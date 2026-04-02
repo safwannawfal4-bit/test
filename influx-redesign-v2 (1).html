@@ -1,0 +1,1217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Influx — Business Development Reimagined</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap');
+
+  :root {
+    --ivory: #F5F0EA;
+    --charcoal: #1A1A1A;
+    --warm-black: #0D0D0D;
+    --gold: #C4A265;
+    --gold-light: #D4B87A;
+    --gold-dark: #A88B50;
+    --muted: #8A8478;
+    --line: rgba(196, 162, 101, 0.15);
+    --cream: #EDE7DD;
+    --error: #C26255;
+    --success: #6BAF7B;
+    --serif: 'Cormorant Garamond', Georgia, serif;
+    --sans: 'DM Sans', sans-serif;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  ::selection { background: var(--gold); color: var(--warm-black); }
+  html { scroll-behavior: smooth; font-size: 16px; }
+  body {
+    background: var(--ivory);
+    color: var(--charcoal);
+    font-family: var(--sans);
+    font-weight: 300;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ── LOADER ── */
+  .loader {
+    position: fixed; inset: 0; background: var(--warm-black);
+    z-index: 9999; display: flex; align-items: center; justify-content: center;
+    flex-direction: column; gap: 2rem;
+    animation: loaderOut 0.8s ease 2.6s forwards;
+  }
+  .loader svg { width: 80px; height: 80px; opacity: 0; animation: loaderIconIn 1s ease 0.2s forwards; }
+  .loader-text {
+    font-family: var(--serif); font-size: clamp(1.5rem, 3vw, 2.5rem); font-weight: 300;
+    color: var(--gold); letter-spacing: 0.4em; text-transform: uppercase;
+    opacity: 0; animation: loaderFade 1.4s ease 0.5s forwards;
+  }
+  .loader-bar {
+    width: 120px; height: 1px; background: rgba(196,162,101,0.2); position: relative;
+    overflow: hidden; opacity: 0; animation: fadeIn 0.5s ease 0.8s forwards;
+  }
+  .loader-bar::after {
+    content: ''; position: absolute; top: 0; left: 0; height: 100%; width: 0;
+    background: var(--gold); animation: barFill 1.5s ease 1s forwards;
+  }
+  @keyframes loaderIconIn { from { opacity: 0; transform: scale(0.8); } to { opacity: 1; transform: scale(1); } }
+  @keyframes loaderFade { 0% { opacity: 0; letter-spacing: 0.7em; } 100% { opacity: 1; letter-spacing: 0.4em; } }
+  @keyframes barFill { to { width: 100%; } }
+  @keyframes loaderOut { to { opacity: 0; pointer-events: none; } }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes slideUp { from { opacity: 0; transform: translateY(40px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* ── NAV ── */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    padding: 1.8rem 4rem; display: flex; justify-content: space-between; align-items: center;
+    transition: all 0.5s ease; opacity: 0; animation: fadeIn 1s ease 2.8s forwards;
+  }
+  nav.scrolled {
+    background: rgba(13,13,13,0.96); backdrop-filter: blur(12px);
+    padding: 1rem 4rem; box-shadow: 0 1px 0 var(--line);
+  }
+  .logo {
+    font-family: var(--serif); font-size: 1.5rem; font-weight: 400;
+    color: var(--ivory); letter-spacing: 0.15em; text-transform: uppercase; text-decoration: none;
+    display: flex; align-items: center; gap: 0.7rem;
+  }
+  .logo svg { width: 32px; height: 32px; }
+  .logo-text span { color: var(--gold-light); }
+  .nav-links { display: flex; gap: 2.5rem; list-style: none; }
+  .nav-links a {
+    font-family: var(--sans); font-size: 0.72rem; font-weight: 400;
+    color: var(--ivory); text-decoration: none; letter-spacing: 0.15em;
+    text-transform: uppercase; position: relative; padding-bottom: 3px;
+    transition: color 0.3s ease;
+  }
+  .nav-links a::after {
+    content: ''; position: absolute; bottom: 0; left: 0; width: 0; height: 1px;
+    background: var(--gold-light); transition: width 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+  }
+  .nav-links a:hover::after { width: 100%; }
+  .nav-links a:hover { color: var(--gold-light); }
+  .nav-contact {
+    font-family: var(--sans); font-size: 0.68rem; font-weight: 400;
+    color: var(--warm-black); background: var(--gold); text-decoration: none;
+    letter-spacing: 0.2em; text-transform: uppercase; padding: 0.75rem 1.8rem;
+    transition: all 0.4s ease;
+  }
+  .nav-contact:hover { background: var(--gold-light); transform: translateY(-1px); }
+
+  /* Mobile menu */
+  .hamburger {
+    display: none; cursor: pointer; flex-direction: column; gap: 5px;
+    background: none; border: none; padding: 5px; z-index: 200;
+  }
+  .hamburger span {
+    width: 24px; height: 1.5px; background: var(--ivory); transition: all 0.4s ease; display: block;
+  }
+  .hamburger.active span:nth-child(1) { transform: rotate(45deg) translate(4px, 5px); }
+  .hamburger.active span:nth-child(2) { opacity: 0; }
+  .hamburger.active span:nth-child(3) { transform: rotate(-45deg) translate(4px, -5px); }
+  .mobile-menu {
+    position: fixed; inset: 0; background: var(--warm-black); z-index: 150;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 2.5rem; opacity: 0; pointer-events: none; transition: opacity 0.5s ease;
+  }
+  .mobile-menu.open { opacity: 1; pointer-events: all; }
+  .mobile-menu a {
+    font-family: var(--serif); font-size: 2rem; font-weight: 300;
+    color: var(--ivory); text-decoration: none; letter-spacing: 0.1em; transition: color 0.3s ease;
+  }
+  .mobile-menu a:hover { color: var(--gold); }
+
+  /* ── HERO ── */
+  .hero {
+    height: 100vh; min-height: 700px; background: var(--warm-black);
+    display: flex; flex-direction: column; justify-content: flex-end;
+    padding: 6rem 4rem; position: relative; overflow: hidden;
+  }
+  .hero-bg { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+  .hero-bg svg { position: absolute; top: 0; right: 0; width: 65%; height: 100%; opacity: 0.5; }
+  .hero-glow {
+    position: absolute; top: 20%; right: 10%; width: 500px; height: 500px;
+    background: radial-gradient(circle, rgba(196,162,101,0.08) 0%, transparent 70%);
+    filter: blur(40px); pointer-events: none;
+  }
+  .hero-glow-2 {
+    position: absolute; bottom: 10%; left: 20%; width: 300px; height: 300px;
+    background: radial-gradient(circle, rgba(196,162,101,0.04) 0%, transparent 70%);
+    filter: blur(30px); pointer-events: none;
+  }
+  .hero-particles { position: absolute; inset: 0; pointer-events: none; }
+  .particle {
+    position: absolute; width: 2px; height: 2px; background: var(--gold);
+    border-radius: 50%; opacity: 0; animation: particleFloat linear infinite;
+  }
+  @keyframes particleFloat {
+    0% { opacity: 0; transform: translateY(0) scale(0); }
+    10% { opacity: 0.6; transform: scale(1); }
+    90% { opacity: 0.2; }
+    100% { opacity: 0; transform: translateY(-100vh) scale(0.5); }
+  }
+  .hero-tag {
+    font-family: var(--sans); font-size: 0.7rem; font-weight: 400;
+    letter-spacing: 0.35em; text-transform: uppercase; color: var(--gold);
+    margin-bottom: 2rem; opacity: 0; animation: slideUp 1s ease 2.8s forwards;
+    position: relative; z-index: 2;
+  }
+  .hero-tag::before {
+    content: ''; display: inline-block; width: 3rem; height: 1px;
+    background: var(--gold); margin-right: 1.2rem; vertical-align: middle;
+  }
+  .hero h1 {
+    font-family: var(--serif); font-size: clamp(3rem, 6.5vw, 7rem); font-weight: 300;
+    color: var(--ivory); line-height: 1.05; max-width: 65%;
+    opacity: 0; animation: slideUp 1.2s ease 3s forwards; position: relative; z-index: 2;
+  }
+  .hero h1 em { font-style: italic; color: var(--gold); }
+  .hero-sub {
+    margin-top: 2.5rem; font-family: var(--sans); font-size: 1rem; font-weight: 300;
+    color: var(--muted); max-width: 480px; line-height: 1.85;
+    opacity: 0; animation: slideUp 1s ease 3.3s forwards; position: relative; z-index: 2;
+  }
+  .hero-btns {
+    display: flex; gap: 1.5rem; margin-top: 3rem;
+    opacity: 0; animation: slideUp 1s ease 3.5s forwards; position: relative; z-index: 2;
+  }
+  .btn-primary {
+    font-family: var(--sans); font-size: 0.68rem; font-weight: 500;
+    letter-spacing: 0.22em; text-transform: uppercase;
+    color: var(--warm-black); background: var(--gold); padding: 1rem 2.5rem;
+    text-decoration: none; transition: all 0.4s ease; border: none; cursor: pointer;
+  }
+  .btn-primary:hover { background: var(--gold-light); transform: translateY(-2px); box-shadow: 0 10px 30px rgba(196,162,101,0.15); }
+  .btn-outline {
+    font-family: var(--sans); font-size: 0.68rem; font-weight: 400;
+    letter-spacing: 0.22em; text-transform: uppercase;
+    color: var(--gold); background: transparent; padding: 1rem 2.5rem;
+    text-decoration: none; border: 1px solid var(--gold); transition: all 0.4s ease; cursor: pointer;
+  }
+  .btn-outline:hover { background: rgba(196,162,101,0.08); transform: translateY(-2px); }
+  .hero-scroll {
+    position: absolute; bottom: 3rem; right: 4rem;
+    display: flex; flex-direction: column; align-items: center; gap: 0.8rem;
+    opacity: 0; animation: fadeIn 1s ease 3.8s forwards;
+  }
+  .hero-scroll span { font-size: 0.6rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--muted); writing-mode: vertical-rl; }
+  .hero-scroll .scroll-line { width: 1px; height: 4rem; background: var(--gold); animation: scrollPulse 2s ease infinite; }
+  @keyframes scrollPulse { 0%, 100% { transform: scaleY(1); opacity: 0.4; } 50% { transform: scaleY(0.5); opacity: 1; } }
+
+  /* ── SECTION COMMON ── */
+  section { padding: 8rem 4rem; }
+  .section-tag {
+    font-family: var(--sans); font-size: 0.65rem; font-weight: 500;
+    letter-spacing: 0.35em; text-transform: uppercase; color: var(--gold); margin-bottom: 1rem;
+  }
+  .section-tag::before {
+    content: ''; display: inline-block; width: 2rem; height: 1px;
+    background: var(--gold); margin-right: 1rem; vertical-align: middle;
+  }
+  .reveal { opacity: 0; transform: translateY(30px); transition: all 0.9s cubic-bezier(0.25, 0.8, 0.25, 1); }
+  .reveal.visible { opacity: 1; transform: translateY(0); }
+
+  /* ── MARQUEE ── */
+  .marquee-section {
+    background: var(--cream); padding: 2rem 0; overflow: hidden;
+    border-top: 1px solid var(--line); border-bottom: 1px solid var(--line);
+  }
+  .marquee-track { display: flex; gap: 4rem; animation: marqueeScroll 30s linear infinite; white-space: nowrap; }
+  .marquee-item {
+    font-family: var(--serif); font-size: 1.1rem; font-weight: 400;
+    color: var(--muted); letter-spacing: 0.08em; display: flex; align-items: center; gap: 4rem; flex-shrink: 0;
+  }
+  .marquee-dot { width: 4px; height: 4px; background: var(--gold); border-radius: 50%; flex-shrink: 0; }
+  @keyframes marqueeScroll { to { transform: translateX(-50%); } }
+
+  /* ── PHILOSOPHY ── */
+  .philosophy {
+    background: var(--ivory); display: grid; grid-template-columns: 1fr 1fr;
+    gap: 6rem; align-items: center;
+  }
+  .philosophy-visual { position: relative; display: flex; align-items: center; justify-content: center; min-height: 400px; }
+  .philosophy-visual svg { width: 100%; max-width: 420px; }
+  .philosophy h2 {
+    font-family: var(--serif); font-size: clamp(2.5rem, 4vw, 4.2rem);
+    font-weight: 300; line-height: 1.15; color: var(--charcoal);
+  }
+  .philosophy h2 em { font-style: italic; color: var(--gold); }
+  .philosophy-text { font-size: 0.95rem; line-height: 2; color: var(--muted); }
+  .philosophy-text p + p { margin-top: 1.5rem; }
+  .gold-divider { width: 4rem; height: 1px; background: var(--gold); margin: 2rem 0; }
+
+  /* ── SERVICES ── */
+  .services { background: var(--warm-black); color: var(--ivory); }
+  .services-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 5rem; }
+  .services-header h2 { font-family: var(--serif); font-size: clamp(2.5rem, 4.5vw, 5rem); font-weight: 300; line-height: 1.1; }
+  .services-header h2 em { font-style: italic; color: var(--gold); }
+  .services-desc { max-width: 320px; font-size: 0.85rem; line-height: 1.8; color: var(--muted); text-align: right; }
+  .services-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: var(--line); }
+  .service-card {
+    background: var(--warm-black); padding: 3rem 2.5rem; position: relative;
+    cursor: pointer; transition: all 0.5s cubic-bezier(0.25, 0.8, 0.25, 1); overflow: hidden;
+  }
+  .service-card::before {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(135deg, rgba(196,162,101,0.08) 0%, transparent 60%);
+    opacity: 0; transition: opacity 0.5s ease;
+  }
+  .service-card:hover::before { opacity: 1; }
+  .service-card:hover { transform: translateY(-3px); }
+  .service-icon {
+    width: 52px; height: 52px; margin-bottom: 1.8rem;
+    display: flex; align-items: center; justify-content: center;
+    border: 1px solid rgba(196,162,101,0.2); border-radius: 50%; transition: all 0.5s ease;
+  }
+  .service-icon svg { width: 22px; height: 22px; }
+  .service-card:hover .service-icon { border-color: var(--gold); background: rgba(196,162,101,0.06); }
+  .service-number {
+    font-family: var(--serif); font-size: 3rem; font-weight: 300;
+    color: rgba(196,162,101,0.1); line-height: 1; margin-bottom: 1.5rem;
+    position: absolute; top: 2.5rem; right: 2.5rem; transition: color 0.5s ease;
+  }
+  .service-card:hover .service-number { color: rgba(196,162,101,0.2); }
+  .service-card h3 { font-family: var(--serif); font-size: 1.4rem; font-weight: 400; margin-bottom: 0.8rem; color: var(--ivory); }
+  .service-card p { font-size: 0.82rem; line-height: 1.85; color: var(--muted); position: relative; z-index: 1; }
+  .service-card .arrow {
+    display: inline-flex; align-items: center; gap: 0.5rem; margin-top: 1.8rem;
+    font-size: 0.68rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--gold);
+    transition: gap 0.3s ease; position: relative; z-index: 1;
+  }
+  .service-card:hover .arrow { gap: 0.9rem; }
+
+  /* ── APPROACH ── */
+  .approach { background: var(--cream); position: relative; overflow: hidden; }
+  .approach > h2 {
+    font-family: var(--serif); font-size: clamp(2rem, 3.5vw, 3.5rem);
+    font-weight: 300; color: var(--charcoal); max-width: 600px; margin-bottom: 4rem;
+  }
+  .approach > h2 em { color: var(--gold); font-style: italic; }
+  .approach-content { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0; position: relative; }
+  .approach-content::before {
+    content: ''; position: absolute; top: 0; left: 33.33%; right: 33.33%; height: 100%;
+    border-left: 1px solid var(--line); border-right: 1px solid var(--line); pointer-events: none;
+  }
+  .approach-step { position: relative; padding: 2.5rem 2.5rem 2.5rem 0; }
+  .approach-step:nth-child(2) { padding: 2.5rem; }
+  .approach-step:nth-child(3) { padding: 2.5rem 0 2.5rem 2.5rem; }
+  .approach-icon {
+    width: 56px; height: 56px; margin-bottom: 1.5rem;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--ivory); border-radius: 50%; box-shadow: 0 4px 20px rgba(0,0,0,0.04);
+  }
+  .approach-icon svg { width: 24px; height: 24px; }
+  .approach-num { font-family: var(--serif); font-size: 0.85rem; color: var(--gold); margin-bottom: 0.8rem; letter-spacing: 0.1em; }
+  .approach-step h3 { font-family: var(--serif); font-size: 1.6rem; font-weight: 400; margin-bottom: 1rem; color: var(--charcoal); }
+  .approach-step p { font-size: 0.85rem; line-height: 1.9; color: var(--muted); }
+
+  /* ── STATS ── */
+  .stats { background: var(--warm-black); display: flex; justify-content: center; padding: 6rem 4rem; position: relative; overflow: hidden; }
+  .stats::before {
+    content: ''; position: absolute; inset: 0;
+    background: repeating-linear-gradient(90deg, transparent, transparent calc(25% - 0.5px), rgba(196,162,101,0.06) calc(25% - 0.5px), rgba(196,162,101,0.06) calc(25% + 0.5px));
+    pointer-events: none;
+  }
+  .stats-inner { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4rem; text-align: center; width: 100%; max-width: 1000px; position: relative; z-index: 1; }
+  .stat-num { font-family: var(--serif); font-size: clamp(2.8rem, 5vw, 4rem); font-weight: 300; color: var(--gold); line-height: 1; }
+  .stat-label { margin-top: 0.8rem; font-size: 0.68rem; font-weight: 400; letter-spacing: 0.22em; text-transform: uppercase; color: var(--muted); }
+
+  /* ── TESTIMONIALS ── */
+  .testimonials { background: var(--ivory); position: relative; overflow: hidden; }
+  .testimonials-wrapper { position: relative; max-width: 700px; margin: 3rem auto 0; }
+  .testimonial-slide { display: none; text-align: center; animation: testimonialIn 0.6s ease; }
+  .testimonial-slide.active { display: block; }
+  @keyframes testimonialIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+  .testimonial-quote { font-family: var(--serif); font-size: 3rem; color: var(--gold); line-height: 1; margin-bottom: 1.5rem; }
+  .testimonial-text {
+    font-family: var(--serif); font-size: clamp(1.2rem, 2vw, 1.5rem); font-weight: 400;
+    font-style: italic; line-height: 1.7; color: var(--charcoal); margin-bottom: 2rem;
+  }
+  .testimonial-author { font-family: var(--sans); font-size: 0.85rem; font-weight: 500; color: var(--charcoal); }
+  .testimonial-role { font-family: var(--sans); font-size: 0.75rem; color: var(--muted); margin-top: 0.3rem; }
+  .testimonial-nav { display: flex; justify-content: center; gap: 0.8rem; margin-top: 2.5rem; }
+  .testimonial-dot {
+    width: 8px; height: 8px; border-radius: 50%; background: var(--line); border: none;
+    cursor: pointer; transition: all 0.3s ease; padding: 0;
+  }
+  .testimonial-dot.active { background: var(--gold); transform: scale(1.3); }
+
+  /* ── TEAM ── */
+  .team { background: var(--cream); }
+  .team-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 2.5rem; margin-top: 4rem; }
+  .team-card { text-align: center; }
+  .team-avatar {
+    width: 140px; height: 140px; border-radius: 50%; margin: 0 auto 1.5rem;
+    background: var(--warm-black); display: flex; align-items: center; justify-content: center;
+    border: 2px solid var(--line); transition: all 0.5s ease; overflow: hidden; position: relative;
+  }
+  .team-avatar svg { width: 140px; height: 140px; }
+  .team-card:hover .team-avatar { border-color: var(--gold); transform: scale(1.05); box-shadow: 0 8px 30px rgba(196,162,101,0.15); }
+  .team-name { font-family: var(--serif); font-size: 1.25rem; font-weight: 400; color: var(--charcoal); }
+  .team-role { font-size: 0.72rem; color: var(--gold); letter-spacing: 0.15em; text-transform: uppercase; margin-top: 0.3rem; }
+  .team-bio { font-size: 0.78rem; color: var(--muted); line-height: 1.6; margin-top: 0.8rem; max-width: 220px; margin-left: auto; margin-right: auto; }
+
+  /* ── PARTNERS & CLIENTS ── */
+  .partners { background: var(--warm-black); padding: 5rem 4rem; text-align: center; }
+  .partners-label { font-family: var(--sans); font-size: 0.65rem; letter-spacing: 0.35em; text-transform: uppercase; color: var(--muted); margin-bottom: 3rem; }
+  .partners-grid { display: flex; justify-content: center; align-items: center; gap: 3.5rem; flex-wrap: wrap; max-width: 1000px; margin: 0 auto; }
+  .partner-logo { opacity: 0.35; transition: all 0.4s ease; cursor: pointer; }
+  .partner-logo:hover { opacity: 0.85; transform: translateY(-2px); }
+  .partner-logo svg { height: 40px; width: auto; }
+  .clients-section { background: var(--ivory); padding: 5rem 4rem; text-align: center; }
+  .clients-grid { display: flex; justify-content: center; align-items: center; gap: 3rem; flex-wrap: wrap; max-width: 1100px; margin: 2.5rem auto 0; }
+  .client-logo { opacity: 0.25; transition: all 0.4s ease; cursor: pointer; }
+  .client-logo:hover { opacity: 0.7; transform: translateY(-2px); }
+  .client-logo svg { height: 44px; width: auto; }
+
+  /* ── CONTACT ── */
+  .contact { background: var(--ivory); display: grid; grid-template-columns: 1fr 1fr; gap: 6rem; }
+  .contact-info h2 {
+    font-family: var(--serif); font-size: clamp(2.5rem, 4vw, 4rem);
+    font-weight: 300; line-height: 1.15; color: var(--charcoal); margin-bottom: 1.5rem;
+  }
+  .contact-info h2 em { font-style: italic; color: var(--gold); }
+  .contact-info > p { font-size: 0.95rem; line-height: 1.9; color: var(--muted); margin-bottom: 3rem; }
+  .contact-detail { display: flex; align-items: center; gap: 1.2rem; margin-bottom: 1.5rem; }
+  .contact-detail-icon {
+    width: 44px; height: 44px; border-radius: 50%;
+    border: 1px solid var(--line); display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .contact-detail-icon svg { width: 18px; height: 18px; }
+  .contact-detail a, .contact-detail span { font-size: 0.9rem; color: var(--charcoal); text-decoration: none; transition: color 0.3s ease; }
+  .contact-detail a:hover { color: var(--gold); }
+
+  .contact-form { display: flex; flex-direction: column; gap: 1.5rem; }
+  .form-group { position: relative; }
+  .form-group label { font-size: 0.68rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted); display: block; margin-bottom: 0.6rem; }
+  .form-group input, .form-group textarea, .form-group select {
+    width: 100%; padding: 1rem 0; font-family: var(--sans); font-size: 0.9rem;
+    color: var(--charcoal); background: transparent;
+    border: none; border-bottom: 1px solid var(--line);
+    outline: none; transition: border-color 0.3s ease; resize: none;
+    -webkit-appearance: none; appearance: none;
+  }
+  .form-group select { cursor: pointer; }
+  .form-group input:focus, .form-group textarea:focus, .form-group select:focus { border-bottom-color: var(--gold); }
+  .form-group input::placeholder, .form-group textarea::placeholder { color: rgba(138,132,120,0.5); }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+  .form-error { font-size: 0.72rem; color: var(--error); margin-top: 0.4rem; display: none; }
+  .form-group.error .form-error { display: block; }
+  .form-group.error input, .form-group.error textarea { border-bottom-color: var(--error); }
+  .form-success { display: none; padding: 3rem; text-align: center; background: rgba(107,175,123,0.06); border: 1px solid rgba(107,175,123,0.2); }
+  .form-success.show { display: block; }
+  .form-success h3 { font-family: var(--serif); font-size: 1.5rem; font-weight: 400; color: var(--charcoal); margin-bottom: 0.5rem; }
+  .form-success p { font-size: 0.85rem; color: var(--muted); }
+  .submit-btn {
+    font-family: var(--sans); font-size: 0.68rem; font-weight: 500;
+    letter-spacing: 0.22em; text-transform: uppercase;
+    color: var(--warm-black); background: var(--gold); padding: 1.1rem 3rem;
+    border: none; cursor: pointer; transition: all 0.4s ease; align-self: flex-start;
+  }
+  .submit-btn:hover { background: var(--gold-light); transform: translateY(-2px); box-shadow: 0 10px 30px rgba(196,162,101,0.15); }
+
+  /* ── FOOTER ── */
+  footer { background: var(--warm-black); padding: 5rem 4rem 2.5rem; color: var(--ivory); }
+  .footer-top { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 4rem; padding-bottom: 4rem; border-bottom: 1px solid var(--line); }
+  .footer-brand p { margin-top: 1.5rem; font-size: 0.82rem; line-height: 1.85; color: var(--muted); max-width: 280px; }
+  .footer-col h4 { font-family: var(--serif); font-size: 1rem; font-weight: 400; margin-bottom: 1.5rem; color: var(--gold); }
+  .footer-col a { display: block; font-size: 0.78rem; color: var(--muted); text-decoration: none; margin-bottom: 0.75rem; transition: color 0.3s ease; }
+  .footer-col a:hover { color: var(--ivory); }
+  .footer-bottom { display: flex; justify-content: space-between; align-items: center; padding-top: 2.5rem; flex-wrap: wrap; gap: 1rem; }
+  .footer-bottom span { font-size: 0.68rem; color: var(--muted); letter-spacing: 0.1em; }
+  .footer-social { display: flex; gap: 1rem; }
+  .footer-social a {
+    width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--line);
+    display: flex; align-items: center; justify-content: center; transition: all 0.3s ease; margin: 0;
+  }
+  .footer-social a:hover { border-color: var(--gold); background: rgba(196,162,101,0.06); }
+  .footer-social svg { width: 14px; height: 14px; }
+
+  /* Back to top */
+  .back-to-top {
+    position: fixed; bottom: 2rem; right: 2rem; width: 44px; height: 44px;
+    background: var(--gold); border: none; cursor: pointer; display: flex;
+    align-items: center; justify-content: center; opacity: 0; pointer-events: none;
+    transition: all 0.4s ease; z-index: 90;
+  }
+  .back-to-top.show { opacity: 1; pointer-events: all; }
+  .back-to-top:hover { background: var(--gold-light); transform: translateY(-3px); }
+  .back-to-top svg { width: 18px; height: 18px; }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 1024px) {
+    nav { padding: 1.5rem 2rem; }
+    nav.scrolled { padding: 1rem 2rem; }
+    section { padding: 5rem 2rem; }
+    .hero { padding: 4rem 2rem; }
+    .hero h1 { max-width: 90%; }
+    .hero-bg svg { width: 80%; opacity: 0.3; }
+    .philosophy { grid-template-columns: 1fr; gap: 3rem; }
+    .philosophy-visual { order: -1; min-height: 280px; }
+    .services-grid { grid-template-columns: 1fr 1fr; }
+    .services-header { flex-direction: column; align-items: flex-start; gap: 2rem; }
+    .services-desc { text-align: left; }
+    .approach-content { grid-template-columns: 1fr; gap: 2.5rem; }
+    .approach-content::before { display: none; }
+    .approach-step, .approach-step:nth-child(2), .approach-step:nth-child(3) { padding: 0; }
+    .stats-inner { grid-template-columns: repeat(2, 1fr); gap: 3rem; }
+    .team-grid { grid-template-columns: repeat(2, 1fr); }
+    .contact { grid-template-columns: 1fr; gap: 4rem; }
+    .footer-top { grid-template-columns: 1fr 1fr; gap: 2rem; }
+    .nav-links, .nav-contact { display: none; }
+    .hamburger { display: flex; }
+  }
+  @media (max-width: 600px) {
+    .services-grid { grid-template-columns: 1fr; }
+    .stats-inner { grid-template-columns: 1fr 1fr; gap: 2rem; }
+    .footer-top { grid-template-columns: 1fr; }
+    .hero-scroll { display: none; }
+    .form-row { grid-template-columns: 1fr; }
+    .team-grid { grid-template-columns: 1fr 1fr; }
+    .partners-grid { gap: 2.5rem; }
+    .clients-grid { gap: 2rem; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Loader -->
+<div class="loader">
+  <svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M40 8L12 24v32l28 16 28-16V24L40 8z" stroke="#C4A265" stroke-width="1" opacity="0.3"/>
+    <path d="M40 16L20 28v24l20 12 20-12V28L40 16z" stroke="#C4A265" stroke-width="1.5" opacity="0.6">
+      <animate attributeName="opacity" values="0.6;1;0.6" dur="2s" repeatCount="indefinite"/>
+    </path>
+    <path d="M40 24L28 32v16l12 8 12-8V32L40 24z" fill="#C4A265" opacity="0.15">
+      <animate attributeName="opacity" values="0.15;0.3;0.15" dur="2s" repeatCount="indefinite"/>
+    </path>
+    <line x1="40" y1="8" x2="40" y2="72" stroke="#C4A265" stroke-width="0.5" opacity="0.2"/>
+    <line x1="12" y1="24" x2="68" y2="56" stroke="#C4A265" stroke-width="0.5" opacity="0.2"/>
+    <line x1="68" y1="24" x2="12" y2="56" stroke="#C4A265" stroke-width="0.5" opacity="0.2"/>
+  </svg>
+  <div class="loader-text">Influx</div>
+  <div class="loader-bar"></div>
+</div>
+
+<!-- Navigation -->
+<nav id="navbar">
+  <a href="#hero" class="logo">
+    <svg viewBox="0 0 32 32" fill="none"><path d="M16 2L4 9v14l12 7 12-7V9L16 2z" stroke="#C4A265" stroke-width="1.2"/><path d="M16 8L8 13v10l8 5 8-5V13L16 8z" fill="#C4A265" opacity="0.2"/></svg>
+    <span class="logo-text">Influx<span>.</span></span>
+  </a>
+  <ul class="nav-links">
+    <li><a href="#philosophy">About</a></li>
+    <li><a href="#services">Services</a></li>
+    <li><a href="#approach">Approach</a></li>
+    <li><a href="#testimonials">Clients</a></li>
+    <li><a href="#team-section">Team</a></li>
+  </ul>
+  <a href="#contact" class="nav-contact">Get in Touch</a>
+  <button class="hamburger" id="hamburger" aria-label="Menu"><span></span><span></span><span></span></button>
+</nav>
+
+<!-- Mobile Menu -->
+<div class="mobile-menu" id="mobileMenu">
+  <a href="#philosophy" onclick="closeMenu()">About</a>
+  <a href="#services" onclick="closeMenu()">Services</a>
+  <a href="#approach" onclick="closeMenu()">Approach</a>
+  <a href="#testimonials" onclick="closeMenu()">Clients</a>
+  <a href="#team-section" onclick="closeMenu()">Team</a>
+  <a href="#contact" onclick="closeMenu()" style="color:var(--gold)">Contact</a>
+</div>
+
+<!-- Hero -->
+<section class="hero" id="hero">
+  <div class="hero-bg">
+    <svg viewBox="0 0 600 700" fill="none" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMaxYMid slice">
+      <line x1="100" y1="0" x2="100" y2="700" stroke="#C4A265" stroke-width="0.3" opacity="0.08"/>
+      <line x1="200" y1="0" x2="200" y2="700" stroke="#C4A265" stroke-width="0.3" opacity="0.08"/>
+      <line x1="300" y1="0" x2="300" y2="700" stroke="#C4A265" stroke-width="0.3" opacity="0.08"/>
+      <line x1="400" y1="0" x2="400" y2="700" stroke="#C4A265" stroke-width="0.3" opacity="0.08"/>
+      <line x1="500" y1="0" x2="500" y2="700" stroke="#C4A265" stroke-width="0.3" opacity="0.08"/>
+      <line x1="0" y1="100" x2="600" y2="100" stroke="#C4A265" stroke-width="0.3" opacity="0.06"/>
+      <line x1="0" y1="200" x2="600" y2="200" stroke="#C4A265" stroke-width="0.3" opacity="0.06"/>
+      <line x1="0" y1="300" x2="600" y2="300" stroke="#C4A265" stroke-width="0.3" opacity="0.06"/>
+      <line x1="0" y1="400" x2="600" y2="400" stroke="#C4A265" stroke-width="0.3" opacity="0.06"/>
+      <line x1="0" y1="500" x2="600" y2="500" stroke="#C4A265" stroke-width="0.3" opacity="0.06"/>
+      <line x1="0" y1="600" x2="600" y2="600" stroke="#C4A265" stroke-width="0.3" opacity="0.06"/>
+      <path d="M300 80L480 180V380L300 480 120 380V180Z" stroke="#C4A265" stroke-width="0.6" opacity="0.1">
+        <animateTransform attributeName="transform" type="rotate" values="0 300 280;360 300 280" dur="120s" repeatCount="indefinite"/>
+      </path>
+      <path d="M300 140L420 210V350L300 420 180 350V210Z" stroke="#C4A265" stroke-width="0.8" opacity="0.12">
+        <animateTransform attributeName="transform" type="rotate" values="360 300 280;0 300 280" dur="90s" repeatCount="indefinite"/>
+      </path>
+      <path d="M300 200L380 280 300 360 220 280Z" stroke="#C4A265" stroke-width="1" opacity="0.15" fill="#C4A265" fill-opacity="0.02">
+        <animate attributeName="fill-opacity" values="0.02;0.06;0.02" dur="5s" repeatCount="indefinite"/>
+      </path>
+      <circle cx="300" cy="200" r="3" fill="#C4A265" opacity="0.2"><animate attributeName="opacity" values="0.2;0.5;0.2" dur="3s" repeatCount="indefinite"/></circle>
+      <circle cx="300" cy="360" r="3" fill="#C4A265" opacity="0.2"><animate attributeName="opacity" values="0.2;0.5;0.2" dur="3s" begin="1s" repeatCount="indefinite"/></circle>
+      <circle cx="220" cy="280" r="2" fill="#C4A265" opacity="0.15"/>
+      <circle cx="380" cy="280" r="2" fill="#C4A265" opacity="0.15"/>
+      <circle cx="100" cy="150" r="1.5" fill="#C4A265" opacity="0.1"/>
+      <circle cx="500" cy="120" r="1.5" fill="#C4A265" opacity="0.1"/>
+      <circle cx="450" cy="450" r="1.5" fill="#C4A265" opacity="0.1"/>
+      <circle cx="150" cy="500" r="1.5" fill="#C4A265" opacity="0.1"/>
+    </svg>
+    <div class="hero-glow"></div>
+    <div class="hero-glow-2"></div>
+  </div>
+  <div class="hero-particles" id="heroParticles"></div>
+  <div class="hero-tag">Business Development Consultancy</div>
+  <h1>We build the <em>backbone</em> of your business</h1>
+  <p class="hero-sub">Strategic accounting, human resources, and operational infrastructure — so you can focus on growth.</p>
+  <div class="hero-btns">
+    <a href="#contact" class="btn-primary">Start a Project</a>
+    <a href="#services" class="btn-outline">Our Services</a>
+  </div>
+  <div class="hero-scroll"><span>Scroll</span><div class="scroll-line"></div></div>
+</section>
+
+<!-- Marquee -->
+<div class="marquee-section">
+  <div class="marquee-track">
+    <div class="marquee-item">Accounting & Finance <div class="marquee-dot"></div></div>
+    <div class="marquee-item">Human Resources <div class="marquee-dot"></div></div>
+    <div class="marquee-item">Business Strategy <div class="marquee-dot"></div></div>
+    <div class="marquee-item">Compliance & Risk <div class="marquee-dot"></div></div>
+    <div class="marquee-item">Operational Setup <div class="marquee-dot"></div></div>
+    <div class="marquee-item">Technology Integration <div class="marquee-dot"></div></div>
+    <div class="marquee-item">Accounting & Finance <div class="marquee-dot"></div></div>
+    <div class="marquee-item">Human Resources <div class="marquee-dot"></div></div>
+    <div class="marquee-item">Business Strategy <div class="marquee-dot"></div></div>
+    <div class="marquee-item">Compliance & Risk <div class="marquee-dot"></div></div>
+    <div class="marquee-item">Operational Setup <div class="marquee-dot"></div></div>
+    <div class="marquee-item">Technology Integration <div class="marquee-dot"></div></div>
+  </div>
+</div>
+
+<!-- Philosophy -->
+<section class="philosophy" id="philosophy">
+  <div class="reveal">
+    <div class="section-tag">Our Philosophy</div>
+    <h2>Simplicity is the ultimate <em>sophistication</em></h2>
+    <div style="margin-top:2rem">
+      <div class="philosophy-text">
+        <p>At Influx, we believe that excellence in business development comes from removing complexity — not adding it. We distill your accounting, HR, and operational needs into elegant systems that run seamlessly.</p>
+        <div class="gold-divider"></div>
+        <p>Our clients trust us to handle the critical functions that power their organizations, freeing them to pursue their vision with confidence and clarity.</p>
+      </div>
+    </div>
+  </div>
+  <div class="philosophy-visual reveal" style="transition-delay:0.3s">
+    <svg viewBox="0 0 420 400" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="210" cy="200" r="90" stroke="#C4A265" stroke-width="1" opacity="0.15"/>
+      <circle cx="210" cy="200" r="140" stroke="#C4A265" stroke-width="0.6" opacity="0.08" stroke-dasharray="4 6"/>
+      <circle cx="210" cy="200" r="180" stroke="#C4A265" stroke-width="0.4" opacity="0.05" stroke-dasharray="2 8"/>
+      <circle cx="210" cy="200" r="30" fill="#C4A265" opacity="0.08"><animate attributeName="r" values="28;32;28" dur="4s" repeatCount="indefinite"/></circle>
+      <circle cx="210" cy="200" r="6" fill="#C4A265" opacity="0.6"/>
+      <g><animateTransform attributeName="transform" type="rotate" values="0 210 200;360 210 200" dur="40s" repeatCount="indefinite"/>
+        <circle cx="210" cy="110" r="18" fill="#0D0D0D" stroke="#C4A265" stroke-width="1"/>
+        <text x="210" y="105" text-anchor="middle" font-family="DM Sans" font-size="7" fill="#C4A265" letter-spacing="0.5">ACCOUNTING</text>
+        <text x="210" y="115" text-anchor="middle" font-family="DM Sans" font-size="6" fill="#8A8478">&amp; FINANCE</text>
+        <line x1="210" y1="128" x2="210" y2="170" stroke="#C4A265" stroke-width="0.5" opacity="0.3"/>
+      </g>
+      <g><animateTransform attributeName="transform" type="rotate" values="120 210 200;480 210 200" dur="40s" repeatCount="indefinite"/>
+        <circle cx="210" cy="110" r="18" fill="#0D0D0D" stroke="#C4A265" stroke-width="1"/>
+        <text x="210" y="105" text-anchor="middle" font-family="DM Sans" font-size="7" fill="#C4A265" letter-spacing="0.5">HUMAN</text>
+        <text x="210" y="115" text-anchor="middle" font-family="DM Sans" font-size="6" fill="#8A8478">RESOURCES</text>
+        <line x1="210" y1="128" x2="210" y2="170" stroke="#C4A265" stroke-width="0.5" opacity="0.3"/>
+      </g>
+      <g><animateTransform attributeName="transform" type="rotate" values="240 210 200;600 210 200" dur="40s" repeatCount="indefinite"/>
+        <circle cx="210" cy="110" r="18" fill="#0D0D0D" stroke="#C4A265" stroke-width="1"/>
+        <text x="210" y="105" text-anchor="middle" font-family="DM Sans" font-size="7" fill="#C4A265" letter-spacing="0.5">BUSINESS</text>
+        <text x="210" y="115" text-anchor="middle" font-family="DM Sans" font-size="6" fill="#8A8478">STRATEGY</text>
+        <line x1="210" y1="128" x2="210" y2="170" stroke="#C4A265" stroke-width="0.5" opacity="0.3"/>
+      </g>
+      <g opacity="0.4">
+        <text x="60" y="80" font-family="DM Sans" font-size="6.5" fill="#8A8478" letter-spacing="1">COMPLIANCE</text>
+        <text x="310" y="60" font-family="DM Sans" font-size="6.5" fill="#8A8478" letter-spacing="1">OPERATIONS</text>
+        <text x="40" y="340" font-family="DM Sans" font-size="6.5" fill="#8A8478" letter-spacing="1">TECHNOLOGY</text>
+        <text x="320" y="360" font-family="DM Sans" font-size="6.5" fill="#8A8478" letter-spacing="1">GROWTH</text>
+      </g>
+      <line x1="95" y1="82" x2="140" y2="130" stroke="#C4A265" stroke-width="0.3" opacity="0.15"/>
+      <line x1="340" y1="62" x2="310" y2="110" stroke="#C4A265" stroke-width="0.3" opacity="0.15"/>
+      <line x1="80" y1="335" x2="130" y2="290" stroke="#C4A265" stroke-width="0.3" opacity="0.15"/>
+      <line x1="340" y1="355" x2="300" y2="300" stroke="#C4A265" stroke-width="0.3" opacity="0.15"/>
+    </svg>
+  </div>
+</section>
+
+<!-- Services -->
+<section class="services" id="services">
+  <div class="services-header reveal">
+    <div><div class="section-tag">What We Do</div><h2>Precision in<br>every <em>detail</em></h2></div>
+    <p class="services-desc">We deliver comprehensive business solutions with the care and precision your organization deserves.</p>
+  </div>
+  <div class="services-grid">
+    <div class="service-card reveal">
+      <div class="service-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#C4A265" stroke-width="1.5"><rect x="3" y="4" width="18" height="16" rx="1"/><path d="M3 10h18M9 4v16"/><path d="M13 14h4M13 17h4"/></svg></div>
+      <div class="service-number">01</div>
+      <h3>Accounting & Finance</h3>
+      <p>Full-spectrum financial management — from bookkeeping and tax planning to CFO-level advisory. We bring clarity to your numbers.</p>
+      <span class="arrow">Learn More →</span>
+    </div>
+    <div class="service-card reveal" style="transition-delay:0.1s">
+      <div class="service-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#C4A265" stroke-width="1.5"><circle cx="9" cy="8" r="3.5"/><circle cx="17" cy="10" r="2.5"/><path d="M2 20c0-3.5 3-6 7-6s7 2.5 7 6"/><path d="M17 14c2.5 0 5 1.5 5 4"/></svg></div>
+      <div class="service-number">02</div>
+      <h3>Human Resources</h3>
+      <p>End-to-end HR solutions including talent acquisition, payroll, compliance, and organizational development tailored to your culture.</p>
+      <span class="arrow">Learn More →</span>
+    </div>
+    <div class="service-card reveal" style="transition-delay:0.2s">
+      <div class="service-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#C4A265" stroke-width="1.5"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg></div>
+      <div class="service-number">03</div>
+      <h3>Business Strategy</h3>
+      <p>Strategic planning and process optimization that transforms how your organization operates, scales, and competes.</p>
+      <span class="arrow">Learn More →</span>
+    </div>
+    <div class="service-card reveal" style="transition-delay:0.05s">
+      <div class="service-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#C4A265" stroke-width="1.5"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></div>
+      <div class="service-number">04</div>
+      <h3>Operational Setup</h3>
+      <p>Building the infrastructure of your business from the ground up — systems, processes, and frameworks for sustained growth.</p>
+      <span class="arrow">Learn More →</span>
+    </div>
+    <div class="service-card reveal" style="transition-delay:0.15s">
+      <div class="service-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#C4A265" stroke-width="1.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg></div>
+      <div class="service-number">05</div>
+      <h3>Compliance & Risk</h3>
+      <p>Navigating regulatory landscapes with precision. We ensure your business stays ahead of compliance requirements.</p>
+      <span class="arrow">Learn More →</span>
+    </div>
+    <div class="service-card reveal" style="transition-delay:0.25s">
+      <div class="service-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#C4A265" stroke-width="1.5"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg></div>
+      <div class="service-number">06</div>
+      <h3>Technology Integration</h3>
+      <p>Implementing and managing the digital tools — ERP, HRIS, and financial platforms — that modernize your operations.</p>
+      <span class="arrow">Learn More →</span>
+    </div>
+  </div>
+</section>
+
+<!-- Approach -->
+<section class="approach" id="approach">
+  <div class="section-tag reveal">Our Approach</div>
+  <h2 class="reveal">How we work <em>with</em> you</h2>
+  <div class="approach-content">
+    <div class="approach-step reveal">
+      <div class="approach-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#C4A265" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/><path d="M11 8v6M8 11h6"/></svg></div>
+      <div class="approach-num">Phase I</div>
+      <h3>Discover</h3>
+      <p>We begin with a deep understanding of your business, its goals, pain points, and the vision that drives you forward. Every engagement starts with listening.</p>
+    </div>
+    <div class="approach-step reveal" style="transition-delay:0.15s">
+      <div class="approach-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#C4A265" stroke-width="1.5"><path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z"/><path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z"/></svg></div>
+      <div class="approach-num">Phase II</div>
+      <h3>Design</h3>
+      <p>We architect tailored solutions — selecting the right combination of services, tools, and talent to match your needs with precision and elegance.</p>
+    </div>
+    <div class="approach-step reveal" style="transition-delay:0.3s">
+      <div class="approach-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#C4A265" stroke-width="1.5"><polyline points="20 6 9 17 4 12"/></svg></div>
+      <div class="approach-num">Phase III</div>
+      <h3>Deliver</h3>
+      <p>Seamless execution with ongoing refinement. We embed into your operations and continuously optimize for performance and growth.</p>
+    </div>
+  </div>
+</section>
+
+<!-- Stats -->
+<div class="stats">
+  <div class="stats-inner">
+    <div class="reveal"><div class="stat-num" data-target="150" data-suffix="+">0</div><div class="stat-label">Clients Served</div></div>
+    <div class="reveal" style="transition-delay:0.1s"><div class="stat-num" data-target="12" data-suffix="">0</div><div class="stat-label">Years of Excellence</div></div>
+    <div class="reveal" style="transition-delay:0.2s"><div class="stat-num" data-target="98" data-suffix="%">0</div><div class="stat-label">Client Retention</div></div>
+    <div class="reveal" style="transition-delay:0.3s"><div class="stat-num" data-target="3" data-suffix="">0</div><div class="stat-label">Regional Offices</div></div>
+  </div>
+</div>
+
+<!-- Testimonials -->
+<section class="testimonials" id="testimonials">
+  <div class="section-tag reveal">What Clients Say</div>
+  <h2 class="reveal" style="font-family:var(--serif);font-size:clamp(2rem,3.5vw,3.5rem);font-weight:300;color:var(--charcoal)">Trusted by <em style="color:var(--gold);font-style:italic">leaders</em></h2>
+  <div class="testimonials-wrapper reveal" style="transition-delay:0.2s">
+    <div class="testimonial-slide active">
+      <div class="testimonial-quote">&ldquo;</div>
+      <div class="testimonial-text">Influx transformed our back-office operations entirely. Their approach to our accounting and HR needs was both meticulous and elegant — exactly what we needed to scale.</div>
+      <div class="testimonial-author">Ahmad Al-Rashid</div>
+      <div class="testimonial-role">CEO, Nexus Holdings — Riyadh</div>
+    </div>
+    <div class="testimonial-slide">
+      <div class="testimonial-quote">&ldquo;</div>
+      <div class="testimonial-text">Working with Influx feels like having a world-class internal team without the overhead. They understood our culture from day one and built systems that truly fit.</div>
+      <div class="testimonial-author">Sara Khoury</div>
+      <div class="testimonial-role">Managing Director, Cedar Group — Beirut</div>
+    </div>
+    <div class="testimonial-slide">
+      <div class="testimonial-quote">&ldquo;</div>
+      <div class="testimonial-text">The level of professionalism and attention to detail is unmatched. Influx handles our compliance and payroll across three markets seamlessly.</div>
+      <div class="testimonial-author">Khalid bin Omar</div>
+      <div class="testimonial-role">Founder, Oasis Ventures — Dubai</div>
+    </div>
+    <div class="testimonial-nav">
+      <button class="testimonial-dot active" data-index="0"></button>
+      <button class="testimonial-dot" data-index="1"></button>
+      <button class="testimonial-dot" data-index="2"></button>
+    </div>
+  </div>
+</section>
+
+<!-- Team -->
+<section class="team" id="team-section">
+  <div class="section-tag reveal">Our Team</div>
+  <h2 class="reveal" style="font-family:var(--serif);font-size:clamp(2rem,3.5vw,3.5rem);font-weight:300;color:var(--charcoal)">The people behind <em style="color:var(--gold);font-style:italic">Influx</em></h2>
+  <div class="team-grid">
+    <!-- Rami - Male, short hair, strong jaw -->
+    <div class="team-card reveal">
+      <div class="team-avatar">
+        <svg viewBox="0 0 140 140" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="70" cy="70" r="70" fill="#0D0D0D"/>
+          <circle cx="70" cy="70" r="69" stroke="#C4A265" stroke-width="0.5" opacity="0.2"/>
+          <!-- Neck/Shoulders -->
+          <path d="M35 130c0-18 15-28 35-28s35 10 35 28" fill="#1A1A1A"/>
+          <path d="M35 130c0-18 15-28 35-28s35 10 35 28" stroke="#C4A265" stroke-width="0.6" opacity="0.3"/>
+          <!-- Suit collar -->
+          <path d="M50 108l20 14 20-14" stroke="#C4A265" stroke-width="1" opacity="0.5"/>
+          <path d="M55 105l15 10 15-10" fill="#C4A265" opacity="0.06"/>
+          <!-- Tie -->
+          <line x1="70" y1="115" x2="70" y2="130" stroke="#C4A265" stroke-width="1.5" opacity="0.3"/>
+          <!-- Head -->
+          <ellipse cx="70" cy="62" rx="24" ry="28" fill="#2A2420"/>
+          <ellipse cx="70" cy="62" rx="24" ry="28" stroke="#C4A265" stroke-width="0.8" opacity="0.4"/>
+          <!-- Hair - short, neat -->
+          <path d="M46 55c0-16 10-28 24-28s24 12 24 28" fill="#1A1714" stroke="#C4A265" stroke-width="0.4" opacity="0.3"/>
+          <path d="M48 52c2-14 10-24 22-24s20 10 22 24" fill="#1A1714"/>
+          <!-- Eyes -->
+          <ellipse cx="60" cy="62" rx="3.5" ry="2" fill="#C4A265" opacity="0.7"/>
+          <ellipse cx="80" cy="62" rx="3.5" ry="2" fill="#C4A265" opacity="0.7"/>
+          <circle cx="60" cy="62" r="1.2" fill="#0D0D0D"/>
+          <circle cx="80" cy="62" r="1.2" fill="#0D0D0D"/>
+          <!-- Eyebrows -->
+          <path d="M55 58c2-2 5-2.5 8-1.5" stroke="#C4A265" stroke-width="0.8" opacity="0.5" fill="none"/>
+          <path d="M77 56.5c3-1 6-0.5 8 1.5" stroke="#C4A265" stroke-width="0.8" opacity="0.5" fill="none"/>
+          <!-- Nose -->
+          <path d="M68 66c1 3 2 5 2 5s1-2 2-5" stroke="#C4A265" stroke-width="0.5" opacity="0.3" fill="none"/>
+          <!-- Mouth -->
+          <path d="M63 74c3 2 5 3 7 3s4-1 7-3" stroke="#C4A265" stroke-width="0.7" opacity="0.4" fill="none"/>
+          <!-- Subtle jawline -->
+          <path d="M48 68c2 14 10 22 22 24 12-2 20-10 22-24" stroke="#C4A265" stroke-width="0.3" opacity="0.15" fill="none"/>
+          <!-- Ear hints -->
+          <ellipse cx="46" cy="64" rx="3" ry="5" stroke="#C4A265" stroke-width="0.4" opacity="0.2" fill="none"/>
+          <ellipse cx="94" cy="64" rx="3" ry="5" stroke="#C4A265" stroke-width="0.4" opacity="0.2" fill="none"/>
+        </svg>
+      </div>
+      <div class="team-name">Rami Haddad</div>
+      <div class="team-role">Managing Partner</div>
+      <div class="team-bio">15+ years leading business transformation across the GCC and Levant.</div>
+    </div>
+    <!-- Lina - Female, shoulder-length hair -->
+    <div class="team-card reveal" style="transition-delay:0.1s">
+      <div class="team-avatar">
+        <svg viewBox="0 0 140 140" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="70" cy="70" r="70" fill="#0D0D0D"/>
+          <circle cx="70" cy="70" r="69" stroke="#C4A265" stroke-width="0.5" opacity="0.2"/>
+          <!-- Neck/Shoulders -->
+          <path d="M35 130c0-18 15-28 35-28s35 10 35 28" fill="#1A1A1A"/>
+          <path d="M35 130c0-18 15-28 35-28s35 10 35 28" stroke="#C4A265" stroke-width="0.6" opacity="0.3"/>
+          <!-- Blouse neckline -->
+          <path d="M55 104c5 6 10 10 15 10s10-4 15-10" stroke="#C4A265" stroke-width="0.8" opacity="0.4" fill="none"/>
+          <!-- Head -->
+          <ellipse cx="70" cy="60" rx="23" ry="27" fill="#2A2420"/>
+          <ellipse cx="70" cy="60" rx="23" ry="27" stroke="#C4A265" stroke-width="0.8" opacity="0.4"/>
+          <!-- Hair - shoulder length, flowing -->
+          <path d="M44 54c0-18 11-30 26-30s26 12 26 30c0 6-1 12-3 18" fill="#1A1714"/>
+          <path d="M96 72c-1 8-2 16-4 24-1 4-3 7-5 9" stroke="#C4A265" stroke-width="0.4" opacity="0.2" fill="none"/>
+          <path d="M44 54c0-18 11-30 26-30s26 12 26 30" stroke="#C4A265" stroke-width="0.4" opacity="0.3" fill="none"/>
+          <!-- Hair falling on sides -->
+          <path d="M44 54c-1 8 0 20 2 30 1 4 2 7 4 9" stroke="#C4A265" stroke-width="0.4" opacity="0.2" fill="none"/>
+          <path d="M44 54c0 10 1 22 3 30" fill="#1A1714"/>
+          <path d="M96 54c0 10-1 22-3 30" fill="#1A1714"/>
+          <!-- Eyes - slightly larger, feminine -->
+          <ellipse cx="60" cy="60" rx="3.5" ry="2.2" fill="#C4A265" opacity="0.7"/>
+          <ellipse cx="80" cy="60" rx="3.5" ry="2.2" fill="#C4A265" opacity="0.7"/>
+          <circle cx="60" cy="60" r="1.2" fill="#0D0D0D"/>
+          <circle cx="80" cy="60" r="1.2" fill="#0D0D0D"/>
+          <!-- Eyelashes hint -->
+          <path d="M55.5 58.5c1.5-1 3-1.5 4.5-1.5" stroke="#C4A265" stroke-width="0.5" opacity="0.4" fill="none"/>
+          <path d="M80 58.5c-1.5-1-3-1.5-4.5-1.5" stroke="#C4A265" stroke-width="0.5" opacity="0.4" fill="none" transform="translate(4.5,0)"/>
+          <!-- Eyebrows - arched -->
+          <path d="M55 56c2-2 5-3 9-2" stroke="#C4A265" stroke-width="0.7" opacity="0.45" fill="none"/>
+          <path d="M76 54c4-1 7 0 9 2" stroke="#C4A265" stroke-width="0.7" opacity="0.45" fill="none"/>
+          <!-- Nose -->
+          <path d="M69 64c0.5 2.5 1 4 1 4s0.5-1.5 1-4" stroke="#C4A265" stroke-width="0.4" opacity="0.25" fill="none"/>
+          <!-- Lips -->
+          <path d="M63 72c3 2.5 5 3.5 7 3.5s4-1 7-3.5" stroke="#C4A265" stroke-width="0.8" opacity="0.45" fill="none"/>
+          <path d="M65 72c2 1.5 3.5 2 5 2s3-0.5 5-2" fill="#C4A265" opacity="0.06"/>
+        </svg>
+      </div>
+      <div class="team-name">Lina Makhlouf</div>
+      <div class="team-role">Head of Finance</div>
+      <div class="team-bio">CPA-certified with expertise in multi-market tax and audit compliance.</div>
+    </div>
+    <!-- Omar - Male, beard, more angular -->
+    <div class="team-card reveal" style="transition-delay:0.2s">
+      <div class="team-avatar">
+        <svg viewBox="0 0 140 140" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="70" cy="70" r="70" fill="#0D0D0D"/>
+          <circle cx="70" cy="70" r="69" stroke="#C4A265" stroke-width="0.5" opacity="0.2"/>
+          <!-- Neck/Shoulders -->
+          <path d="M35 130c0-18 15-28 35-28s35 10 35 28" fill="#1A1A1A"/>
+          <path d="M35 130c0-18 15-28 35-28s35 10 35 28" stroke="#C4A265" stroke-width="0.6" opacity="0.3"/>
+          <!-- Collar -->
+          <path d="M52 106l18 12 18-12" stroke="#C4A265" stroke-width="0.8" opacity="0.4" fill="none"/>
+          <!-- Head - more angular -->
+          <path d="M47 58c0-16 10-29 23-29s23 13 23 29c0 10-4 20-10 26-4 4-8 6-13 6s-9-2-13-6c-6-6-10-16-10-26z" fill="#2A2420" stroke="#C4A265" stroke-width="0.8" opacity="0.4"/>
+          <!-- Hair - cropped, textured -->
+          <path d="M48 52c1-14 10-24 22-24s21 10 22 24" fill="#1A1714" stroke="#C4A265" stroke-width="0.4" opacity="0.3"/>
+          <path d="M50 50c2-12 9-21 20-21s18 9 20 21" fill="#151210"/>
+          <!-- Beard -->
+          <path d="M54 72c2 10 7 16 16 18 9-2 14-8 16-18" fill="#1A1714" opacity="0.6"/>
+          <path d="M54 72c2 10 7 16 16 18 9-2 14-8 16-18" stroke="#C4A265" stroke-width="0.3" opacity="0.2" fill="none"/>
+          <!-- Eyes -->
+          <ellipse cx="61" cy="60" rx="3.2" ry="1.8" fill="#C4A265" opacity="0.7"/>
+          <ellipse cx="79" cy="60" rx="3.2" ry="1.8" fill="#C4A265" opacity="0.7"/>
+          <circle cx="61" cy="60" r="1.1" fill="#0D0D0D"/>
+          <circle cx="79" cy="60" r="1.1" fill="#0D0D0D"/>
+          <!-- Strong eyebrows -->
+          <path d="M55 56c3-2 6-2.5 9-1.5" stroke="#C4A265" stroke-width="1" opacity="0.5" fill="none"/>
+          <path d="M76 54.5c3-1 6-0.5 9 1.5" stroke="#C4A265" stroke-width="1" opacity="0.5" fill="none"/>
+          <!-- Nose -->
+          <path d="M68 64c1 3 2 6 2 6s1-3 2-6" stroke="#C4A265" stroke-width="0.5" opacity="0.3" fill="none"/>
+          <!-- Mouth in beard -->
+          <path d="M64 74c3 1.5 4 2 6 2s3-0.5 6-2" stroke="#C4A265" stroke-width="0.6" opacity="0.3" fill="none"/>
+        </svg>
+      </div>
+      <div class="team-name">Omar Al-Faisal</div>
+      <div class="team-role">HR Director</div>
+      <div class="team-bio">SHRM-SCP specialist in organizational development and talent systems.</div>
+    </div>
+    <!-- Nadia - Female, updo/bun -->
+    <div class="team-card reveal" style="transition-delay:0.3s">
+      <div class="team-avatar">
+        <svg viewBox="0 0 140 140" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="70" cy="70" r="70" fill="#0D0D0D"/>
+          <circle cx="70" cy="70" r="69" stroke="#C4A265" stroke-width="0.5" opacity="0.2"/>
+          <!-- Neck/Shoulders -->
+          <path d="M35 130c0-18 15-28 35-28s35 10 35 28" fill="#1A1A1A"/>
+          <path d="M35 130c0-18 15-28 35-28s35 10 35 28" stroke="#C4A265" stroke-width="0.6" opacity="0.3"/>
+          <!-- V-neck blouse -->
+          <path d="M58 104l12 14 12-14" stroke="#C4A265" stroke-width="0.7" opacity="0.35" fill="none"/>
+          <!-- Head -->
+          <ellipse cx="70" cy="62" rx="22" ry="26" fill="#2A2420"/>
+          <ellipse cx="70" cy="62" rx="22" ry="26" stroke="#C4A265" stroke-width="0.8" opacity="0.4"/>
+          <!-- Hair - pulled back into bun -->
+          <path d="M48 56c0-16 10-28 22-28s22 12 22 28" fill="#1A1714" stroke="#C4A265" stroke-width="0.4" opacity="0.3"/>
+          <path d="M50 54c1-14 9-24 20-24s19 10 20 24" fill="#151210"/>
+          <!-- Bun on top -->
+          <ellipse cx="70" cy="30" rx="12" ry="10" fill="#1A1714" stroke="#C4A265" stroke-width="0.5" opacity="0.25"/>
+          <ellipse cx="70" cy="30" rx="9" ry="7" fill="#151210"/>
+          <!-- Eyes - elegant -->
+          <ellipse cx="61" cy="62" rx="3.5" ry="2.2" fill="#C4A265" opacity="0.7"/>
+          <ellipse cx="79" cy="62" rx="3.5" ry="2.2" fill="#C4A265" opacity="0.7"/>
+          <circle cx="61" cy="62" r="1.2" fill="#0D0D0D"/>
+          <circle cx="79" cy="62" r="1.2" fill="#0D0D0D"/>
+          <!-- Refined eyebrows -->
+          <path d="M56 58c2-2 4.5-2.5 8-1.5" stroke="#C4A265" stroke-width="0.6" opacity="0.45" fill="none"/>
+          <path d="M76 56.5c3.5-1 6 0 8 1.5" stroke="#C4A265" stroke-width="0.6" opacity="0.45" fill="none"/>
+          <!-- Nose -->
+          <path d="M69 65c0.5 2 1 3.5 1 3.5s0.5-1.5 1-3.5" stroke="#C4A265" stroke-width="0.4" opacity="0.25" fill="none"/>
+          <!-- Smile -->
+          <path d="M63 74c3 2.5 5 3 7 3s4-0.5 7-3" stroke="#C4A265" stroke-width="0.7" opacity="0.45" fill="none"/>
+          <!-- Earring hints -->
+          <circle cx="48" cy="68" r="1.5" fill="#C4A265" opacity="0.25"/>
+          <circle cx="92" cy="68" r="1.5" fill="#C4A265" opacity="0.25"/>
+        </svg>
+      </div>
+      <div class="team-name">Nadia Saab</div>
+      <div class="team-role">Strategy Lead</div>
+      <div class="team-bio">Former Big Four consultant specializing in growth strategy for SMEs.</div>
+    </div>
+  </div>
+</section>
+
+<!-- Partners -->
+<div class="partners">
+  <div class="partners-label">Trusted Technology Partners</div>
+  <div class="partners-grid">
+    <!-- Microsoft - Windows icon + text -->
+    <div class="partner-logo">
+      <svg viewBox="0 0 160 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="2" y="9" width="9" height="9" fill="#C4A265" opacity="0.8"/>
+        <rect x="13" y="9" width="9" height="9" fill="#C4A265" opacity="0.6"/>
+        <rect x="2" y="20" width="9" height="9" fill="#C4A265" opacity="0.5"/>
+        <rect x="13" y="20" width="9" height="9" fill="#C4A265" opacity="0.7"/>
+        <text x="30" y="25" font-family="DM Sans" font-size="13" fill="#C4A265" font-weight="400" letter-spacing="1.5">Microsoft</text>
+      </svg>
+    </div>
+    <!-- Oracle - Abstract O + text -->
+    <div class="partner-logo">
+      <svg viewBox="0 0 120 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <ellipse cx="14" cy="20" rx="10" ry="10" stroke="#C4A265" stroke-width="2.5" fill="none"/>
+        <text x="30" y="25" font-family="DM Sans" font-size="13" fill="#C4A265" font-weight="400" letter-spacing="1.5">Oracle</text>
+      </svg>
+    </div>
+    <!-- SAP - Diamond + text -->
+    <div class="partner-logo">
+      <svg viewBox="0 0 90 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M14 6L26 20 14 34 2 20Z" fill="#C4A265" opacity="0.15" stroke="#C4A265" stroke-width="1.5"/>
+        <text x="32" y="25" font-family="DM Sans" font-size="14" fill="#C4A265" font-weight="500" letter-spacing="2">SAP</text>
+      </svg>
+    </div>
+    <!-- Zoho - Z icon + text -->
+    <div class="partner-logo">
+      <svg viewBox="0 0 110 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="2" y="9" width="22" height="22" rx="5" stroke="#C4A265" stroke-width="1.5" fill="none"/>
+        <path d="M7 15h12l-12 12h12" stroke="#C4A265" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+        <text x="30" y="25" font-family="DM Sans" font-size="13" fill="#C4A265" font-weight="400" letter-spacing="1.5">Zoho</text>
+      </svg>
+    </div>
+    <!-- QuickBooks - QB icon + text -->
+    <div class="partner-logo">
+      <svg viewBox="0 0 160 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="14" cy="20" r="12" fill="#C4A265" opacity="0.12" stroke="#C4A265" stroke-width="1.5"/>
+        <text x="10" y="25" font-family="DM Sans" font-size="14" fill="#C4A265" font-weight="600" text-anchor="middle">Q</text>
+        <text x="32" y="25" font-family="DM Sans" font-size="12" fill="#C4A265" font-weight="400" letter-spacing="1">QuickBooks</text>
+      </svg>
+    </div>
+    <!-- Sage - Leaf icon + text -->
+    <div class="partner-logo">
+      <svg viewBox="0 0 110 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M8 28c0-12 8-20 16-20-2 6-2 14 0 20C16 28 8 28 8 28z" fill="#C4A265" opacity="0.15" stroke="#C4A265" stroke-width="1"/>
+        <text x="30" y="25" font-family="DM Sans" font-size="13" fill="#C4A265" font-weight="400" letter-spacing="1.5">Sage</text>
+      </svg>
+    </div>
+  </div>
+</div>
+
+<!-- Clients -->
+<div class="clients-section">
+  <div class="section-tag" style="display:inline-block">Our Clients</div>
+  <h2 class="reveal" style="font-family:var(--serif);font-size:clamp(1.5rem,2.5vw,2.2rem);font-weight:300;color:var(--charcoal);margin-top:0.5rem">Companies that trust <em style="color:var(--gold);font-style:italic">Influx</em></h2>
+  <div class="clients-grid">
+    <!-- Nexus Holdings -->
+    <div class="client-logo">
+      <svg viewBox="0 0 150 50" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M10 10l10 15L30 10v30" stroke="#1A1A1A" stroke-width="2" fill="none" stroke-linecap="round"/>
+        <text x="38" y="22" font-family="Cormorant Garamond" font-size="14" fill="#1A1A1A" font-weight="600" letter-spacing="1">NEXUS</text>
+        <text x="38" y="36" font-family="DM Sans" font-size="8" fill="#8A8478" letter-spacing="2.5">HOLDINGS</text>
+      </svg>
+    </div>
+    <!-- Cedar Group -->
+    <div class="client-logo">
+      <svg viewBox="0 0 140 50" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M15 40L15 15 5 25M15 15l10 10M15 25l-6 4M15 25l6 4M15 32l-8 5M15 32l8 5" stroke="#1A1A1A" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+        <text x="32" y="22" font-family="Cormorant Garamond" font-size="14" fill="#1A1A1A" font-weight="600" letter-spacing="1">CEDAR</text>
+        <text x="32" y="36" font-family="DM Sans" font-size="8" fill="#8A8478" letter-spacing="2.5">GROUP</text>
+      </svg>
+    </div>
+    <!-- Oasis Ventures -->
+    <div class="client-logo">
+      <svg viewBox="0 0 160 50" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="15" cy="25" r="12" stroke="#1A1A1A" stroke-width="1.5" fill="none"/>
+        <circle cx="15" cy="25" r="6" stroke="#1A1A1A" stroke-width="1" fill="none" opacity="0.4"/>
+        <circle cx="15" cy="25" r="2" fill="#C4A265" opacity="0.5"/>
+        <text x="32" y="22" font-family="Cormorant Garamond" font-size="14" fill="#1A1A1A" font-weight="600" letter-spacing="1">OASIS</text>
+        <text x="32" y="36" font-family="DM Sans" font-size="8" fill="#8A8478" letter-spacing="2.5">VENTURES</text>
+      </svg>
+    </div>
+    <!-- Meridian Capital -->
+    <div class="client-logo">
+      <svg viewBox="0 0 170 50" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M5 38L15 12l10 26M8 30h14" stroke="#1A1A1A" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+        <text x="34" y="22" font-family="Cormorant Garamond" font-size="13" fill="#1A1A1A" font-weight="600" letter-spacing="1">MERIDIAN</text>
+        <text x="34" y="36" font-family="DM Sans" font-size="8" fill="#8A8478" letter-spacing="2.5">CAPITAL</text>
+      </svg>
+    </div>
+    <!-- Al Noor Industries -->
+    <div class="client-logo">
+      <svg viewBox="0 0 160 50" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M15 38L15 12" stroke="#1A1A1A" stroke-width="2" stroke-linecap="round"/>
+        <circle cx="15" cy="12" r="5" stroke="#C4A265" stroke-width="1.2" fill="#C4A265" fill-opacity="0.1"/>
+        <path d="M8 25h14" stroke="#1A1A1A" stroke-width="1" opacity="0.4"/>
+        <text x="28" y="22" font-family="Cormorant Garamond" font-size="13" fill="#1A1A1A" font-weight="600" letter-spacing="1">AL NOOR</text>
+        <text x="28" y="36" font-family="DM Sans" font-size="8" fill="#8A8478" letter-spacing="2.5">INDUSTRIES</text>
+      </svg>
+    </div>
+    <!-- Talon Real Estate -->
+    <div class="client-logo">
+      <svg viewBox="0 0 150 50" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M6 35l9-23 9 23" stroke="#1A1A1A" stroke-width="1.5" fill="none"/>
+        <path d="M15 12l-2 0M15 12l2 0M15 12l0-2" stroke="#1A1A1A" stroke-width="1.5" stroke-linecap="round"/>
+        <path d="M9 28h12" stroke="#1A1A1A" stroke-width="1" opacity="0.3"/>
+        <text x="30" y="22" font-family="Cormorant Garamond" font-size="14" fill="#1A1A1A" font-weight="600" letter-spacing="1">TALON</text>
+        <text x="30" y="36" font-family="DM Sans" font-size="8" fill="#8A8478" letter-spacing="2.5">REAL ESTATE</text>
+      </svg>
+    </div>
+    <!-- Summit Advisory -->
+    <div class="client-logo">
+      <svg viewBox="0 0 160 50" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M5 38L15 8l10 30" stroke="#1A1A1A" stroke-width="1.2" fill="none"/>
+        <path d="M9 26l6-18 6 18" stroke="#1A1A1A" stroke-width="1.2" fill="none" opacity="0.3"/>
+        <text x="30" y="22" font-family="Cormorant Garamond" font-size="13" fill="#1A1A1A" font-weight="600" letter-spacing="1">SUMMIT</text>
+        <text x="30" y="36" font-family="DM Sans" font-size="8" fill="#8A8478" letter-spacing="2.5">ADVISORY</text>
+      </svg>
+    </div>
+    <!-- Levant Logistics -->
+    <div class="client-logo">
+      <svg viewBox="0 0 160 50" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="4" y="14" width="22" height="22" rx="2" stroke="#1A1A1A" stroke-width="1.5" fill="none"/>
+        <path d="M4 20h22M15 14v22" stroke="#1A1A1A" stroke-width="0.6" opacity="0.25"/>
+        <path d="M9 25l4 4 8-8" stroke="#C4A265" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity="0.5"/>
+        <text x="32" y="22" font-family="Cormorant Garamond" font-size="13" fill="#1A1A1A" font-weight="600" letter-spacing="1">LEVANT</text>
+        <text x="32" y="36" font-family="DM Sans" font-size="8" fill="#8A8478" letter-spacing="2.5">LOGISTICS</text>
+      </svg>
+    </div>
+    <!-- Zenith Corp -->
+    <div class="client-logo">
+      <svg viewBox="0 0 140 50" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M5 15h20L5 35h20" stroke="#1A1A1A" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+        <text x="30" y="22" font-family="Cormorant Garamond" font-size="14" fill="#1A1A1A" font-weight="600" letter-spacing="1">ZENITH</text>
+        <text x="30" y="36" font-family="DM Sans" font-size="8" fill="#8A8478" letter-spacing="2.5">CORP</text>
+      </svg>
+    </div>
+    <!-- Petra Development -->
+    <div class="client-logo">
+      <svg viewBox="0 0 160 50" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M8 38V12h10c5 0 8 3 8 8s-3 8-8 8H8" stroke="#1A1A1A" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+        <text x="32" y="22" font-family="Cormorant Garamond" font-size="13" fill="#1A1A1A" font-weight="600" letter-spacing="1">PETRA</text>
+        <text x="32" y="36" font-family="DM Sans" font-size="8" fill="#8A8478" letter-spacing="2">DEVELOPMENT</text>
+      </svg>
+    </div>
+  </div>
+</div>
+
+<!-- Contact -->
+<section class="contact" id="contact">
+  <div class="contact-info reveal">
+    <div class="section-tag">Get in Touch</div>
+    <h2>Let's build something <em>exceptional</em></h2>
+    <p>Whether you're launching a new venture or optimizing an established one, we're ready to become your most trusted partner.</p>
+    <div class="contact-detail">
+      <div class="contact-detail-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#C4A265" stroke-width="1.5"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></div>
+      <a href="/cdn-cgi/l/email-protection#abc2c5cdc4ebc2c5cdc7ded3c8d2c9ced985c8c4c6"><span class="__cf_email__" data-cfemail="2e474048416e474048425b564d574c4b5c004d4143">[email&#160;protected]</span></a>
+    </div>
+    <div class="contact-detail">
+      <div class="contact-detail-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#C4A265" stroke-width="1.5"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.12.96.36 1.9.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.91.34 1.85.58 2.81.7A2 2 0 0122 16.92z"/></svg></div>
+      <div><a href="tel:+966558335982" style="display:block">+966 55 833 5982</a><a href="tel:+971551855900" style="display:block;margin-top:4px">+971 55 185 5900</a></div>
+    </div>
+    <div class="contact-detail">
+      <div class="contact-detail-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#C4A265" stroke-width="1.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg></div>
+      <span>Riyadh · Dubai · Beirut</span>
+    </div>
+  </div>
+  <div class="reveal" style="transition-delay:0.2s">
+    <form class="contact-form" id="contactForm" novalidate>
+      <div class="form-row">
+        <div class="form-group"><label>Full Name</label><input type="text" name="name" placeholder="John Doe" required><div class="form-error">Please enter your name</div></div>
+        <div class="form-group"><label>Email Address</label><input type="email" name="email" placeholder="john@company.com" required><div class="form-error">Please enter a valid email</div></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Company</label><input type="text" name="company" placeholder="Your company name"></div>
+        <div class="form-group"><label>Service Interest</label>
+          <select name="service">
+            <option value="" disabled selected>Select a service</option>
+            <option>Accounting & Finance</option><option>Human Resources</option>
+            <option>Business Strategy</option><option>Operational Setup</option>
+            <option>Compliance & Risk</option><option>Technology Integration</option>
+            <option>Full Partnership</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group"><label>Message</label><textarea name="message" rows="4" placeholder="Tell us about your project or needs..." required></textarea><div class="form-error">Please enter a message</div></div>
+      <button type="submit" class="submit-btn">Send Message</button>
+    </form>
+    <div class="form-success" id="formSuccess"><h3>Thank you!</h3><p>Your message has been sent. We'll be in touch within 24 hours.</p></div>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer>
+  <div class="footer-top">
+    <div class="footer-brand">
+      <a href="#hero" class="logo"><svg viewBox="0 0 32 32" fill="none"><path d="M16 2L4 9v14l12 7 12-7V9L16 2z" stroke="#C4A265" stroke-width="1.2"/><path d="M16 8L8 13v10l8 5 8-5V13L16 8z" fill="#C4A265" opacity="0.2"/></svg><span class="logo-text">Influx<span>.</span></span></a>
+      <p>Business development consultancy specializing in accounting, HR, and operational excellence across the Middle East.</p>
+    </div>
+    <div class="footer-col"><h4>Services</h4><a href="#services">Accounting & Finance</a><a href="#services">Human Resources</a><a href="#services">Business Strategy</a><a href="#services">Operational Setup</a><a href="#services">Compliance & Risk</a></div>
+    <div class="footer-col"><h4>Company</h4><a href="#philosophy">About Us</a><a href="#approach">Our Approach</a><a href="#team-section">Our Team</a><a href="#contact">Contact</a></div>
+    <div class="footer-col"><h4>Contact</h4><a href="/cdn-cgi/l/email-protection#264f484049664f48404a535e455f4443540845494b"><span class="__cf_email__" data-cfemail="2940474f466940474f455c514a504b4c5b074a4644">[email&#160;protected]</span></a><a href="tel:+966558335982">+966 55 833 5982</a><a href="tel:+971551855900">+971 55 185 5900</a><a href="tel:+96121395095">+961 21 395 095</a></div>
+  </div>
+  <div class="footer-bottom">
+    <span>&copy; 2026 Influx. All rights reserved.</span>
+    <div class="footer-social">
+      <a href="#" aria-label="LinkedIn"><svg viewBox="0 0 24 24" fill="none" stroke="#C4A265" stroke-width="1.5"><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-4 0v7h-4v-7a6 6 0 016-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg></a>
+      <a href="#" aria-label="X"><svg viewBox="0 0 24 24" fill="none" stroke="#C4A265" stroke-width="1.5"><path d="M4 4l11.7 16H20L8.3 4H4z"/><path d="M4 20l6.5-7M13.5 11L20 4"/></svg></a>
+      <a href="#" aria-label="Instagram"><svg viewBox="0 0 24 24" fill="none" stroke="#C4A265" stroke-width="1.5"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="5"/><circle cx="17.5" cy="6.5" r="1.5" fill="#C4A265"/></svg></a>
+    </div>
+    <span>Riyadh · Dubai · Beirut</span>
+  </div>
+</footer>
+
+<!-- Back to Top -->
+<button class="back-to-top" id="backToTop" aria-label="Back to top"><svg viewBox="0 0 24 24" fill="none" stroke="#0D0D0D" stroke-width="2"><polyline points="18 15 12 9 6 15"/></svg></button>
+
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+// ── Reveals ──
+const obs = new IntersectionObserver(entries => {
+  entries.forEach(e => { if(e.isIntersecting){ e.target.classList.add('visible'); obs.unobserve(e.target); }});
+}, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+
+// ── Nav scroll ──
+const nav = document.getElementById('navbar');
+const btt = document.getElementById('backToTop');
+window.addEventListener('scroll', () => {
+  nav.classList.toggle('scrolled', scrollY > 80);
+  btt.classList.toggle('show', scrollY > 600);
+});
+btt.addEventListener('click', () => scrollTo({top:0,behavior:'smooth'}));
+
+// ── Mobile Menu ──
+const ham = document.getElementById('hamburger');
+const mm = document.getElementById('mobileMenu');
+ham.addEventListener('click', () => {
+  ham.classList.toggle('active'); mm.classList.toggle('open');
+  document.body.style.overflow = mm.classList.contains('open') ? 'hidden' : '';
+});
+function closeMenu(){ ham.classList.remove('active'); mm.classList.remove('open'); document.body.style.overflow=''; }
+
+// ── Particles ──
+const pc = document.getElementById('heroParticles');
+for(let i=0;i<20;i++){
+  const p=document.createElement('div'); p.className='particle';
+  p.style.left=Math.random()*100+'%'; p.style.top=(60+Math.random()*40)+'%';
+  p.style.animationDuration=(6+Math.random()*10)+'s'; p.style.animationDelay=Math.random()*8+'s';
+  p.style.width=p.style.height=(1+Math.random()*2)+'px'; pc.appendChild(p);
+}
+
+// ── Stat counters ──
+const sn = document.querySelectorAll('.stat-num[data-target]');
+const so = new IntersectionObserver(entries => {
+  entries.forEach(e => { if(e.isIntersecting){
+    const el=e.target, t=+el.dataset.target, s=el.dataset.suffix||'', st=performance.now();
+    (function a(now){ const p=Math.min((now-st)/2000,1); el.textContent=Math.round(t*(1-Math.pow(1-p,3)))+s; if(p<1) requestAnimationFrame(a); })(st);
+    so.unobserve(el);
+  }});
+}, {threshold:0.5});
+sn.forEach(el=>so.observe(el));
+
+// ── Testimonials ──
+const slides=document.querySelectorAll('.testimonial-slide'), dots=document.querySelectorAll('.testimonial-dot');
+let cur=0, auto;
+function go(n){ slides[cur].classList.remove('active'); dots[cur].classList.remove('active'); cur=n; slides[cur].classList.add('active'); dots[cur].classList.add('active'); }
+dots.forEach(d=>d.addEventListener('click',()=>{ go(+d.dataset.index); clearInterval(auto); auto=setInterval(()=>go((cur+1)%slides.length),6000); }));
+auto=setInterval(()=>go((cur+1)%slides.length),6000);
+
+// ── Form ──
+const form=document.getElementById('contactForm'), succ=document.getElementById('formSuccess');
+form.addEventListener('submit',e=>{
+  e.preventDefault(); let v=true;
+  form.querySelectorAll('.form-group').forEach(g=>g.classList.remove('error'));
+  const n=form.querySelector('[name="name"]'); if(!n.value.trim()){n.closest('.form-group').classList.add('error');v=false;}
+  const em=form.querySelector('[name="email"]'); if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em.value.trim())){em.closest('.form-group').classList.add('error');v=false;}
+  const m=form.querySelector('[name="message"]'); if(!m.value.trim()){m.closest('.form-group').classList.add('error');v=false;}
+  if(v){form.style.display='none';succ.classList.add('show');}
+});
+form.querySelectorAll('input,textarea').forEach
