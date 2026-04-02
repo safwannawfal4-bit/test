@@ -3,93 +3,413 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Particle Galaxy</title>
+<title>Nova — Design the Future</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-  * { margin: 0; padding: 0; }
-  body { background: #0a0a2e; overflow: hidden; }
-  canvas { display: block; }
-  #info { position: fixed; bottom: 20px; width: 100%; text-align: center; color: rgba(255,255,255,0.5); font-family: sans-serif; font-size: 14px; pointer-events: none; }
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+:root {
+  --bg: #06060e; --surface: rgba(255,255,255,0.03); --border: rgba(255,255,255,0.06);
+  --text: #e8e8f0; --muted: #7a7a8e; --accent: #7c5cfc; --accent2: #00d4aa;
+  --glow1: #7c5cfc; --glow2: #ff6bca; --glow3: #00d4aa;
+}
+html { scroll-behavior: smooth; }
+body { font-family: 'Inter', -apple-system, sans-serif; background: var(--bg); color: var(--text); overflow-x: hidden; }
+
+/* ===== CANVAS BG ===== */
+#bg-canvas { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
+
+/* ===== NAV ===== */
+nav { position: fixed; top: 0; width: 100%; z-index: 100; padding: 20px 40px;
+  display: flex; align-items: center; justify-content: space-between;
+  backdrop-filter: blur(20px); background: rgba(6,6,14,0.6);
+  border-bottom: 1px solid var(--border); transition: all 0.3s; }
+nav .logo { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 1.5rem;
+  background: linear-gradient(135deg, var(--glow1), var(--glow2)); -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent; }
+nav .links { display: flex; gap: 32px; }
+nav .links a { color: var(--muted); text-decoration: none; font-size: 0.9rem; font-weight: 500;
+  transition: color 0.3s; }
+nav .links a:hover { color: var(--text); }
+nav .cta-btn { padding: 10px 24px; border-radius: 50px; border: none; cursor: pointer;
+  background: linear-gradient(135deg, var(--glow1), var(--glow2)); color: #fff;
+  font-weight: 600; font-size: 0.9rem; transition: transform 0.3s, box-shadow 0.3s; }
+nav .cta-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(124,92,252,0.4); }
+
+/* ===== HERO ===== */
+.hero { position: relative; z-index: 1; min-height: 100vh; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; text-align: center; padding: 120px 20px 80px; }
+.hero .badge { display: inline-flex; align-items: center; gap: 8px; padding: 8px 20px;
+  border-radius: 50px; background: var(--surface); border: 1px solid var(--border);
+  font-size: 0.85rem; color: var(--muted); margin-bottom: 32px;
+  animation: fadeUp 1s ease both; }
+.hero .badge .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent2);
+  animation: pulse 2s infinite; }
+.hero h1 { font-family: 'Space Grotesk', sans-serif; font-size: clamp(3rem, 8vw, 7rem);
+  font-weight: 800; line-height: 1.05; letter-spacing: -0.03em; max-width: 900px;
+  animation: fadeUp 1s 0.15s ease both; }
+.hero h1 .gradient { background: linear-gradient(135deg, var(--glow1), var(--glow2), var(--glow3));
+  background-size: 200% 200%; -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  animation: shimmer 5s ease infinite; }
+.hero p { font-size: clamp(1rem, 2vw, 1.25rem); color: var(--muted); max-width: 560px;
+  margin-top: 24px; line-height: 1.7; animation: fadeUp 1s 0.3s ease both; }
+.hero .actions { display: flex; gap: 16px; margin-top: 48px; animation: fadeUp 1s 0.45s ease both; }
+.btn-primary { padding: 16px 36px; border-radius: 60px; border: none; cursor: pointer;
+  background: linear-gradient(135deg, var(--glow1), var(--glow2)); color: #fff;
+  font-weight: 700; font-size: 1rem; transition: all 0.3s; position: relative; overflow: hidden; }
+.btn-primary::before { content: ''; position: absolute; inset: -2px; border-radius: 60px;
+  background: linear-gradient(135deg, var(--glow1), var(--glow2), var(--glow3));
+  z-index: -1; filter: blur(16px); opacity: 0.5; transition: opacity 0.3s; }
+.btn-primary:hover { transform: translateY(-3px); }
+.btn-primary:hover::before { opacity: 0.8; }
+.btn-secondary { padding: 16px 36px; border-radius: 60px; border: 1px solid var(--border);
+  background: var(--surface); color: var(--text); cursor: pointer;
+  font-weight: 600; font-size: 1rem; transition: all 0.3s; backdrop-filter: blur(10px); }
+.btn-secondary:hover { border-color: rgba(255,255,255,0.15); transform: translateY(-3px); }
+
+/* ===== ORBIT RING (hero decoration) ===== */
+.orbit-container { position: absolute; width: 700px; height: 700px; top: 50%; left: 50%;
+  transform: translate(-50%, -50%); pointer-events: none; opacity: 0.15; }
+.orbit-ring { position: absolute; inset: 0; border: 1px solid rgba(124,92,252,0.3);
+  border-radius: 50%; animation: spin 30s linear infinite; }
+.orbit-ring:nth-child(2) { inset: 60px; animation-duration: 25s; animation-direction: reverse;
+  border-color: rgba(255,107,202,0.3); }
+.orbit-ring:nth-child(3) { inset: 120px; animation-duration: 20s;
+  border-color: rgba(0,212,170,0.3); }
+.orbit-dot { position: absolute; width: 6px; height: 6px; border-radius: 50%;
+  background: var(--glow1); top: -3px; left: 50%; box-shadow: 0 0 12px var(--glow1); }
+
+/* ===== FLOATING GLOW ORBS ===== */
+.orb { position: fixed; border-radius: 50%; filter: blur(80px); opacity: 0.12;
+  pointer-events: none; z-index: 0; animation: float 15s ease-in-out infinite; }
+.orb-1 { width: 500px; height: 500px; background: var(--glow1); top: -10%; left: -5%; }
+.orb-2 { width: 400px; height: 400px; background: var(--glow2); top: 40%; right: -10%;
+  animation-delay: -5s; }
+.orb-3 { width: 350px; height: 350px; background: var(--glow3); bottom: -5%; left: 30%;
+  animation-delay: -10s; }
+
+/* ===== SECTION SHARED ===== */
+section { position: relative; z-index: 1; padding: 120px 40px; }
+.section-label { text-transform: uppercase; letter-spacing: 0.2em; font-size: 0.75rem;
+  color: var(--accent); font-weight: 600; margin-bottom: 16px; }
+.section-title { font-family: 'Space Grotesk', sans-serif; font-size: clamp(2rem, 4vw, 3.2rem);
+  font-weight: 700; letter-spacing: -0.02em; max-width: 700px; }
+.section-sub { color: var(--muted); font-size: 1.1rem; line-height: 1.7; max-width: 560px;
+  margin-top: 16px; }
+
+/* ===== FEATURES ===== */
+.features { max-width: 1200px; margin: 0 auto; }
+.features-header { text-align: center; margin-bottom: 72px; display: flex; flex-direction: column;
+  align-items: center; }
+.feature-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 24px; }
+.feature-card { padding: 40px; border-radius: 24px; background: var(--surface);
+  border: 1px solid var(--border); transition: all 0.4s; position: relative; overflow: hidden; }
+.feature-card::before { content: ''; position: absolute; inset: 0; border-radius: 24px;
+  background: radial-gradient(ellipse at top left, rgba(124,92,252,0.08), transparent 60%);
+  opacity: 0; transition: opacity 0.4s; }
+.feature-card:hover { border-color: rgba(124,92,252,0.2); transform: translateY(-6px); }
+.feature-card:hover::before { opacity: 1; }
+.feature-icon { width: 56px; height: 56px; border-radius: 16px; display: grid; place-items: center;
+  font-size: 1.5rem; margin-bottom: 24px;
+  background: linear-gradient(135deg, rgba(124,92,252,0.15), rgba(255,107,202,0.1));
+  border: 1px solid rgba(124,92,252,0.15); }
+.feature-card h3 { font-family: 'Space Grotesk', sans-serif; font-size: 1.25rem; font-weight: 600;
+  margin-bottom: 12px; }
+.feature-card p { color: var(--muted); line-height: 1.7; font-size: 0.95rem; }
+
+/* ===== STATS ===== */
+.stats { max-width: 1000px; margin: 0 auto; display: grid;
+  grid-template-columns: repeat(4, 1fr); gap: 32px; text-align: center; padding: 80px 40px; }
+.stat-num { font-family: 'Space Grotesk', sans-serif; font-size: clamp(2.5rem, 5vw, 3.5rem);
+  font-weight: 700; background: linear-gradient(135deg, var(--glow1), var(--glow2));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.stat-label { color: var(--muted); font-size: 0.9rem; margin-top: 8px; }
+
+/* ===== TESTIMONIALS ===== */
+.testimonials { max-width: 1200px; margin: 0 auto; }
+.testimonials-header { text-align: center; margin-bottom: 72px; display: flex;
+  flex-direction: column; align-items: center; }
+.test-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 24px; }
+.test-card { padding: 36px; border-radius: 24px; background: var(--surface);
+  border: 1px solid var(--border); transition: all 0.4s; }
+.test-card:hover { border-color: rgba(124,92,252,0.2); transform: translateY(-4px); }
+.test-card .stars { color: #fbbf24; font-size: 0.9rem; margin-bottom: 16px; letter-spacing: 2px; }
+.test-card blockquote { color: var(--text); line-height: 1.7; font-size: 1rem;
+  margin-bottom: 24px; font-style: italic; opacity: 0.9; }
+.test-author { display: flex; align-items: center; gap: 12px; }
+.test-avatar { width: 44px; height: 44px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--glow1), var(--glow3)); display: grid;
+  place-items: center; font-weight: 700; font-size: 1rem; }
+.test-name { font-weight: 600; font-size: 0.95rem; }
+.test-role { color: var(--muted); font-size: 0.8rem; }
+
+/* ===== CTA ===== */
+.cta-section { max-width: 900px; margin: 0 auto; text-align: center; padding: 120px 40px; }
+.cta-box { padding: 80px 60px; border-radius: 32px; position: relative; overflow: hidden;
+  background: linear-gradient(135deg, rgba(124,92,252,0.1), rgba(255,107,202,0.05));
+  border: 1px solid rgba(124,92,252,0.15); }
+.cta-box::before { content: ''; position: absolute; top: -50%; left: -50%; width: 200%;
+  height: 200%; background: radial-gradient(circle, rgba(124,92,252,0.08), transparent 60%);
+  animation: spin 20s linear infinite; }
+.cta-box h2 { font-family: 'Space Grotesk', sans-serif; font-size: clamp(2rem, 4vw, 3rem);
+  font-weight: 700; margin-bottom: 16px; position: relative; }
+.cta-box p { color: var(--muted); font-size: 1.1rem; max-width: 480px; margin: 0 auto 40px;
+  line-height: 1.7; position: relative; }
+.cta-box .btn-primary { position: relative; font-size: 1.1rem; padding: 18px 44px; }
+
+/* ===== FOOTER ===== */
+footer { text-align: center; padding: 40px; border-top: 1px solid var(--border);
+  color: var(--muted); font-size: 0.85rem; position: relative; z-index: 1; }
+
+/* ===== ANIMATIONS ===== */
+@keyframes fadeUp { from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); } }
+@keyframes shimmer { 0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; } }
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+@keyframes float { 0%, 100% { transform: translate(0, 0); }
+  33% { transform: translate(30px, -30px); }
+  66% { transform: translate(-20px, 20px); } }
+
+/* Scroll reveal */
+.reveal { opacity: 0; transform: translateY(40px); transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1); }
+.reveal.visible { opacity: 1; transform: translateY(0); }
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 768px) {
+  nav { padding: 16px 20px; }
+  nav .links { display: none; }
+  section { padding: 80px 20px; }
+  .stats { grid-template-columns: repeat(2, 1fr); }
+  .hero .actions { flex-direction: column; }
+  .orbit-container { width: 400px; height: 400px; }
+}
 </style>
 </head>
 <body>
-<canvas id="c"></canvas>
-<div id="info">Move your mouse to attract particles | Click to burst</div>
+
+<!-- Floating glow orbs -->
+<div class="orb orb-1"></div>
+<div class="orb orb-2"></div>
+<div class="orb orb-3"></div>
+
+<!-- Background canvas -->
+<canvas id="bg-canvas"></canvas>
+
+<!-- Nav -->
+<nav>
+  <div class="logo">Nova</div>
+  <div class="links">
+    <a href="#features">Features</a>
+    <a href="#testimonials">Testimonials</a>
+    <a href="#pricing">Pricing</a>
+    <a href="#">Docs</a>
+  </div>
+  <button class="cta-btn">Get Started</button>
+</nav>
+
+<!-- Hero -->
+<section class="hero">
+  <div class="orbit-container">
+    <div class="orbit-ring"><div class="orbit-dot"></div></div>
+    <div class="orbit-ring"><div class="orbit-dot"></div></div>
+    <div class="orbit-ring"><div class="orbit-dot"></div></div>
+  </div>
+  <div class="badge"><span class="dot"></span> Now in public beta</div>
+  <h1>Build the<br><span class="gradient">impossible.</span></h1>
+  <p>The next-generation platform that transforms how teams design, develop, and ship products at the speed of thought.</p>
+  <div class="actions">
+    <button class="btn-primary">Start Building Free</button>
+    <button class="btn-secondary">Watch Demo</button>
+  </div>
+</section>
+
+<!-- Features -->
+<section id="features" class="features">
+  <div class="features-header reveal">
+    <span class="section-label">Features</span>
+    <h2 class="section-title">Everything you need to move faster</h2>
+    <p class="section-sub">Powerful tools designed to eliminate friction and amplify what your team can achieve.</p>
+  </div>
+  <div class="feature-grid">
+    <div class="feature-card reveal">
+      <div class="feature-icon">&#9889;</div>
+      <h3>Lightning Fast</h3>
+      <p>Sub-millisecond response times with our edge-first architecture. Your users will never wait again.</p>
+    </div>
+    <div class="feature-card reveal">
+      <div class="feature-icon">&#128274;</div>
+      <h3>Secure by Default</h3>
+      <p>Enterprise-grade encryption, SOC 2 certified, with zero-trust security built into every layer.</p>
+    </div>
+    <div class="feature-card reveal">
+      <div class="feature-icon">&#127912;</div>
+      <h3>Beautiful APIs</h3>
+      <p>Developer experience is our obsession. Clean, intuitive APIs that feel like they read your mind.</p>
+    </div>
+    <div class="feature-card reveal">
+      <div class="feature-icon">&#128640;</div>
+      <h3>Ship Instantly</h3>
+      <p>One-click deployments with automatic rollbacks. Push to main and let us handle the rest.</p>
+    </div>
+    <div class="feature-card reveal">
+      <div class="feature-icon">&#129302;</div>
+      <h3>AI-Powered</h3>
+      <p>Built-in intelligence that learns your patterns, predicts issues, and automates the boring stuff.</p>
+    </div>
+    <div class="feature-card reveal">
+      <div class="feature-icon">&#127760;</div>
+      <h3>Global Scale</h3>
+      <p>Deploy to 200+ edge locations worldwide. Your app, everywhere, instantly. No configuration needed.</p>
+    </div>
+  </div>
+</section>
+
+<!-- Stats -->
+<div class="stats reveal">
+  <div><div class="stat-num" data-target="99.99">0</div><div class="stat-label">Uptime %</div></div>
+  <div><div class="stat-num" data-target="12">0</div><div class="stat-label">ms Avg Response</div></div>
+  <div><div class="stat-num" data-target="50">0</div><div class="stat-label">K+ Developers</div></div>
+  <div><div class="stat-num" data-target="200">0</div><div class="stat-label">Edge Locations</div></div>
+</div>
+
+<!-- Testimonials -->
+<section id="testimonials" class="testimonials">
+  <div class="testimonials-header reveal">
+    <span class="section-label">Testimonials</span>
+    <h2 class="section-title">Loved by teams worldwide</h2>
+    <p class="section-sub">Join thousands of developers and companies building the future with Nova.</p>
+  </div>
+  <div class="test-grid">
+    <div class="test-card reveal">
+      <div class="stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+      <blockquote>"Nova completely transformed our deployment pipeline. What took hours now takes seconds. It's genuinely magical."</blockquote>
+      <div class="test-author">
+        <div class="test-avatar">S</div>
+        <div><div class="test-name">Sarah Chen</div><div class="test-role">CTO at Streamline</div></div>
+      </div>
+    </div>
+    <div class="test-card reveal">
+      <div class="stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+      <blockquote>"The API design is a masterclass. Our entire team was productive within minutes, not days. This is how tools should be built."</blockquote>
+      <div class="test-author">
+        <div class="test-avatar">M</div>
+        <div><div class="test-name">Marcus Johnson</div><div class="test-role">Lead Engineer at Vertex</div></div>
+      </div>
+    </div>
+    <div class="test-card reveal">
+      <div class="stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+      <blockquote>"We migrated 400 microservices to Nova in a weekend. The performance gains were immediate and dramatic."</blockquote>
+      <div class="test-author">
+        <div class="test-avatar">A</div>
+        <div><div class="test-name">Aisha Patel</div><div class="test-role">VP Engineering at Scale AI</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section id="pricing" class="cta-section">
+  <div class="cta-box reveal">
+    <h2>Ready to build the future?</h2>
+    <p>Join 50,000+ developers who are already shipping faster with Nova. Free to start, no credit card required.</p>
+    <button class="btn-primary">Get Started for Free &rarr;</button>
+  </div>
+</section>
+
+<footer>
+  <p>&copy; 2026 Nova Inc. Crafted with precision.</p>
+</footer>
+
 <script>
-const c = document.getElementById('c');
-const ctx = c.getContext('2d');
+// ===== Particle background =====
+const canvas = document.getElementById('bg-canvas');
+const ctx = canvas.getContext('2d');
 let W, H;
-const resize = () => { W = c.width = innerWidth; H = c.height = innerHeight; };
+function resize() { W = canvas.width = innerWidth; H = canvas.height = innerHeight; }
 resize();
 addEventListener('resize', resize);
 
-const mouse = { x: W / 2, y: H / 2, down: false };
-addEventListener('mousemove', e => { mouse.x = e.clientX; mouse.y = e.clientY; });
-addEventListener('mousedown', () => mouse.down = true);
-addEventListener('mouseup', () => mouse.down = false);
-
-const N = 600;
-const particles = Array.from({ length: N }, () => ({
-  x: Math.random() * W, y: Math.random() * H,
-  vx: (Math.random() - 0.5) * 2, vy: (Math.random() - 0.5) * 2,
-  r: Math.random() * 2.5 + 0.5,
-  hue: Math.random() * 60 + 200
+const particles = Array.from({ length: 80 }, () => ({
+  x: Math.random() * innerWidth, y: Math.random() * innerHeight,
+  vx: (Math.random() - 0.5) * 0.3, vy: (Math.random() - 0.5) * 0.3,
+  r: Math.random() * 1.5 + 0.5, o: Math.random() * 0.5 + 0.1
 }));
 
-let hueShift = 0;
-
-function draw() {
-  ctx.fillStyle = 'rgba(10,10,46,0.15)';
-  ctx.fillRect(0, 0, W, H);
-  hueShift += 0.3;
-
+function drawBg() {
+  ctx.clearRect(0, 0, W, H);
   for (const p of particles) {
-    const dx = mouse.x - p.x;
-    const dy = mouse.y - p.y;
-    const dist = Math.sqrt(dx * dx + dy * dy) || 1;
-    const force = mouse.down ? -800 : 150;
-    const acc = Math.min(force / (dist * dist), 0.8);
-    p.vx += dx / dist * acc;
-    p.vy += dy / dist * acc;
-    p.vx *= 0.98;
-    p.vy *= 0.98;
-    p.x += p.vx;
-    p.y += p.vy;
-
-    if (p.x < 0) { p.x = 0; p.vx *= -0.5; }
-    if (p.x > W) { p.x = W; p.vx *= -0.5; }
-    if (p.y < 0) { p.y = 0; p.vy *= -0.5; }
-    if (p.y > H) { p.y = H; p.vy *= -0.5; }
-
-    const speed = Math.sqrt(p.vx * p.vx + p.vy * p.vy);
-    const hue = (p.hue + hueShift + speed * 10) % 360;
-    const alpha = Math.min(0.4 + speed * 0.15, 1);
+    p.x += p.vx; p.y += p.vy;
+    if (p.x < 0 || p.x > W) p.vx *= -1;
+    if (p.y < 0 || p.y > H) p.vy *= -1;
     ctx.beginPath();
-    ctx.arc(p.x, p.y, p.r + speed * 0.3, 0, Math.PI * 2);
-    ctx.fillStyle = `hsla(${hue},100%,65%,${alpha})`;
+    ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(124,92,252,${p.o})`;
     ctx.fill();
   }
-
-  // Draw connections
-  ctx.lineWidth = 0.3;
-  for (let i = 0; i < N; i++) {
-    for (let j = i + 1; j < N; j++) {
+  // connections
+  for (let i = 0; i < particles.length; i++) {
+    for (let j = i + 1; j < particles.length; j++) {
       const dx = particles[i].x - particles[j].x;
       const dy = particles[i].y - particles[j].y;
-      const d = dx * dx + dy * dy;
-      if (d < 3600) {
-        const alpha = (1 - d / 3600) * 0.4;
-        ctx.strokeStyle = `hsla(${(particles[i].hue + hueShift) % 360},80%,60%,${alpha})`;
+      const d = Math.sqrt(dx * dx + dy * dy);
+      if (d < 150) {
         ctx.beginPath();
         ctx.moveTo(particles[i].x, particles[i].y);
         ctx.lineTo(particles[j].x, particles[j].y);
+        ctx.strokeStyle = `rgba(124,92,252,${0.06 * (1 - d / 150)})`;
+        ctx.lineWidth = 0.5;
         ctx.stroke();
       }
     }
   }
-
-  requestAnimationFrame(draw);
+  requestAnimationFrame(drawBg);
 }
-draw();
+drawBg();
+
+// ===== Scroll reveal =====
+const reveals = document.querySelectorAll('.reveal');
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach((e, i) => {
+    if (e.isIntersecting) {
+      setTimeout(() => e.target.classList.add('visible'), i * 100);
+      observer.unobserve(e.target);
+    }
+  });
+}, { threshold: 0.15 });
+reveals.forEach(el => observer.observe(el));
+
+// ===== Animated counters =====
+const statNums = document.querySelectorAll('.stat-num');
+const statObserver = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      const el = entry.target;
+      const target = parseFloat(el.dataset.target);
+      const isDecimal = target % 1 !== 0;
+      const duration = 2000;
+      const start = performance.now();
+      function tick(now) {
+        const progress = Math.min((now - start) / duration, 1);
+        const ease = 1 - Math.pow(1 - progress, 4);
+        el.textContent = isDecimal ? (target * ease).toFixed(2) : Math.floor(target * ease);
+        if (progress < 1) requestAnimationFrame(tick);
+        else el.textContent = isDecimal ? target.toFixed(2) : target;
+      }
+      requestAnimationFrame(tick);
+      statObserver.unobserve(el);
+    }
+  });
+}, { threshold: 0.5 });
+statNums.forEach(el => statObserver.observe(el));
+
+// ===== Nav scroll effect =====
+addEventListener('scroll', () => {
+  document.querySelector('nav').style.background =
+    scrollY > 50 ? 'rgba(6,6,14,0.85)' : 'rgba(6,6,14,0.6)';
+});
 </script>
 </body>
 </html>
