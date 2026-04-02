@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Particle Galaxy</title>
+<style>
+  * { margin: 0; padding: 0; }
+  body { background: #0a0a2e; overflow: hidden; }
+  canvas { display: block; }
+  #info { position: fixed; bottom: 20px; width: 100%; text-align: center; color: rgba(255,255,255,0.5); font-family: sans-serif; font-size: 14px; pointer-events: none; }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="info">Move your mouse to attract particles | Click to burst</div>
+<script>
+const c = document.getElementById('c');
+const ctx = c.getContext('2d');
+let W, H;
+const resize = () => { W = c.width = innerWidth; H = c.height = innerHeight; };
+resize();
+addEventListener('resize', resize);
+
+const mouse = { x: W / 2, y: H / 2, down: false };
+addEventListener('mousemove', e => { mouse.x = e.clientX; mouse.y = e.clientY; });
+addEventListener('mousedown', () => mouse.down = true);
+addEventListener('mouseup', () => mouse.down = false);
+
+const N = 600;
+const particles = Array.from({ length: N }, () => ({
+  x: Math.random() * W, y: Math.random() * H,
+  vx: (Math.random() - 0.5) * 2, vy: (Math.random() - 0.5) * 2,
+  r: Math.random() * 2.5 + 0.5,
+  hue: Math.random() * 60 + 200
+}));
+
+let hueShift = 0;
+
+function draw() {
+  ctx.fillStyle = 'rgba(10,10,46,0.15)';
+  ctx.fillRect(0, 0, W, H);
+  hueShift += 0.3;
+
+  for (const p of particles) {
+    const dx = mouse.x - p.x;
+    const dy = mouse.y - p.y;
+    const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+    const force = mouse.down ? -800 : 150;
+    const acc = Math.min(force / (dist * dist), 0.8);
+    p.vx += dx / dist * acc;
+    p.vy += dy / dist * acc;
+    p.vx *= 0.98;
+    p.vy *= 0.98;
+    p.x += p.vx;
+    p.y += p.vy;
+
+    if (p.x < 0) { p.x = 0; p.vx *= -0.5; }
+    if (p.x > W) { p.x = W; p.vx *= -0.5; }
+    if (p.y < 0) { p.y = 0; p.vy *= -0.5; }
+    if (p.y > H) { p.y = H; p.vy *= -0.5; }
+
+    const speed = Math.sqrt(p.vx * p.vx + p.vy * p.vy);
+    const hue = (p.hue + hueShift + speed * 10) % 360;
+    const alpha = Math.min(0.4 + speed * 0.15, 1);
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.r + speed * 0.3, 0, Math.PI * 2);
+    ctx.fillStyle = `hsla(${hue},100%,65%,${alpha})`;
+    ctx.fill();
+  }
+
+  // Draw connections
+  ctx.lineWidth = 0.3;
+  for (let i = 0; i < N; i++) {
+    for (let j = i + 1; j < N; j++) {
+      const dx = particles[i].x - particles[j].x;
+      const dy = particles[i].y - particles[j].y;
+      const d = dx * dx + dy * dy;
+      if (d < 3600) {
+        const alpha = (1 - d / 3600) * 0.4;
+        ctx.strokeStyle = `hsla(${(particles[i].hue + hueShift) % 360},80%,60%,${alpha})`;
+        ctx.beginPath();
+        ctx.moveTo(particles[i].x, particles[i].y);
+        ctx.lineTo(particles[j].x, particles[j].y);
+        ctx.stroke();
+      }
+    }
+  }
+
+  requestAnimationFrame(draw);
+}
+draw();
+</script>
+</body>
+</html>
