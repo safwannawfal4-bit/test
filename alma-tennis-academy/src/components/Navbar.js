@@ -38,11 +38,8 @@ export default function Navbar() {
         <div className="flex items-center justify-between h-20">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2">
-            <img
-              src={`${process.env.PUBLIC_URL}/logo.png`}
-              alt="Alma Tennis Academy"
-              className="h-12 w-auto"
-            />
+            <span className="text-2xl font-display font-bold text-alma-green italic">Alma</span>
+            <span className="text-lg">🎾</span>
           </Link>
 
           {/* Desktop Navigation */}

@@ -7,11 +7,11 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-10">
           {/* Brand */}
           <div className="md:col-span-1">
-            <img
-              src={`${process.env.PUBLIC_URL}/logo.png`}
-              alt="Alma Tennis Academy"
-              className="h-10 w-auto brightness-200 mb-4"
-            />
+            <div className="mb-4">
+              <span className="text-2xl font-display font-bold text-white italic">Alma</span>
+              <span className="text-lg ml-1">🎾</span>
+              <p className="text-alma-lime text-xs font-semibold tracking-widest uppercase mt-1">Tennis Academy</p>
+            </div>
             <p className="text-white/70 text-sm leading-relaxed">
               Elevating your tennis game through professional coaching,
               quality equipment, and a passionate community.
