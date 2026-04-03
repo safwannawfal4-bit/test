@@ -1,6 +1,10 @@
 import { Link } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 
+const categoryEmojis = {
+  rackets: '🎾', balls: '🟡', bags: '🎒', strings: '🧵', accessories: '⭐',
+};
+
 export default function ProductCard({ product }) {
   const { addToCart } = useCart();
 
@@ -8,13 +12,14 @@ export default function ProductCard({ product }) {
     <div className="card group">
       <Link to={`/shop/${product.id}`}>
         <div className="aspect-square bg-alma-cream-dark flex items-center justify-center overflow-hidden">
-          <div className="text-6xl group-hover:scale-110 transition-transform duration-300">
-            {product.category === 'rackets' && '🎾'}
-            {product.category === 'balls' && '🟡'}
-            {product.category === 'bags' && '🎒'}
-            {product.category === 'strings' && '🧵'}
-            {product.category === 'accessories' && '⭐'}
-          </div>
+          {product.imageUrl ? (
+            <img src={product.imageUrl} alt={product.name}
+              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300" />
+          ) : (
+            <div className="text-6xl group-hover:scale-110 transition-transform duration-300">
+              {categoryEmojis[product.category] || '🎾'}
+            </div>
+          )}
         </div>
       </Link>
       <div className="p-5">

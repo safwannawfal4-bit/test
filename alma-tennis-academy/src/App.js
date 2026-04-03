@@ -1,8 +1,9 @@
 import { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
-import { AuthProvider } from './context/AuthContext';
+import { AuthProvider, useAuth } from './context/AuthContext';
 import { DataProvider } from './context/DataContext';
 import { OrderProvider } from './context/OrderContext';
+import { EnrollmentProvider } from './context/EnrollmentContext';
 import { CartProvider } from './context/CartContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import Navbar from './components/Navbar';
@@ -22,13 +23,23 @@ import DashboardPage from './pages/admin/DashboardPage';
 import AdminProductsPage from './pages/admin/AdminProductsPage';
 import AdminProgramsPage from './pages/admin/AdminProgramsPage';
 import AdminOrdersPage from './pages/admin/AdminOrdersPage';
+import AdminCustomersPage from './pages/admin/AdminCustomersPage';
 
 function ScrollToTop() {
   const { pathname } = useLocation();
-  useEffect(() => {
-    window.scrollTo(0, 0);
-  }, [pathname]);
+  useEffect(() => { window.scrollTo(0, 0); }, [pathname]);
   return null;
+}
+
+function LoadingScreen() {
+  return (
+    <div className="min-h-screen bg-alma-cream flex items-center justify-center">
+      <div className="text-center">
+        <div className="text-5xl mb-4 animate-bounce">🎾</div>
+        <p className="text-alma-green font-semibold">Loading Alma Tennis Academy...</p>
+      </div>
+    </div>
+  );
 }
 
 function PublicLayout() {
@@ -54,29 +65,39 @@ function PublicLayout() {
   );
 }
 
+function AppContent() {
+  const { loading } = useAuth();
+
+  if (loading) return <LoadingScreen />;
+
+  return (
+    <>
+      <ScrollToTop />
+      <Routes>
+        <Route path="/admin" element={<ProtectedRoute><AdminLayout /></ProtectedRoute>}>
+          <Route index element={<DashboardPage />} />
+          <Route path="products" element={<AdminProductsPage />} />
+          <Route path="programs" element={<AdminProgramsPage />} />
+          <Route path="orders" element={<AdminOrdersPage />} />
+          <Route path="customers" element={<AdminCustomersPage />} />
+        </Route>
+        <Route path="/*" element={<PublicLayout />} />
+      </Routes>
+    </>
+  );
+}
+
 function App() {
   return (
     <Router>
       <AuthProvider>
         <DataProvider>
           <OrderProvider>
-            <CartProvider>
-              <ScrollToTop />
-              <Routes>
-                {/* Admin routes - separate layout, no Navbar/Footer */}
-                <Route path="/admin" element={
-                  <ProtectedRoute><AdminLayout /></ProtectedRoute>
-                }>
-                  <Route index element={<DashboardPage />} />
-                  <Route path="products" element={<AdminProductsPage />} />
-                  <Route path="programs" element={<AdminProgramsPage />} />
-                  <Route path="orders" element={<AdminOrdersPage />} />
-                </Route>
-
-                {/* Public routes - with Navbar/Footer */}
-                <Route path="/*" element={<PublicLayout />} />
-              </Routes>
-            </CartProvider>
+            <EnrollmentProvider>
+              <CartProvider>
+                <AppContent />
+              </CartProvider>
+            </EnrollmentProvider>
           </OrderProvider>
         </DataProvider>
       </AuthProvider>

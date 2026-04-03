@@ -1,4 +1,13 @@
 import { createContext, useContext, useState, useEffect } from 'react';
+import {
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  signOut,
+  onAuthStateChanged,
+} from 'firebase/auth';
+import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
+import { auth, db } from '../firebase';
+import { seedIfEmpty } from '../utils/seedData';
 
 const AuthContext = createContext();
 
@@ -6,76 +15,99 @@ export function useAuth() {
   return useContext(AuthContext);
 }
 
-const ADMIN_ACCOUNT = {
-  id: 'admin',
-  email: 'admin@alma.com',
-  password: '12345678',
-  name: 'Admin',
-  role: 'admin',
-  createdAt: new Date().toISOString(),
-};
-
-function getUsers() {
-  const saved = localStorage.getItem('alma-users');
-  const users = saved ? JSON.parse(saved) : [];
-  if (!users.find(u => u.email === ADMIN_ACCOUNT.email)) {
-    users.push(ADMIN_ACCOUNT);
-    localStorage.setItem('alma-users', JSON.stringify(users));
-  }
-  return users;
-}
-
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(() => {
-    const saved = localStorage.getItem('alma-current-user');
-    return saved ? JSON.parse(saved) : null;
-  });
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (user) {
-      localStorage.setItem('alma-current-user', JSON.stringify(user));
-    } else {
-      localStorage.removeItem('alma-current-user');
-    }
-  }, [user]);
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      if (firebaseUser) {
+        try {
+          const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
+          if (userDoc.exists()) {
+            const userData = { uid: firebaseUser.uid, ...userDoc.data() };
+            setUser(userData);
+            if (userData.role === 'admin') {
+              seedIfEmpty();
+            }
+          } else {
+            setUser({
+              uid: firebaseUser.uid,
+              email: firebaseUser.email,
+              name: firebaseUser.displayName || 'User',
+              role: 'customer',
+            });
+          }
+        } catch (err) {
+          console.error('Error fetching user doc:', err);
+          setUser({
+            uid: firebaseUser.uid,
+            email: firebaseUser.email,
+            name: 'User',
+            role: 'customer',
+          });
+        }
+      } else {
+        setUser(null);
+      }
+      setLoading(false);
+    });
+    return unsubscribe;
+  }, []);
 
-  const login = (email, password) => {
-    const users = getUsers();
-    const found = users.find(
-      u => u.email.toLowerCase() === email.toLowerCase() && u.password === password
-    );
-    if (!found) return { success: false, error: 'Invalid email or password' };
-    setUser(found);
-    return { success: true, user: found };
+  const login = async (email, password) => {
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+      return { success: true };
+    } catch (err) {
+      const msg =
+        err.code === 'auth/invalid-credential'
+          ? 'Invalid email or password'
+          : err.code === 'auth/user-not-found'
+          ? 'No account found with this email'
+          : err.code === 'auth/too-many-requests'
+          ? 'Too many attempts. Please try again later'
+          : err.message;
+      return { success: false, error: msg };
+    }
   };
 
-  const register = (name, email, password) => {
-    const users = getUsers();
-    if (users.find(u => u.email.toLowerCase() === email.toLowerCase())) {
-      return { success: false, error: 'An account with this email already exists' };
+  const register = async (name, email, password, phone = '') => {
+    try {
+      const cred = await createUserWithEmailAndPassword(auth, email, password);
+      await setDoc(doc(db, 'users', cred.user.uid), {
+        uid: cred.user.uid,
+        email,
+        name,
+        phone,
+        role: 'customer',
+        createdAt: serverTimestamp(),
+        totalSpent: 0,
+        orderCount: 0,
+      });
+      return { success: true };
+    } catch (err) {
+      const msg =
+        err.code === 'auth/email-already-in-use'
+          ? 'An account with this email already exists'
+          : err.code === 'auth/weak-password'
+          ? 'Password must be at least 6 characters'
+          : err.message;
+      return { success: false, error: msg };
     }
-    const newUser = {
-      id: Date.now().toString(),
-      email,
-      password,
-      name,
-      role: 'customer',
-      createdAt: new Date().toISOString(),
-    };
-    users.push(newUser);
-    localStorage.setItem('alma-users', JSON.stringify(users));
-    setUser(newUser);
-    return { success: true, user: newUser };
   };
 
-  const logout = () => setUser(null);
+  const logout = async () => {
+    await signOut(auth);
+    setUser(null);
+  };
 
   const isAuthenticated = !!user;
   const isAdmin = user?.role === 'admin';
 
   return (
     <AuthContext.Provider
-      value={{ user, isAuthenticated, isAdmin, login, register, logout }}
+      value={{ user, loading, isAuthenticated, isAdmin, login, register, logout }}
     >
       {children}
     </AuthContext.Provider>

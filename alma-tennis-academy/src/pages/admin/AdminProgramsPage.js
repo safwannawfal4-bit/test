@@ -7,24 +7,19 @@ export default function AdminProgramsPage() {
   const [showModal, setShowModal] = useState(false);
   const [editing, setEditing] = useState(null);
 
-  const handleSave = (data) => {
+  const handleSave = async (data) => {
     if (editing) {
-      updateProgram(editing.id, data);
+      await updateProgram(editing.id, data);
     } else {
-      addProgram(data);
+      await addProgram(data);
     }
     setShowModal(false);
     setEditing(null);
   };
 
-  const handleEdit = (program) => {
-    setEditing(program);
-    setShowModal(true);
-  };
-
-  const handleDelete = (program) => {
+  const handleDelete = async (program) => {
     if (window.confirm(`Delete "${program.name}"?`)) {
-      deleteProgram(program.id);
+      await deleteProgram(program.id);
     }
   };
 
@@ -38,10 +33,7 @@ export default function AdminProgramsPage() {
     <div>
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold text-alma-green">Programs ({programs.length})</h1>
-        <button
-          onClick={() => { setEditing(null); setShowModal(true); }}
-          className="btn-primary text-sm"
-        >
+        <button onClick={() => { setEditing(null); setShowModal(true); }} className="btn-primary text-sm">
           + Add Program
         </button>
       </div>
@@ -51,6 +43,7 @@ export default function AdminProgramsPage() {
           <table className="w-full text-sm">
             <thead className="bg-gray-50 text-left">
               <tr>
+                <th className="px-4 py-3 font-medium text-alma-charcoal/60">Image</th>
                 <th className="px-4 py-3 font-medium text-alma-charcoal/60">Name</th>
                 <th className="px-4 py-3 font-medium text-alma-charcoal/60">Type</th>
                 <th className="px-4 py-3 font-medium text-alma-charcoal/60">Age</th>
@@ -62,17 +55,24 @@ export default function AdminProgramsPage() {
             <tbody className="divide-y divide-gray-100">
               {programs.map(program => (
                 <tr key={program.id} className="hover:bg-gray-50 transition-colors">
+                  <td className="px-4 py-3">
+                    <div className="w-10 h-10 rounded-lg bg-alma-cream-dark flex items-center justify-center overflow-hidden">
+                      {program.imageUrl ? (
+                        <img src={program.imageUrl} alt="" className="w-full h-full object-cover" />
+                      ) : (
+                        <span className="text-lg">📋</span>
+                      )}
+                    </div>
+                  </td>
                   <td className="px-4 py-3 font-medium text-alma-green">{program.name}</td>
                   <td className="px-4 py-3">
-                    <span className={`capitalize text-xs px-2 py-1 rounded-full ${typeColors[program.type] || ''}`}>
-                      {program.type}
-                    </span>
+                    <span className={`capitalize text-xs px-2 py-1 rounded-full ${typeColors[program.type] || ''}`}>{program.type}</span>
                   </td>
                   <td className="px-4 py-3 capitalize text-alma-charcoal/70">{program.ageGroup}</td>
                   <td className="px-4 py-3 font-semibold">${program.price}</td>
                   <td className="px-4 py-3">{program.spotsAvailable}</td>
                   <td className="px-4 py-3 text-right space-x-2">
-                    <button onClick={() => handleEdit(program)}
+                    <button onClick={() => { setEditing(program); setShowModal(true); }}
                       className="text-blue-500 hover:text-blue-700 text-xs font-medium">Edit</button>
                     <button onClick={() => handleDelete(program)}
                       className="text-red-400 hover:text-red-600 text-xs font-medium">Delete</button>
@@ -85,11 +85,8 @@ export default function AdminProgramsPage() {
       </div>
 
       {showModal && (
-        <ProgramFormModal
-          program={editing}
-          onSave={handleSave}
-          onClose={() => { setShowModal(false); setEditing(null); }}
-        />
+        <ProgramFormModal program={editing} onSave={handleSave}
+          onClose={() => { setShowModal(false); setEditing(null); }} />
       )}
     </div>
   );

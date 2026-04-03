@@ -1,10 +1,14 @@
 import { useState, useEffect } from 'react';
+import ImageUpload from '../../components/ImageUpload';
+import { uploadImage } from '../../utils/uploadImage';
 
 export default function ProductFormModal({ product, onSave, onClose }) {
   const [form, setForm] = useState({
     name: '', category: 'rackets', price: '', description: '',
     features: '', inStock: true,
   });
+  const [imageFile, setImageFile] = useState(null);
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (product) {
@@ -13,23 +17,33 @@ export default function ProductFormModal({ product, onSave, onClose }) {
         category: product.category,
         price: product.price.toString(),
         description: product.description,
-        features: product.features.join(', '),
+        features: (product.features || []).join(', '),
         inStock: product.inStock,
       });
     }
   }, [product]);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    onSave({
-      name: form.name,
-      category: form.category,
-      price: parseFloat(form.price),
-      description: form.description,
-      features: form.features.split(',').map(f => f.trim()).filter(Boolean),
-      inStock: form.inStock,
-      image: '',
-    });
+    setSaving(true);
+    try {
+      let imageUrl = product?.imageUrl || '';
+      if (imageFile) {
+        imageUrl = await uploadImage(imageFile, 'products');
+      }
+      await onSave({
+        name: form.name,
+        category: form.category,
+        price: parseFloat(form.price),
+        description: form.description,
+        features: form.features.split(',').map(f => f.trim()).filter(Boolean),
+        inStock: form.inStock,
+        imageUrl,
+      });
+    } catch (err) {
+      console.error('Save error:', err);
+    }
+    setSaving(false);
   };
 
   return (
@@ -41,6 +55,7 @@ export default function ProductFormModal({ product, onSave, onClose }) {
           </h2>
         </div>
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
+          <ImageUpload currentUrl={product?.imageUrl} onFileSelect={setImageFile} />
           <div>
             <label className="block text-sm font-medium text-alma-green mb-1">Product Name</label>
             <input required value={form.name} onChange={e => setForm({ ...form, name: e.target.value })}
@@ -84,8 +99,8 @@ export default function ProductFormModal({ product, onSave, onClose }) {
             <span className="text-sm text-alma-charcoal">In Stock</span>
           </label>
           <div className="flex gap-3 pt-2">
-            <button type="submit" className="btn-primary flex-grow">
-              {product ? 'Save Changes' : 'Add Product'}
+            <button type="submit" disabled={saving} className="btn-primary flex-grow disabled:opacity-50">
+              {saving ? 'Saving...' : product ? 'Save Changes' : 'Add Product'}
             </button>
             <button type="button" onClick={onClose} className="btn-outline">Cancel</button>
           </div>

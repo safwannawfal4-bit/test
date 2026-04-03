@@ -10,7 +10,7 @@ export default function ProductDetailPage() {
   const [quantity, setQuantity] = useState(1);
   const [added, setAdded] = useState(false);
 
-  const product = products.find(p => p.id === parseInt(id));
+  const product = products.find(p => p.id === id);
 
   if (!product) {
     return (
@@ -52,8 +52,12 @@ export default function ProductDetailPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
         {/* Image */}
-        <div className="aspect-square bg-white rounded-2xl shadow-md flex items-center justify-center">
-          <span className="text-9xl">{categoryEmojis[product.category]}</span>
+        <div className="aspect-square bg-white rounded-2xl shadow-md flex items-center justify-center overflow-hidden">
+          {product.imageUrl ? (
+            <img src={product.imageUrl} alt={product.name} className="w-full h-full object-cover" />
+          ) : (
+            <span className="text-9xl">{categoryEmojis[product.category]}</span>
+          )}
         </div>
 
         {/* Details */}

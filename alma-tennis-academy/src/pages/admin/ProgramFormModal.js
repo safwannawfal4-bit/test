@@ -1,10 +1,14 @@
 import { useState, useEffect } from 'react';
+import ImageUpload from '../../components/ImageUpload';
+import { uploadImage } from '../../utils/uploadImage';
 
 export default function ProgramFormModal({ program, onSave, onClose }) {
   const [form, setForm] = useState({
     name: '', ageGroup: 'all', type: 'group', price: '',
     duration: '', schedule: '', description: '', spotsAvailable: '10', level: 'All Levels',
   });
+  const [imageFile, setImageFile] = useState(null);
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (program) {
@@ -22,19 +26,30 @@ export default function ProgramFormModal({ program, onSave, onClose }) {
     }
   }, [program]);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    onSave({
-      name: form.name,
-      ageGroup: form.ageGroup,
-      type: form.type,
-      price: parseFloat(form.price),
-      duration: form.duration,
-      schedule: form.schedule,
-      description: form.description,
-      spotsAvailable: parseInt(form.spotsAvailable),
-      level: form.level,
-    });
+    setSaving(true);
+    try {
+      let imageUrl = program?.imageUrl || '';
+      if (imageFile) {
+        imageUrl = await uploadImage(imageFile, 'programs');
+      }
+      await onSave({
+        name: form.name,
+        ageGroup: form.ageGroup,
+        type: form.type,
+        price: parseFloat(form.price),
+        duration: form.duration,
+        schedule: form.schedule,
+        description: form.description,
+        spotsAvailable: parseInt(form.spotsAvailable),
+        level: form.level,
+        imageUrl,
+      });
+    } catch (err) {
+      console.error('Save error:', err);
+    }
+    setSaving(false);
   };
 
   return (
@@ -46,6 +61,7 @@ export default function ProgramFormModal({ program, onSave, onClose }) {
           </h2>
         </div>
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
+          <ImageUpload currentUrl={program?.imageUrl} onFileSelect={setImageFile} />
           <div>
             <label className="block text-sm font-medium text-alma-green mb-1">Program Name</label>
             <input required value={form.name} onChange={e => setForm({ ...form, name: e.target.value })}
@@ -82,8 +98,7 @@ export default function ProgramFormModal({ program, onSave, onClose }) {
             <div>
               <label className="block text-sm font-medium text-alma-green mb-1">Duration</label>
               <input required value={form.duration} onChange={e => setForm({ ...form, duration: e.target.value })}
-                placeholder="e.g. 8 weeks"
-                className="w-full px-4 py-2.5 rounded-lg border border-gray-200 outline-none" />
+                placeholder="e.g. 8 weeks" className="w-full px-4 py-2.5 rounded-lg border border-gray-200 outline-none" />
             </div>
             <div>
               <label className="block text-sm font-medium text-alma-green mb-1">Spots Available</label>
@@ -95,13 +110,11 @@ export default function ProgramFormModal({ program, onSave, onClose }) {
           <div>
             <label className="block text-sm font-medium text-alma-green mb-1">Schedule</label>
             <input required value={form.schedule} onChange={e => setForm({ ...form, schedule: e.target.value })}
-              placeholder="e.g. Mon & Wed, 4:00 - 5:30 PM"
-              className="w-full px-4 py-2.5 rounded-lg border border-gray-200 outline-none" />
+              placeholder="e.g. Mon & Wed, 4:00 - 5:30 PM" className="w-full px-4 py-2.5 rounded-lg border border-gray-200 outline-none" />
           </div>
           <div>
             <label className="block text-sm font-medium text-alma-green mb-1">Level</label>
             <input required value={form.level} onChange={e => setForm({ ...form, level: e.target.value })}
-              placeholder="e.g. Beginner to Intermediate"
               className="w-full px-4 py-2.5 rounded-lg border border-gray-200 outline-none" />
           </div>
           <div>
@@ -111,8 +124,8 @@ export default function ProgramFormModal({ program, onSave, onClose }) {
               className="w-full px-4 py-2.5 rounded-lg border border-gray-200 outline-none resize-none" />
           </div>
           <div className="flex gap-3 pt-2">
-            <button type="submit" className="btn-primary flex-grow">
-              {program ? 'Save Changes' : 'Add Program'}
+            <button type="submit" disabled={saving} className="btn-primary flex-grow disabled:opacity-50">
+              {saving ? 'Saving...' : program ? 'Save Changes' : 'Add Program'}
             </button>
             <button type="button" onClick={onClose} className="btn-outline">Cancel</button>
           </div>

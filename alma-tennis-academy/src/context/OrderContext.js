@@ -1,4 +1,8 @@
 import { createContext, useContext, useState, useEffect } from 'react';
+import {
+  collection, addDoc, updateDoc, doc, onSnapshot, query, orderBy, serverTimestamp,
+} from 'firebase/firestore';
+import { db } from '../firebase';
 
 const OrderContext = createContext();
 
@@ -7,39 +11,33 @@ export function useOrders() {
 }
 
 export function OrderProvider({ children }) {
-  const [orders, setOrders] = useState(() => {
-    const saved = localStorage.getItem('alma-orders');
-    return saved ? JSON.parse(saved) : [];
-  });
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    localStorage.setItem('alma-orders', JSON.stringify(orders));
-  }, [orders]);
+    const q = query(collection(db, 'orders'), orderBy('createdAt', 'desc'));
+    const unsub = onSnapshot(q, (snap) => {
+      setOrders(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+      setLoading(false);
+    });
+    return unsub;
+  }, []);
 
-  const placeOrder = ({ items, subtotal, discountAmount, total, customerEmail, customerName }) => {
-    const order = {
-      id: 'ORD-' + Date.now(),
-      items,
-      subtotal,
-      discountAmount,
-      total,
-      customerEmail,
-      customerName,
+  const placeOrder = async (orderData) => {
+    const docRef = await addDoc(collection(db, 'orders'), {
+      ...orderData,
       status: 'confirmed',
-      createdAt: new Date().toISOString(),
-    };
-    setOrders(prev => [order, ...prev]);
-    return order;
+      createdAt: serverTimestamp(),
+    });
+    return { id: docRef.id, ...orderData };
   };
 
-  const updateOrderStatus = (orderId, status) => {
-    setOrders(prev =>
-      prev.map(o => o.id === orderId ? { ...o, status } : o)
-    );
+  const updateOrderStatus = async (orderId, status) => {
+    return updateDoc(doc(db, 'orders', orderId), { status });
   };
 
   return (
-    <OrderContext.Provider value={{ orders, placeOrder, updateOrderStatus }}>
+    <OrderContext.Provider value={{ orders, loading, placeOrder, updateOrderStatus }}>
       {children}
     </OrderContext.Provider>
   );
