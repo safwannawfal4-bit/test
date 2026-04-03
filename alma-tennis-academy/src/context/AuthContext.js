@@ -31,12 +31,24 @@ export function AuthProvider({ children }) {
               seedIfEmpty();
             }
           } else {
-            setUser({
+            // Auto-create admin doc for admin@alma.com
+            const isAdminEmail = firebaseUser.email === 'admin@alma.com';
+            const role = isAdminEmail ? 'admin' : 'customer';
+            const newUserData = {
               uid: firebaseUser.uid,
               email: firebaseUser.email,
-              name: firebaseUser.displayName || 'User',
-              role: 'customer',
-            });
+              name: isAdminEmail ? 'Admin' : (firebaseUser.displayName || 'User'),
+              phone: '',
+              role,
+              createdAt: serverTimestamp(),
+              totalSpent: 0,
+              orderCount: 0,
+            };
+            await setDoc(doc(db, 'users', firebaseUser.uid), newUserData);
+            setUser({ ...newUserData, uid: firebaseUser.uid });
+            if (isAdminEmail) {
+              seedIfEmpty();
+            }
           }
         } catch (err) {
           console.error('Error fetching user doc:', err);
