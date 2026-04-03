@@ -1,94 +1,93 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from 'react-leaflet';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
+
+// Fix Leaflet default marker icon
+delete L.Icon.Default.prototype._getIconUrl;
+const pinIcon = new L.Icon({
+  iconUrl: 'data:image/svg+xml;base64,' + btoa(`
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 36" width="32" height="48">
+      <path d="M12 0C5.4 0 0 5.4 0 12c0 9 12 24 12 24s12-15 12-24C24 5.4 18.6 0 12 0z" fill="#E53E3E"/>
+      <circle cx="12" cy="11" r="5" fill="white"/>
+      <circle cx="12" cy="11" r="2.5" fill="#E53E3E"/>
+    </svg>
+  `),
+  iconSize: [32, 48],
+  iconAnchor: [16, 48],
+  popupAnchor: [0, -48],
+});
+
+// Component that handles click events on the map
+function MapClickHandler({ onLocationSelect, setPin }) {
+  useMapEvents({
+    click(e) {
+      const loc = { lat: e.latlng.lat, lng: e.latlng.lng };
+      setPin(loc);
+      onLocationSelect(loc);
+    },
+  });
+  return null;
+}
+
+// Component that flies to a new center
+function FlyTo({ center, zoom }) {
+  const map = useMap();
+  useEffect(() => {
+    if (center) {
+      map.flyTo([center.lat, center.lng], zoom, { duration: 1.5 });
+    }
+  }, [center, zoom, map]);
+  return null;
+}
 
 export default function MapPicker({ onLocationSelect }) {
-  const mapRef = useRef(null);
   const [pin, setPin] = useState(null);
-  const [mapCenter, setMapCenter] = useState({ lat: 25.2048, lng: 55.2708 }); // Default: Dubai
-  const [zoom, setZoom] = useState(12);
-  const [dragging, setDragging] = useState(false);
-  const [dragStart, setDragStart] = useState(null);
+  const [center, setCenter] = useState({ lat: 25.2048, lng: 55.2708 });
+  const [flyTarget, setFlyTarget] = useState(null);
+  const [flyZoom, setFlyZoom] = useState(13);
   const [searchQuery, setSearchQuery] = useState('');
   const [searching, setSearching] = useState(false);
+  const [locationName, setLocationName] = useState('');
+  const [geolocating, setGeolocating] = useState(false);
+  const mapReady = useRef(false);
 
-  const TILE_SIZE = 256;
-
-  // Convert lat/lng to pixel position
-  const latLngToPixel = (lat, lng, centerLat, centerLng, zoomLevel, width, height) => {
-    const scale = Math.pow(2, zoomLevel);
-    const worldX = ((lng + 180) / 360) * TILE_SIZE * scale;
-    const worldY = ((1 - Math.log(Math.tan((lat * Math.PI) / 180) + 1 / Math.cos((lat * Math.PI) / 180)) / Math.PI) / 2) * TILE_SIZE * scale;
-    const centerWorldX = ((centerLng + 180) / 360) * TILE_SIZE * scale;
-    const centerWorldY = ((1 - Math.log(Math.tan((centerLat * Math.PI) / 180) + 1 / Math.cos((centerLat * Math.PI) / 180)) / Math.PI) / 2) * TILE_SIZE * scale;
-    return {
-      x: worldX - centerWorldX + width / 2,
-      y: worldY - centerWorldY + height / 2,
-    };
-  };
-
-  // Convert pixel to lat/lng
-  const pixelToLatLng = (px, py, centerLat, centerLng, zoomLevel, width, height) => {
-    const scale = Math.pow(2, zoomLevel);
-    const centerWorldX = ((centerLng + 180) / 360) * TILE_SIZE * scale;
-    const centerWorldY = ((1 - Math.log(Math.tan((centerLat * Math.PI) / 180) + 1 / Math.cos((centerLat * Math.PI) / 180)) / Math.PI) / 2) * TILE_SIZE * scale;
-    const worldX = px - width / 2 + centerWorldX;
-    const worldY = py - height / 2 + centerWorldY;
-    const lng = (worldX / (TILE_SIZE * scale)) * 360 - 180;
-    const latRad = Math.atan(Math.sinh(Math.PI * (1 - (2 * worldY) / (TILE_SIZE * scale))));
-    const lat = (latRad * 180) / Math.PI;
-    return { lat, lng };
-  };
-
-  const handleMapClick = (e) => {
-    if (dragging) return;
-    const rect = mapRef.current.getBoundingClientRect();
-    const px = e.clientX - rect.left;
-    const py = e.clientY - rect.top;
-    const loc = pixelToLatLng(px, py, mapCenter.lat, mapCenter.lng, zoom, rect.width, rect.height);
-    setPin(loc);
-    onLocationSelect(loc);
-  };
-
-  const handleMouseDown = (e) => {
-    if (e.target.closest('.pin-marker')) return;
-    setDragging(false);
-    setDragStart({ x: e.clientX, y: e.clientY, lat: mapCenter.lat, lng: mapCenter.lng });
-  };
-
-  const handleMouseMove = (e) => {
-    if (!dragStart) return;
-    const dx = e.clientX - dragStart.x;
-    const dy = e.clientY - dragStart.y;
-    if (Math.abs(dx) > 3 || Math.abs(dy) > 3) setDragging(true);
-    const rect = mapRef.current.getBoundingClientRect();
-    const newCenter = pixelToLatLng(
-      rect.width / 2 - dx, rect.height / 2 - dy,
-      dragStart.lat, dragStart.lng, zoom, rect.width, rect.height
-    );
-    setMapCenter(newCenter);
-  };
-
-  const handleMouseUp = () => {
-    setTimeout(() => setDragging(false), 50);
-    setDragStart(null);
-  };
-
-  const handleWheel = (e) => {
-    e.preventDefault();
-    setZoom(z => Math.max(2, Math.min(18, z + (e.deltaY < 0 ? 1 : -1))));
-  };
-
-  // Try to get user's location on mount
+  // Auto-detect user location on mount
   useEffect(() => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (pos) => {
-          setMapCenter({ lat: pos.coords.latitude, lng: pos.coords.longitude });
-          setZoom(14);
+          const loc = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+          setCenter(loc);
+          setFlyTarget(loc);
+          setFlyZoom(15);
         },
-        () => {} // Silently fail, keep default
+        () => {}
       );
     }
   }, []);
+
+  // Reverse geocode pin location to get address name
+  const reverseGeocode = async (lat, lng) => {
+    try {
+      const resp = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18`,
+        { headers: { 'Accept': 'application/json' } }
+      );
+      const data = await resp.json();
+      if (data.display_name) {
+        setLocationName(data.display_name);
+      }
+    } catch {
+      setLocationName(`${lat.toFixed(5)}, ${lng.toFixed(5)}`);
+    }
+  };
+
+  const handlePinDrop = (loc) => {
+    setPin(loc);
+    onLocationSelect(loc);
+    reverseGeocode(loc.lat, loc.lng);
+  };
 
   // Search for a location
   const handleSearch = async () => {
@@ -102,10 +101,10 @@ export default function MapPicker({ onLocationSelect }) {
       const data = await resp.json();
       if (data.length > 0) {
         const loc = { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
-        setMapCenter(loc);
-        setPin(loc);
-        setZoom(16);
-        onLocationSelect(loc);
+        setFlyTarget(loc);
+        setFlyZoom(17);
+        handlePinDrop(loc);
+        setLocationName(data[0].display_name || searchQuery);
       }
     } catch (err) {
       console.error('Search error:', err);
@@ -113,150 +112,125 @@ export default function MapPicker({ onLocationSelect }) {
     setSearching(false);
   };
 
-  // Generate tile URLs for OpenStreetMap
-  const getTiles = () => {
-    if (!mapRef.current) return [];
-    const rect = mapRef.current.getBoundingClientRect();
-    const width = rect.width || 400;
-    const height = rect.height || 300;
-    const scale = Math.pow(2, zoom);
-    const centerTileX = ((mapCenter.lng + 180) / 360) * scale;
-    const centerTileY = ((1 - Math.log(Math.tan((mapCenter.lat * Math.PI) / 180) + 1 / Math.cos((mapCenter.lat * Math.PI) / 180)) / Math.PI) / 2) * scale;
-    const tilesX = Math.ceil(width / TILE_SIZE) + 2;
-    const tilesY = Math.ceil(height / TILE_SIZE) + 2;
-    const tiles = [];
-    const startTileX = Math.floor(centerTileX - tilesX / 2);
-    const startTileY = Math.floor(centerTileY - tilesY / 2);
-    const offsetX = (centerTileX - Math.floor(centerTileX)) * TILE_SIZE;
-    const offsetY = (centerTileY - Math.floor(centerTileY)) * TILE_SIZE;
-
-    for (let dx = 0; dx < tilesX; dx++) {
-      for (let dy = 0; dy < tilesY; dy++) {
-        const tileX = ((startTileX + dx) % scale + scale) % scale;
-        const tileY = startTileY + dy;
-        if (tileY < 0 || tileY >= scale) continue;
-        tiles.push({
-          key: `${zoom}-${tileX}-${tileY}`,
-          url: `https://tile.openstreetmap.org/${zoom}/${tileX}/${tileY}.png`,
-          x: (dx - Math.floor(tilesX / 2)) * TILE_SIZE + width / 2 - offsetX,
-          y: (dy - Math.floor(tilesY / 2)) * TILE_SIZE + height / 2 - offsetY,
-        });
+  // Use my current location
+  const handleGeolocate = () => {
+    if (!navigator.geolocation) return;
+    setGeolocating(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const loc = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+        setFlyTarget(loc);
+        setFlyZoom(17);
+        handlePinDrop(loc);
+        setGeolocating(false);
+      },
+      () => {
+        setGeolocating(false);
+        alert('Could not get your location. Please allow location access.');
       }
-    }
-    return tiles;
+    );
   };
 
-  const tiles = getTiles();
-  const pinPixel = pin && mapRef.current
-    ? latLngToPixel(pin.lat, pin.lng, mapCenter.lat, mapCenter.lng, zoom,
-        mapRef.current.getBoundingClientRect().width,
-        mapRef.current.getBoundingClientRect().height)
-    : null;
-
   return (
-    <div>
+    <div className="space-y-3">
       {/* Search bar */}
-      <div className="flex gap-2 mb-3">
-        <input
-          type="text"
-          value={searchQuery}
-          onChange={e => setSearchQuery(e.target.value)}
-          onKeyDown={e => e.key === 'Enter' && handleSearch()}
-          placeholder="Search location (e.g. Dubai Marina)"
-          className="flex-grow px-4 py-2.5 rounded-lg border border-alma-cream-dark focus:border-alma-lime focus:ring-2 focus:ring-alma-lime/20 outline-none text-sm"
-        />
+      <div className="flex gap-2">
+        <div className="relative flex-grow">
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), handleSearch())}
+            placeholder="Search for a place or address..."
+            className="w-full px-4 py-2.5 pr-10 rounded-xl border border-alma-cream-dark focus:border-alma-lime focus:ring-2 focus:ring-alma-lime/20 outline-none text-sm transition-all"
+          />
+          <svg className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-alma-charcoal/30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+        </div>
         <button type="button" onClick={handleSearch} disabled={searching}
-          className="px-4 py-2.5 bg-alma-green text-white rounded-lg text-sm font-medium hover:bg-alma-green-light transition-colors disabled:opacity-50">
-          {searching ? '...' : '📍 Find'}
+          className="px-4 py-2.5 bg-alma-green text-white rounded-xl text-sm font-medium hover:bg-alma-green-light transition-all disabled:opacity-50 whitespace-nowrap">
+          {searching ? 'Finding...' : 'Search'}
         </button>
       </div>
 
-      {/* Map */}
-      <div
-        ref={mapRef}
-        className="relative w-full h-72 rounded-xl overflow-hidden border border-alma-cream-dark cursor-crosshair select-none"
-        onClick={handleMapClick}
-        onMouseDown={handleMouseDown}
-        onMouseMove={handleMouseMove}
-        onMouseUp={handleMouseUp}
-        onMouseLeave={handleMouseUp}
-        onWheel={handleWheel}
-        onTouchStart={(e) => {
-          const t = e.touches[0];
-          setDragStart({ x: t.clientX, y: t.clientY, lat: mapCenter.lat, lng: mapCenter.lng });
-        }}
-        onTouchMove={(e) => {
-          if (!dragStart) return;
-          const t = e.touches[0];
-          const dx = t.clientX - dragStart.x;
-          const dy = t.clientY - dragStart.y;
-          if (Math.abs(dx) > 3 || Math.abs(dy) > 3) setDragging(true);
-          const rect = mapRef.current.getBoundingClientRect();
-          const newCenter = pixelToLatLng(
-            rect.width / 2 - dx, rect.height / 2 - dy,
-            dragStart.lat, dragStart.lng, zoom, rect.width, rect.height
-          );
-          setMapCenter(newCenter);
-        }}
-        onTouchEnd={() => {
-          setTimeout(() => setDragging(false), 100);
-          setDragStart(null);
-        }}
+      {/* My Location button */}
+      <button
+        type="button"
+        onClick={handleGeolocate}
+        disabled={geolocating}
+        className="flex items-center gap-2 text-sm text-alma-green hover:text-alma-green-light transition-colors disabled:opacity-50"
       >
-        {/* Tiles */}
-        {tiles.map(tile => (
-          <img
-            key={tile.key}
-            src={tile.url}
-            alt=""
-            draggable={false}
-            className="absolute pointer-events-none"
-            style={{ left: tile.x, top: tile.y, width: TILE_SIZE, height: TILE_SIZE }}
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm8.94 3A8.994 8.994 0 0013 3.06V1h-2v2.06A8.994 8.994 0 003.06 11H1v2h2.06A8.994 8.994 0 0011 20.94V23h2v-2.06A8.994 8.994 0 0020.94 13H23v-2h-2.06zM12 19c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7-3.13 7-7 7z" />
+        </svg>
+        {geolocating ? 'Detecting location...' : 'Use my current location'}
+      </button>
+
+      {/* Map */}
+      <div className="rounded-xl overflow-hidden border-2 border-alma-cream-dark shadow-sm" style={{ height: '320px' }}>
+        <MapContainer
+          center={[center.lat, center.lng]}
+          zoom={13}
+          style={{ height: '100%', width: '100%' }}
+          zoomControl={false}
+          whenReady={() => { mapReady.current = true; }}
+        >
+          <TileLayer
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
-        ))}
 
-        {/* Pin */}
-        {pinPixel && (
-          <div
-            className="pin-marker absolute z-10 pointer-events-none"
-            style={{ left: pinPixel.x, top: pinPixel.y, transform: 'translate(-50%, -100%)' }}
-          >
-            <div className="flex flex-col items-center">
-              <div className="bg-red-500 text-white rounded-full w-8 h-8 flex items-center justify-center shadow-lg text-sm font-bold">
-                📍
-              </div>
-              <div className="w-0 h-0 border-l-[6px] border-r-[6px] border-t-[8px] border-l-transparent border-r-transparent border-t-red-500 -mt-0.5" />
-            </div>
+          {/* Zoom control top-right */}
+          <div className="leaflet-top leaflet-right" style={{ marginTop: 10, marginRight: 10 }}>
+            <div className="leaflet-control leaflet-bar" style={{ border: 'none' }} />
           </div>
-        )}
 
-        {/* Zoom controls */}
-        <div className="absolute top-3 right-3 z-10 flex flex-col gap-1">
-          <button type="button" onClick={(e) => { e.stopPropagation(); setZoom(z => Math.min(18, z + 1)); }}
-            className="w-8 h-8 bg-white rounded-lg shadow-md flex items-center justify-center text-alma-green font-bold hover:bg-gray-50">+</button>
-          <button type="button" onClick={(e) => { e.stopPropagation(); setZoom(z => Math.max(2, z - 1)); }}
-            className="w-8 h-8 bg-white rounded-lg shadow-md flex items-center justify-center text-alma-green font-bold hover:bg-gray-50">-</button>
-        </div>
+          {/* Click handler */}
+          <MapClickHandler onLocationSelect={handlePinDrop} setPin={setPin} />
 
-        {/* Instruction overlay */}
-        {!pin && (
-          <div className="absolute bottom-3 left-3 right-3 z-10 bg-black/60 text-white text-xs text-center py-2 px-3 rounded-lg backdrop-blur-sm">
-            Click on the map to drop a pin at your delivery location
-          </div>
-        )}
+          {/* Fly to searched/geolocated position */}
+          {flyTarget && <FlyTo center={flyTarget} zoom={flyZoom} />}
 
-        {/* Attribution */}
-        <div className="absolute bottom-1 right-1 z-10 text-[9px] text-gray-500 bg-white/80 px-1 rounded">
-          OpenStreetMap
-        </div>
+          {/* Pin marker */}
+          {pin && (
+            <Marker
+              position={[pin.lat, pin.lng]}
+              icon={pinIcon}
+              draggable={true}
+              eventHandlers={{
+                dragend: (e) => {
+                  const latlng = e.target.getLatLng();
+                  const loc = { lat: latlng.lat, lng: latlng.lng };
+                  setPin(loc);
+                  onLocationSelect(loc);
+                  reverseGeocode(loc.lat, loc.lng);
+                },
+              }}
+            />
+          )}
+        </MapContainer>
       </div>
 
-      {/* Pin coordinates */}
-      {pin && (
-        <p className="text-xs text-alma-charcoal/50 mt-2 flex items-center gap-1">
-          <span className="text-alma-lime">✓</span>
-          Pin dropped at {pin.lat.toFixed(6)}, {pin.lng.toFixed(6)}
-        </p>
+      {/* Location info */}
+      {pin ? (
+        <div className="bg-alma-lime/10 rounded-xl p-3 flex items-start gap-3">
+          <div className="text-alma-green mt-0.5">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            </svg>
+          </div>
+          <div className="flex-grow min-w-0">
+            <p className="text-sm font-medium text-alma-green">Delivery location set</p>
+            <p className="text-xs text-alma-charcoal/60 mt-0.5 truncate">{locationName || `${pin.lat.toFixed(5)}, ${pin.lng.toFixed(5)}`}</p>
+            <p className="text-[10px] text-alma-charcoal/30 mt-0.5">Drag the pin to adjust the exact location</p>
+          </div>
+        </div>
+      ) : (
+        <div className="bg-gray-50 rounded-xl p-3 flex items-center gap-3">
+          <span className="text-xl">📍</span>
+          <p className="text-sm text-alma-charcoal/50">Click on the map or search to set your delivery location</p>
+        </div>
       )}
     </div>
   );
