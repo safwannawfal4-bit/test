@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
+import { usePageContent } from '../context/PageContentContext';
 import Logo from './Logo';
 import DiscountBadge from './DiscountBadge';
 
@@ -10,6 +11,7 @@ export default function Navbar() {
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const { cartCount } = useCart();
   const { user, isAuthenticated, isAdmin, isStaff, logout } = useAuth();
+  const { content } = usePageContent();
   const location = useLocation();
 
   useEffect(() => {
@@ -23,11 +25,11 @@ export default function Navbar() {
   }, [location]);
 
   const navLinks = [
-    { to: '/', label: 'Home' },
-    { to: '/shop', label: 'Shop' },
-    { to: '/programs', label: 'Programs' },
-    { to: '/about', label: 'About' },
-    { to: '/contact', label: 'Contact' },
+    { to: '/', label: content.nav_home || 'Home' },
+    { to: '/shop', label: content.nav_shop || 'Shop' },
+    { to: '/programs', label: content.nav_programs || 'Programs' },
+    { to: '/about', label: content.nav_about || 'About' },
+    { to: '/contact', label: content.nav_contact || 'Contact' },
   ];
 
   return (

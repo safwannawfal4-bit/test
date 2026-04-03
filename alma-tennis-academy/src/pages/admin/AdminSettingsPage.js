@@ -24,7 +24,7 @@ const colorFields = [
 ];
 
 export default function AdminSettingsPage() {
-  const { theme, updateTheme, defaultTheme, logoUrl, updateLogo } = usePageContent();
+  const { theme, updateTheme, defaultTheme, logoUrl, updateLogo, language, setLanguage } = usePageContent();
   const [uploading, setUploading] = useState(false);
   const [saved, setSaved] = useState('');
   const fileRef = useRef();
@@ -69,6 +69,47 @@ export default function AdminSettingsPage() {
         {saved && (
           <span className="text-sm font-medium text-green-600 bg-green-50 px-3 py-1 rounded-full">{saved}</span>
         )}
+      </div>
+
+      {/* Language Section */}
+      <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
+        <h2 className="text-lg font-semibold text-alma-green mb-4">Website Language</h2>
+        <p className="text-sm text-alma-charcoal/50 mb-4">Switch the entire website between English and Arabic. Arabic enables right-to-left (RTL) layout. All visitors see the change instantly.</p>
+
+        <div className="flex gap-3">
+          <button
+            onClick={() => { setLanguage('en'); setSaved('Switched to English'); setTimeout(() => setSaved(''), 3000); }}
+            className={`flex items-center gap-3 px-5 py-4 rounded-xl border-2 transition-all flex-1 ${
+              language === 'en' ? 'border-alma-lime bg-alma-lime/5 shadow-sm' : 'border-gray-200 hover:border-gray-300'
+            }`}
+          >
+            <span className="text-2xl">🇬🇧</span>
+            <div className="text-left">
+              <p className={`font-semibold text-sm ${language === 'en' ? 'text-alma-green' : 'text-alma-charcoal/70'}`}>English</p>
+              <p className="text-xs text-alma-charcoal/40">Left-to-right layout</p>
+            </div>
+            {language === 'en' && <span className="ml-auto text-alma-lime text-lg">✓</span>}
+          </button>
+
+          <button
+            onClick={() => { setLanguage('ar'); setSaved('تم التحويل إلى العربية'); setTimeout(() => setSaved(''), 3000); }}
+            className={`flex items-center gap-3 px-5 py-4 rounded-xl border-2 transition-all flex-1 ${
+              language === 'ar' ? 'border-alma-lime bg-alma-lime/5 shadow-sm' : 'border-gray-200 hover:border-gray-300'
+            }`}
+          >
+            <span className="text-2xl">🇸🇦</span>
+            <div className="text-left">
+              <p className={`font-semibold text-sm ${language === 'ar' ? 'text-alma-green' : 'text-alma-charcoal/70'}`}>العربية</p>
+              <p className="text-xs text-alma-charcoal/40">Right-to-left layout</p>
+            </div>
+            {language === 'ar' && <span className="ml-auto text-alma-lime text-lg">✓</span>}
+          </button>
+        </div>
+
+        <div className="mt-4 bg-amber-50 rounded-lg p-3 text-xs text-amber-700">
+          <strong>Tip:</strong> When in Arabic mode, you can click any text on the site to edit the Arabic translation.
+          Switch back to English to edit English text. Each language has its own content stored separately.
+        </div>
       </div>
 
       {/* Logo Section */}
