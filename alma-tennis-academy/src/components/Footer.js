@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import Logo from './Logo';
 
 export default function Footer() {
   return (
@@ -8,9 +9,7 @@ export default function Footer() {
           {/* Brand */}
           <div className="md:col-span-1">
             <div className="mb-4">
-              <span className="text-2xl font-display font-bold text-white italic">Alma</span>
-              <span className="text-lg ml-1">🎾</span>
-              <p className="text-alma-lime text-xs font-semibold tracking-widest uppercase mt-1">Tennis Academy</p>
+              <Logo size="sm" variant="light" />
             </div>
             <p className="text-white/70 text-sm leading-relaxed">
               Elevating your tennis game through professional coaching,

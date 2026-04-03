@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
+import Logo from './Logo';
 
 export default function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -37,10 +38,7 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-20">
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-2">
-            <span className="text-2xl font-display font-bold text-alma-green italic">Alma</span>
-            <span className="text-lg">🎾</span>
-          </Link>
+          <Logo size="sm" variant="dark" />
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-8">
