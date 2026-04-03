@@ -189,6 +189,7 @@ export function PageContentProvider({ children }) {
   const [contentAR, setContentAR] = useState(defaultContentAR);
   const [theme, setTheme] = useState(defaultTheme);
   const [logoUrl, setLogoUrl] = useState('');
+  const [heroBg, setHeroBg] = useState({ type: 'color', imageUrl: '' });
   const [loading, setLoading] = useState(true);
 
   // The active content based on current language
@@ -213,6 +214,7 @@ export function PageContentProvider({ children }) {
       if (snap.exists()) {
         setLogoUrl(snap.data().logoUrl || '');
         if (snap.data().language) setLanguageState(snap.data().language);
+        if (snap.data().heroBg) setHeroBg(snap.data().heroBg);
       }
     });
 
@@ -260,8 +262,13 @@ export function PageContentProvider({ children }) {
     try { await setDoc(doc(db, 'settings', 'branding'), { language: lang }, { merge: true }); } catch (err) { alert('Failed to save language: ' + err.message); }
   };
 
+  const updateHeroBg = async (bg) => {
+    setHeroBg(bg);
+    try { await setDoc(doc(db, 'settings', 'branding'), { heroBg: bg }, { merge: true }); } catch (err) { alert('Failed to save: ' + err.message); }
+  };
+
   return (
-    <PageContentContext.Provider value={{ content, theme, logoUrl, language, loading, updateContent, updateTheme, updateLogo, setLanguage, defaultTheme }}>
+    <PageContentContext.Provider value={{ content, theme, logoUrl, heroBg, language, loading, updateContent, updateTheme, updateLogo, updateHeroBg, setLanguage, defaultTheme }}>
       {children}
     </PageContentContext.Provider>
   );

@@ -24,10 +24,12 @@ const colorFields = [
 ];
 
 export default function AdminSettingsPage() {
-  const { theme, updateTheme, defaultTheme, logoUrl, updateLogo, language, setLanguage } = usePageContent();
+  const { theme, updateTheme, defaultTheme, logoUrl, updateLogo, heroBg, updateHeroBg, language, setLanguage } = usePageContent();
   const [uploading, setUploading] = useState(false);
+  const [uploadingHero, setUploadingHero] = useState(false);
   const [saved, setSaved] = useState('');
   const fileRef = useRef();
+  const heroFileRef = useRef();
 
   const handleLogoUpload = async (file) => {
     if (!file) return;
@@ -150,6 +152,79 @@ export default function AdminSettingsPage() {
             <p className="text-xs text-alma-charcoal/40">Recommended: PNG or SVG with transparent background. Max height displayed: 40-80px.</p>
           </div>
         </div>
+      </div>
+
+      {/* Hero Background Section */}
+      <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
+        <h2 className="text-lg font-semibold text-alma-green mb-4">Hero Background</h2>
+        <p className="text-sm text-alma-charcoal/50 mb-4">Choose between a solid color (uses your primary color palette) or upload a custom background image for the main hero section.</p>
+
+        <div className="flex gap-3 mb-4">
+          <button
+            onClick={() => { updateHeroBg({ type: 'color', imageUrl: '' }); setSaved('Switched to color'); setTimeout(() => setSaved(''), 3000); }}
+            className={`flex items-center gap-3 px-5 py-4 rounded-xl border-2 transition-all flex-1 ${
+              heroBg?.type !== 'image' ? 'border-alma-lime bg-alma-lime/5 shadow-sm' : 'border-gray-200 hover:border-gray-300'
+            }`}
+          >
+            <span className="text-2xl">🎨</span>
+            <div className="text-left">
+              <p className={`font-semibold text-sm ${heroBg?.type !== 'image' ? 'text-alma-green' : 'text-alma-charcoal/70'}`}>Color Gradient</p>
+              <p className="text-xs text-alma-charcoal/40">Uses your primary color palette</p>
+            </div>
+            {heroBg?.type !== 'image' && <span className="ml-auto text-alma-lime text-lg">✓</span>}
+          </button>
+
+          <button
+            onClick={() => heroFileRef.current?.click()}
+            className={`flex items-center gap-3 px-5 py-4 rounded-xl border-2 transition-all flex-1 ${
+              heroBg?.type === 'image' ? 'border-alma-lime bg-alma-lime/5 shadow-sm' : 'border-gray-200 hover:border-gray-300'
+            }`}
+          >
+            <span className="text-2xl">🖼️</span>
+            <div className="text-left">
+              <p className={`font-semibold text-sm ${heroBg?.type === 'image' ? 'text-alma-green' : 'text-alma-charcoal/70'}`}>Custom Image</p>
+              <p className="text-xs text-alma-charcoal/40">{uploadingHero ? 'Uploading...' : 'Click to upload a photo'}</p>
+            </div>
+            {heroBg?.type === 'image' && <span className="ml-auto text-alma-lime text-lg">✓</span>}
+          </button>
+          <input ref={heroFileRef} type="file" accept="image/*" className="hidden"
+            onChange={async (e) => {
+              const file = e.target.files[0];
+              if (!file) return;
+              setUploadingHero(true);
+              try {
+                const url = await uploadImage(file, 'branding');
+                await updateHeroBg({ type: 'image', imageUrl: url });
+                setSaved('Hero image uploaded!');
+                setTimeout(() => setSaved(''), 3000);
+              } catch (err) { alert('Failed: ' + err.message); }
+              setUploadingHero(false);
+            }} />
+        </div>
+
+        {/* Preview */}
+        <div className="rounded-xl overflow-hidden border border-gray-200 h-40">
+          {heroBg?.type === 'image' && heroBg?.imageUrl ? (
+            <div className="relative w-full h-full">
+              <img src={heroBg.imageUrl} alt="Hero preview" className="w-full h-full object-cover" />
+              <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                <p className="text-white font-display font-bold text-2xl">Your Hero Text Here</p>
+              </div>
+            </div>
+          ) : (
+            <div className="w-full h-full flex items-center justify-center" style={{ background: `linear-gradient(135deg, ${theme.primary}, ${theme.primaryLight}, ${theme.primary})` }}>
+              <p className="text-white font-display font-bold text-2xl">Your Hero Text Here</p>
+            </div>
+          )}
+        </div>
+        {heroBg?.type === 'image' && heroBg?.imageUrl && (
+          <button
+            onClick={() => { updateHeroBg({ type: 'color', imageUrl: '' }); setSaved('Image removed'); setTimeout(() => setSaved(''), 3000); }}
+            className="text-sm text-red-400 hover:text-red-600 mt-2 transition-colors"
+          >
+            Remove image and use color
+          </button>
+        )}
       </div>
 
       {/* Color Palette Section */}
