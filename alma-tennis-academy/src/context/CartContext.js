@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect } from 'react';
+import { useAuth } from './AuthContext';
 
 const CartContext = createContext();
 
@@ -7,6 +8,8 @@ export function useCart() {
 }
 
 export function CartProvider({ children }) {
+  const { isAuthenticated, isAdmin } = useAuth();
+
   const [cartItems, setCartItems] = useState(() => {
     const saved = localStorage.getItem('alma-cart');
     return saved ? JSON.parse(saved) : [];
@@ -55,10 +58,15 @@ export function CartProvider({ children }) {
   const clearCart = () => setCartItems([]);
 
   const cartCount = cartItems.reduce((sum, ci) => sum + ci.quantity, 0);
-  const cartTotal = cartItems.reduce(
+  const cartSubtotal = cartItems.reduce(
     (sum, ci) => sum + ci.item.price * ci.quantity,
     0
   );
+
+  // 20% discount for logged-in customers (not admin)
+  const discountPercent = (isAuthenticated && !isAdmin) ? 20 : 0;
+  const discountAmount = cartSubtotal * (discountPercent / 100);
+  const cartTotal = cartSubtotal - discountAmount;
 
   return (
     <CartContext.Provider
@@ -69,6 +77,9 @@ export function CartProvider({ children }) {
         updateQuantity,
         clearCart,
         cartCount,
+        cartSubtotal,
+        discountPercent,
+        discountAmount,
         cartTotal,
       }}
     >

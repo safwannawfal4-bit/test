@@ -1,28 +1,44 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
+import { useAuth } from '../context/AuthContext';
+import { useOrders } from '../context/OrderContext';
 
 export default function CheckoutPage() {
-  const { cartItems, cartTotal, clearCart } = useCart();
+  const { cartItems, cartSubtotal, discountPercent, discountAmount, cartTotal, clearCart } = useCart();
+  const { user, isAuthenticated } = useAuth();
+  const { placeOrder } = useOrders();
+  const navigate = useNavigate();
   const [orderPlaced, setOrderPlaced] = useState(false);
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    setOrderPlaced(true);
+    const formData = new FormData(e.target);
+    placeOrder({
+      items: cartItems,
+      subtotal: cartSubtotal,
+      discountAmount,
+      total: cartTotal,
+      customerEmail: formData.get('email') || user?.email || 'guest@example.com',
+      customerName: `${formData.get('firstName') || ''} ${formData.get('lastName') || ''}`.trim() || user?.name || 'Guest',
+    });
     clearCart();
+    setOrderPlaced(true);
   };
 
   if (orderPlaced) {
     return (
       <div className="pt-24 pb-16 px-4 text-center min-h-[60vh] flex flex-col items-center justify-center">
         <div className="text-6xl mb-6">✅</div>
-        <h1 className="section-title mb-4">Order Placed!</h1>
+        <h1 className="section-title mb-4">Order Confirmed!</h1>
         <p className="text-alma-charcoal/60 mb-2 max-w-md">
-          Thank you for your order! This is a demo, so no real payment was processed.
+          Thank you for your order! You'll receive a confirmation email shortly.
         </p>
-        <p className="text-sm text-alma-charcoal/40 mb-8">
-          In a real store, you would receive a confirmation email.
-        </p>
+        {discountPercent > 0 && (
+          <p className="text-green-600 font-medium mb-4">
+            You saved ${discountAmount.toFixed(2)} with your member discount!
+          </p>
+        )}
         <Link to="/" className="btn-primary">Back to Home</Link>
       </div>
     );
@@ -41,101 +57,58 @@ export default function CheckoutPage() {
     <div className="pt-24 pb-16 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto">
       <h1 className="section-title mb-8">Checkout</h1>
 
+      {!isAuthenticated && (
+        <div className="bg-alma-lime/10 rounded-xl p-4 mb-6 flex items-center justify-between">
+          <p className="text-sm text-alma-green">
+            <Link to="/register" className="font-bold underline">Register</Link> or <Link to="/login" className="font-bold underline">login</Link> to get 20% off!
+          </p>
+          <span className="text-sm text-alma-charcoal/50">Save ${(cartSubtotal * 0.2).toFixed(2)}</span>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Form */}
         <form onSubmit={handleSubmit} className="lg:col-span-2 space-y-6">
-          {/* Contact */}
           <div className="bg-white rounded-2xl shadow-md p-6">
             <h2 className="text-lg font-semibold text-alma-green mb-4">Contact Information</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <input
-                required
-                type="text"
-                placeholder="First Name"
-                className="w-full px-4 py-3 rounded-lg border border-alma-cream-dark focus:border-alma-lime focus:ring-2 focus:ring-alma-lime/20 outline-none transition-all"
-              />
-              <input
-                required
-                type="text"
-                placeholder="Last Name"
-                className="w-full px-4 py-3 rounded-lg border border-alma-cream-dark focus:border-alma-lime focus:ring-2 focus:ring-alma-lime/20 outline-none transition-all"
-              />
-              <input
-                required
-                type="email"
-                placeholder="Email Address"
-                className="w-full px-4 py-3 rounded-lg border border-alma-cream-dark focus:border-alma-lime focus:ring-2 focus:ring-alma-lime/20 outline-none transition-all md:col-span-2"
-              />
-              <input
-                type="tel"
-                placeholder="Phone Number"
-                className="w-full px-4 py-3 rounded-lg border border-alma-cream-dark focus:border-alma-lime focus:ring-2 focus:ring-alma-lime/20 outline-none transition-all md:col-span-2"
-              />
+              <input name="firstName" required type="text" placeholder="First Name" defaultValue={user?.name?.split(' ')[0] || ''}
+                className="w-full px-4 py-3 rounded-lg border border-alma-cream-dark focus:border-alma-lime focus:ring-2 focus:ring-alma-lime/20 outline-none transition-all" />
+              <input name="lastName" required type="text" placeholder="Last Name" defaultValue={user?.name?.split(' ').slice(1).join(' ') || ''}
+                className="w-full px-4 py-3 rounded-lg border border-alma-cream-dark focus:border-alma-lime focus:ring-2 focus:ring-alma-lime/20 outline-none transition-all" />
+              <input name="email" required type="email" placeholder="Email Address" defaultValue={user?.email || ''}
+                className="w-full px-4 py-3 rounded-lg border border-alma-cream-dark focus:border-alma-lime focus:ring-2 focus:ring-alma-lime/20 outline-none transition-all md:col-span-2" />
+              <input name="phone" type="tel" placeholder="Phone Number"
+                className="w-full px-4 py-3 rounded-lg border border-alma-cream-dark focus:border-alma-lime focus:ring-2 focus:ring-alma-lime/20 outline-none transition-all md:col-span-2" />
             </div>
           </div>
 
-          {/* Shipping */}
           <div className="bg-white rounded-2xl shadow-md p-6">
             <h2 className="text-lg font-semibold text-alma-green mb-4">Shipping Address</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <input
-                required
-                type="text"
-                placeholder="Street Address"
-                className="w-full px-4 py-3 rounded-lg border border-alma-cream-dark focus:border-alma-lime focus:ring-2 focus:ring-alma-lime/20 outline-none transition-all md:col-span-2"
-              />
-              <input
-                required
-                type="text"
-                placeholder="City"
-                className="w-full px-4 py-3 rounded-lg border border-alma-cream-dark focus:border-alma-lime focus:ring-2 focus:ring-alma-lime/20 outline-none transition-all"
-              />
-              <input
-                required
-                type="text"
-                placeholder="State / Province"
-                className="w-full px-4 py-3 rounded-lg border border-alma-cream-dark focus:border-alma-lime focus:ring-2 focus:ring-alma-lime/20 outline-none transition-all"
-              />
-              <input
-                required
-                type="text"
-                placeholder="ZIP / Postal Code"
-                className="w-full px-4 py-3 rounded-lg border border-alma-cream-dark focus:border-alma-lime focus:ring-2 focus:ring-alma-lime/20 outline-none transition-all"
-              />
-              <input
-                required
-                type="text"
-                placeholder="Country"
-                className="w-full px-4 py-3 rounded-lg border border-alma-cream-dark focus:border-alma-lime focus:ring-2 focus:ring-alma-lime/20 outline-none transition-all"
-              />
+              <input required type="text" placeholder="Street Address"
+                className="w-full px-4 py-3 rounded-lg border border-alma-cream-dark focus:border-alma-lime focus:ring-2 focus:ring-alma-lime/20 outline-none transition-all md:col-span-2" />
+              <input required type="text" placeholder="City"
+                className="w-full px-4 py-3 rounded-lg border border-alma-cream-dark focus:border-alma-lime focus:ring-2 focus:ring-alma-lime/20 outline-none transition-all" />
+              <input required type="text" placeholder="State / Province"
+                className="w-full px-4 py-3 rounded-lg border border-alma-cream-dark focus:border-alma-lime focus:ring-2 focus:ring-alma-lime/20 outline-none transition-all" />
+              <input required type="text" placeholder="ZIP / Postal Code"
+                className="w-full px-4 py-3 rounded-lg border border-alma-cream-dark focus:border-alma-lime focus:ring-2 focus:ring-alma-lime/20 outline-none transition-all" />
+              <input required type="text" placeholder="Country"
+                className="w-full px-4 py-3 rounded-lg border border-alma-cream-dark focus:border-alma-lime focus:ring-2 focus:ring-alma-lime/20 outline-none transition-all" />
             </div>
           </div>
 
-          {/* Payment (Demo) */}
           <div className="bg-white rounded-2xl shadow-md p-6">
             <h2 className="text-lg font-semibold text-alma-green mb-2">Payment</h2>
-            <p className="text-sm text-alma-charcoal/50 mb-4">
-              This is a demo store. No real payment will be processed.
-            </p>
+            <p className="text-sm text-alma-charcoal/50 mb-4">Demo store - no real payment processed.</p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <input
-                type="text"
-                placeholder="Card Number"
-                defaultValue="4242 4242 4242 4242"
-                className="w-full px-4 py-3 rounded-lg border border-alma-cream-dark focus:border-alma-lime focus:ring-2 focus:ring-alma-lime/20 outline-none transition-all md:col-span-2"
-              />
-              <input
-                type="text"
-                placeholder="MM/YY"
-                defaultValue="12/28"
-                className="w-full px-4 py-3 rounded-lg border border-alma-cream-dark focus:border-alma-lime focus:ring-2 focus:ring-alma-lime/20 outline-none transition-all"
-              />
-              <input
-                type="text"
-                placeholder="CVC"
-                defaultValue="123"
-                className="w-full px-4 py-3 rounded-lg border border-alma-cream-dark focus:border-alma-lime focus:ring-2 focus:ring-alma-lime/20 outline-none transition-all"
-              />
+              <input type="text" placeholder="Card Number" defaultValue="4242 4242 4242 4242"
+                className="w-full px-4 py-3 rounded-lg border border-alma-cream-dark focus:border-alma-lime focus:ring-2 focus:ring-alma-lime/20 outline-none transition-all md:col-span-2" />
+              <input type="text" placeholder="MM/YY" defaultValue="12/28"
+                className="w-full px-4 py-3 rounded-lg border border-alma-cream-dark focus:border-alma-lime focus:ring-2 focus:ring-alma-lime/20 outline-none transition-all" />
+              <input type="text" placeholder="CVC" defaultValue="123"
+                className="w-full px-4 py-3 rounded-lg border border-alma-cream-dark focus:border-alma-lime focus:ring-2 focus:ring-alma-lime/20 outline-none transition-all" />
             </div>
           </div>
 
@@ -150,16 +123,26 @@ export default function CheckoutPage() {
           <div className="space-y-3">
             {cartItems.map(ci => (
               <div key={`${ci.itemType}-${ci.item.id}`} className="flex justify-between text-sm">
-                <span className="text-alma-charcoal/70">
-                  {ci.item.name} x{ci.quantity}
-                </span>
+                <span className="text-alma-charcoal/70">{ci.item.name} x{ci.quantity}</span>
                 <span className="font-medium">${(ci.item.price * ci.quantity).toFixed(2)}</span>
               </div>
             ))}
           </div>
-          <div className="border-t border-alma-cream-dark mt-4 pt-4 flex justify-between font-bold text-alma-green">
-            <span>Total</span>
-            <span>${cartTotal.toFixed(2)}</span>
+          <div className="border-t border-alma-cream-dark mt-4 pt-4 space-y-2">
+            <div className="flex justify-between text-sm text-alma-charcoal/70">
+              <span>Subtotal</span>
+              <span>${cartSubtotal.toFixed(2)}</span>
+            </div>
+            {discountPercent > 0 && (
+              <div className="flex justify-between text-sm text-green-600 font-medium">
+                <span>Member Discount ({discountPercent}%)</span>
+                <span>-${discountAmount.toFixed(2)}</span>
+              </div>
+            )}
+            <div className="flex justify-between font-bold text-alma-green pt-2 border-t border-alma-cream-dark">
+              <span>Total</span>
+              <span>${cartTotal.toFixed(2)}</span>
+            </div>
           </div>
         </div>
       </div>

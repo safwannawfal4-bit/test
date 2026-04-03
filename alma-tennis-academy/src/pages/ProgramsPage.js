@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import ProgramCard from '../components/ProgramCard';
-import programs from '../data/programs';
+import { useData } from '../context/DataContext';
 
 export default function ProgramsPage() {
+  const { programs } = useData();
   const [typeFilter, setTypeFilter] = useState('all');
   const [ageFilter, setAgeFilter] = useState('all');
 

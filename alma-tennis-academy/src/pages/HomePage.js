@@ -3,8 +3,7 @@ import HeroSection from '../components/HeroSection';
 import ProductCard from '../components/ProductCard';
 import ProgramCard from '../components/ProgramCard';
 import useScrollReveal from '../hooks/useScrollReveal';
-import products from '../data/products';
-import programs from '../data/programs';
+import { useData } from '../context/DataContext';
 
 function RevealSection({ children, className = '' }) {
   const [ref, isVisible] = useScrollReveal(0.1);
@@ -21,6 +20,7 @@ function RevealSection({ children, className = '' }) {
 }
 
 export default function HomePage() {
+  const { products, programs } = useData();
   const featuredProducts = products.slice(0, 4);
   const popularPrograms = programs.slice(0, 3);
 

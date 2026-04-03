@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
-import products from '../data/products';
+import { useData } from '../context/DataContext';
 
 export default function ProductDetailPage() {
   const { id } = useParams();
   const { addToCart } = useCart();
+  const { products } = useData();
   const [quantity, setQuantity] = useState(1);
   const [added, setAdded] = useState(false);
 

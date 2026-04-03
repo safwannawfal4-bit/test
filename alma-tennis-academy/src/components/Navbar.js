@@ -1,12 +1,15 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
+import { useAuth } from '../context/AuthContext';
 import Logo from './Logo';
+import DiscountBadge from './DiscountBadge';
 
 export default function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const { cartCount } = useCart();
+  const { user, isAuthenticated, isAdmin, logout } = useAuth();
   const location = useLocation();
 
   useEffect(() => {
@@ -57,8 +60,43 @@ export default function Navbar() {
             ))}
           </div>
 
-          {/* Cart & Mobile Toggle */}
-          <div className="flex items-center gap-4">
+          {/* Right side: Discount badge + Auth + Cart + Mobile */}
+          <div className="flex items-center gap-3">
+            {/* Discount badge for logged-in users */}
+            {isAuthenticated && !isAdmin && (
+              <div className="hidden md:block">
+                <DiscountBadge />
+              </div>
+            )}
+
+            {/* Auth section */}
+            <div className="hidden md:flex items-center gap-3">
+              {isAuthenticated ? (
+                <>
+                  {isAdmin && (
+                    <Link to="/admin" className="text-xs font-bold bg-alma-green text-white px-3 py-1.5 rounded-full hover:bg-alma-green-light transition-colors">
+                      Admin Panel
+                    </Link>
+                  )}
+                  <span className="text-sm text-alma-charcoal/70">{user.name}</span>
+                  <button
+                    onClick={logout}
+                    className="text-sm text-red-400 hover:text-red-600 transition-colors"
+                  >
+                    Logout
+                  </button>
+                </>
+              ) : (
+                <Link
+                  to="/login"
+                  className="text-sm font-medium text-alma-green hover:text-alma-green-light transition-colors"
+                >
+                  Login
+                </Link>
+              )}
+            </div>
+
+            {/* Cart */}
             <Link
               to="/cart"
               className="relative p-2 text-alma-green hover:text-alma-green-light transition-colors"
@@ -109,6 +147,31 @@ export default function Navbar() {
                 {link.label}
               </Link>
             ))}
+            <div className="border-t border-alma-cream-dark pt-3 space-y-2">
+              {isAuthenticated ? (
+                <>
+                  <div className="px-3 py-1 text-sm text-alma-charcoal/70">Hi, {user.name}</div>
+                  {isAuthenticated && !isAdmin && <div className="px-3"><DiscountBadge /></div>}
+                  {isAdmin && (
+                    <Link to="/admin" className="block py-2 px-3 rounded-lg text-sm font-bold text-alma-green bg-alma-lime/20">
+                      Admin Panel
+                    </Link>
+                  )}
+                  <button onClick={logout} className="block w-full text-left py-2 px-3 rounded-lg text-sm text-red-500">
+                    Logout
+                  </button>
+                </>
+              ) : (
+                <>
+                  <Link to="/login" className="block py-2 px-3 rounded-lg text-sm font-medium text-alma-green">
+                    Login
+                  </Link>
+                  <Link to="/register" className="block py-2 px-3 rounded-lg text-sm font-medium bg-alma-green text-white text-center">
+                    Register - Get 20% Off
+                  </Link>
+                </>
+              )}
+            </div>
           </div>
         </div>
       )}

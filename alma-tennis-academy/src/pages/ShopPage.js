@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import ProductCard from '../components/ProductCard';
 import CategoryFilter from '../components/CategoryFilter';
-import products from '../data/products';
+import { useData } from '../context/DataContext';
 
 export default function ShopPage() {
+  const { products } = useData();
   const [selectedCategory, setSelectedCategory] = useState('all');
 
   const categories = [...new Set(products.map(p => p.category))];

@@ -1,9 +1,11 @@
 import { Link } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
+import { useAuth } from '../context/AuthContext';
 import CartItem from '../components/CartItem';
 
 export default function CartPage() {
-  const { cartItems, cartTotal, clearCart } = useCart();
+  const { cartItems, cartSubtotal, discountPercent, discountAmount, cartTotal, clearCart } = useCart();
+  const { isAuthenticated } = useAuth();
 
   if (cartItems.length === 0) {
     return (
@@ -46,8 +48,16 @@ export default function CartPage() {
           <div className="space-y-3 text-sm">
             <div className="flex justify-between text-alma-charcoal/70">
               <span>Subtotal ({cartItems.reduce((s, c) => s + c.quantity, 0)} items)</span>
-              <span>${cartTotal.toFixed(2)}</span>
+              <span>${cartSubtotal.toFixed(2)}</span>
             </div>
+
+            {discountPercent > 0 && (
+              <div className="flex justify-between text-green-600 font-medium">
+                <span>Member Discount ({discountPercent}%)</span>
+                <span>-${discountAmount.toFixed(2)}</span>
+              </div>
+            )}
+
             <div className="flex justify-between text-alma-charcoal/70">
               <span>Shipping</span>
               <span className="text-alma-lime font-medium">Free</span>
@@ -64,6 +74,17 @@ export default function CartPage() {
           >
             Proceed to Checkout
           </Link>
+
+          {!isAuthenticated && (
+            <div className="mt-4 bg-alma-lime/10 rounded-lg p-3 text-center">
+              <p className="text-sm text-alma-green font-medium">
+                <Link to="/register" className="underline font-bold">Register</Link> to save 20% on your order!
+              </p>
+              <p className="text-xs text-alma-charcoal/50 mt-1">
+                You'd save ${(cartSubtotal * 0.2).toFixed(2)} on this order
+              </p>
+            </div>
+          )}
 
           <Link
             to="/shop"
