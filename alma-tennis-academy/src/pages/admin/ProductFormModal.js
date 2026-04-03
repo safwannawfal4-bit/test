@@ -9,16 +9,17 @@ export default function ProductFormModal({ product, onSave, onClose }) {
   });
   const [imageFile, setImageFile] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     if (product) {
       setForm({
-        name: product.name,
-        category: product.category,
-        price: product.price.toString(),
-        description: product.description,
+        name: product.name || '',
+        category: product.category || 'rackets',
+        price: (product.price || '').toString(),
+        description: product.description || '',
         features: (product.features || []).join(', '),
-        inStock: product.inStock,
+        inStock: product.inStock !== false,
       });
     }
   }, [product]);
@@ -26,6 +27,7 @@ export default function ProductFormModal({ product, onSave, onClose }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSaving(true);
+    setError('');
     try {
       let imageUrl = product?.imageUrl || '';
       if (imageFile) {
@@ -42,19 +44,25 @@ export default function ProductFormModal({ product, onSave, onClose }) {
       });
     } catch (err) {
       console.error('Save error:', err);
+      setError(err.message || 'Failed to save. Check your Firebase permissions.');
+      setSaving(false);
+      return;
     }
     setSaving(false);
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={onClose}>
+      <div className="bg-white rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
         <div className="p-6 border-b border-gray-100">
           <h2 className="text-xl font-semibold text-alma-green">
             {product ? 'Edit Product' : 'Add New Product'}
           </h2>
         </div>
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
+          {error && (
+            <div className="bg-red-50 text-red-600 text-sm px-4 py-3 rounded-lg">{error}</div>
+          )}
           <ImageUpload currentUrl={product?.imageUrl} onFileSelect={setImageFile} />
           <div>
             <label className="block text-sm font-medium text-alma-green mb-1">Product Name</label>
@@ -102,7 +110,7 @@ export default function ProductFormModal({ product, onSave, onClose }) {
             <button type="submit" disabled={saving} className="btn-primary flex-grow disabled:opacity-50">
               {saving ? 'Saving...' : product ? 'Save Changes' : 'Add Product'}
             </button>
-            <button type="button" onClick={onClose} className="btn-outline">Cancel</button>
+            <button type="button" onClick={onClose} disabled={saving} className="btn-outline disabled:opacity-50">Cancel</button>
           </div>
         </form>
       </div>

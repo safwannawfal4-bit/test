@@ -18,43 +18,47 @@ export function DataProvider({ children }) {
   useEffect(() => {
     const unsub1 = onSnapshot(collection(db, 'products'), (snap) => {
       setProducts(snap.docs.map(d => ({ id: d.id, ...d.data() })));
-    });
+    }, (err) => console.error('Products listener error:', err));
+
     const unsub2 = onSnapshot(collection(db, 'programs'), (snap) => {
       setPrograms(snap.docs.map(d => ({ id: d.id, ...d.data() })));
       setLoading(false);
-    });
+    }, (err) => console.error('Programs listener error:', err));
+
     return () => { unsub1(); unsub2(); };
   }, []);
 
   const addProduct = async (product) => {
-    return addDoc(collection(db, 'products'), {
+    const docRef = await addDoc(collection(db, 'products'), {
       ...product,
       createdAt: serverTimestamp(),
     });
+    return docRef;
   };
 
   const updateProduct = async (id, updates) => {
-    return updateDoc(doc(db, 'products', id), updates);
+    await updateDoc(doc(db, 'products', id), updates);
   };
 
   const deleteProduct = async (id) => {
-    return deleteDoc(doc(db, 'products', id));
+    await deleteDoc(doc(db, 'products', id));
   };
 
   const addProgram = async (program) => {
-    return addDoc(collection(db, 'programs'), {
+    const docRef = await addDoc(collection(db, 'programs'), {
       ...program,
       spotsTotal: program.spotsAvailable,
       createdAt: serverTimestamp(),
     });
+    return docRef;
   };
 
   const updateProgram = async (id, updates) => {
-    return updateDoc(doc(db, 'programs', id), updates);
+    await updateDoc(doc(db, 'programs', id), updates);
   };
 
   const deleteProgram = async (id) => {
-    return deleteDoc(doc(db, 'programs', id));
+    await deleteDoc(doc(db, 'programs', id));
   };
 
   return (

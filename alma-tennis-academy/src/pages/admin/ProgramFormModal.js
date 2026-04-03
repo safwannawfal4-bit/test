@@ -9,6 +9,7 @@ export default function ProgramFormModal({ program, onSave, onClose }) {
   });
   const [imageFile, setImageFile] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     if (program) {
@@ -29,6 +30,7 @@ export default function ProgramFormModal({ program, onSave, onClose }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSaving(true);
+    setError('');
     try {
       let imageUrl = program?.imageUrl || '';
       if (imageFile) {
@@ -48,6 +50,9 @@ export default function ProgramFormModal({ program, onSave, onClose }) {
       });
     } catch (err) {
       console.error('Save error:', err);
+      setError(err.message || 'Failed to save. Check your Firebase permissions.');
+      setSaving(false);
+      return;
     }
     setSaving(false);
   };
@@ -61,6 +66,9 @@ export default function ProgramFormModal({ program, onSave, onClose }) {
           </h2>
         </div>
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
+          {error && (
+            <div className="bg-red-50 text-red-600 text-sm px-4 py-3 rounded-lg">{error}</div>
+          )}
           <ImageUpload currentUrl={program?.imageUrl} onFileSelect={setImageFile} />
           <div>
             <label className="block text-sm font-medium text-alma-green mb-1">Program Name</label>
