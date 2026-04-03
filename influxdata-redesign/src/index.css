@@ -1,0 +1,165 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── Base ── */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+html {
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+}
+body {
+  margin: 0;
+  background: #0B0F1A;
+  color: #e2e8f0;
+  font-family: 'General Sans', system-ui, sans-serif;
+  overflow-x: hidden;
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #0B0F1A; }
+::-webkit-scrollbar-thumb { background: #22ADF6; border-radius: 3px; }
+
+/* ── Grid texture ── */
+.grid-bg {
+  background-image:
+    linear-gradient(rgba(34,173,246,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(34,173,246,0.03) 1px, transparent 1px);
+  background-size: 60px 60px;
+}
+
+/* ── Glass card ── */
+.glass {
+  background: rgba(17,24,39,0.6);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(34,173,246,0.12);
+}
+.glass-hover:hover {
+  border-color: rgba(34,173,246,0.4);
+  box-shadow: 0 0 30px rgba(34,173,246,0.08);
+}
+
+/* ── Glow utilities ── */
+.glow-cyan { box-shadow: 0 0 20px rgba(34,173,246,0.25), 0 0 60px rgba(34,173,246,0.08); }
+.glow-text-cyan { text-shadow: 0 0 20px rgba(34,173,246,0.4); }
+.glow-border-cyan { border-color: rgba(34,173,246,0.5); box-shadow: 0 0 20px rgba(34,173,246,0.15); }
+
+/* ── Pulse animation ── */
+@keyframes pulse-glow {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+.animate-pulse-glow { animation: pulse-glow 3s ease-in-out infinite; }
+
+/* ── Fade in from below ── */
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(30px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-up {
+  opacity: 0;
+  animation: fade-up 0.7s ease-out forwards;
+}
+.delay-100 { animation-delay: 0.1s; }
+.delay-200 { animation-delay: 0.2s; }
+.delay-300 { animation-delay: 0.3s; }
+.delay-400 { animation-delay: 0.4s; }
+.delay-500 { animation-delay: 0.5s; }
+.delay-600 { animation-delay: 0.6s; }
+
+/* ── Floating stats badge ── */
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+.animate-float { animation: float 4s ease-in-out infinite; }
+.animate-float-delayed { animation: float 4s ease-in-out 1s infinite; }
+.animate-float-delayed2 { animation: float 4s ease-in-out 2s infinite; }
+
+/* ── Data flow line ── */
+@keyframes flow-right {
+  from { background-position: 0% 50%; }
+  to   { background-position: 200% 50%; }
+}
+.animate-flow {
+  background: linear-gradient(90deg, transparent, #22ADF6, transparent);
+  background-size: 200% 100%;
+  animation: flow-right 2s linear infinite;
+}
+
+/* ── Code block styling ── */
+.code-block {
+  background: rgba(11,15,26,0.9);
+  border: 1px solid rgba(34,173,246,0.15);
+  border-radius: 12px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+/* ── Syntax colours ── */
+.syn-keyword  { color: #c084fc; }
+.syn-function { color: #22ADF6; }
+.syn-string   { color: #34D399; }
+.syn-number   { color: #F59E0B; }
+.syn-comment  { color: #64748b; }
+.syn-operator { color: #94a3b8; }
+
+/* ── Chart glow ── */
+@keyframes chart-draw {
+  from { stroke-dashoffset: 1000; }
+  to   { stroke-dashoffset: 0; }
+}
+.chart-line {
+  stroke-dasharray: 1000;
+  animation: chart-draw 3s ease-out forwards;
+}
+
+/* ── Typing cursor ── */
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+.cursor-blink::after {
+  content: '█';
+  color: #22ADF6;
+  animation: blink 1s step-end infinite;
+}
+
+/* ── Gradient text ── */
+.gradient-text {
+  background: linear-gradient(135deg, #22ADF6, #34D399);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ── Section divider ── */
+.section-divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(34,173,246,0.2), transparent);
+}
+
+/* ── Terminal window ── */
+.terminal {
+  background: #0d1117;
+  border: 1px solid rgba(34,173,246,0.15);
+  border-radius: 12px;
+  overflow: hidden;
+}
+.terminal-bar {
+  background: rgba(17,24,39,0.8);
+  padding: 10px 16px;
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+.terminal-dot {
+  width: 10px; height: 10px; border-radius: 50%;
+}
