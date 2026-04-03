@@ -26,6 +26,7 @@ import AdminOrdersPage from './pages/admin/AdminOrdersPage';
 import AdminCustomersPage from './pages/admin/AdminCustomersPage';
 import AdminStaffPage from './pages/admin/AdminStaffPage';
 import { PageContentProvider } from './context/PageContentContext';
+import ThemeCustomizer from './components/ThemeCustomizer';
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -48,6 +49,7 @@ function PublicLayout() {
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
+      <ThemeCustomizer />
       <main className="flex-grow">
         <Routes>
           <Route path="/" element={<HomePage />} />

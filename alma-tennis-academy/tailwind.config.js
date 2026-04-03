@@ -7,13 +7,13 @@ module.exports = {
     extend: {
       colors: {
         alma: {
-          green: '#2D4A2D',
-          lime: '#A8D86E',
-          'lime-light': '#C4E8A0',
-          cream: '#FDF6E3',
-          'cream-dark': '#F5EDDA',
-          charcoal: '#1A1A1A',
-          'green-light': '#3D6B3D',
+          green: 'var(--color-primary, #2D4A2D)',
+          lime: 'var(--color-accent, #A8D86E)',
+          'lime-light': 'var(--color-accent-light, #C4E8A0)',
+          cream: 'var(--color-cream, #FDF6E3)',
+          'cream-dark': 'var(--color-cream-dark, #F5EDDA)',
+          charcoal: 'var(--color-charcoal, #1A1A1A)',
+          'green-light': 'var(--color-primary-light, #3D6B3D)',
         }
       },
       fontFamily: {

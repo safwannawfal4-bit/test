@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import ProductCard from '../components/ProductCard';
 import CategoryFilter from '../components/CategoryFilter';
+import EditableText from '../components/EditableText';
 import { useData } from '../context/DataContext';
 
 export default function ShopPage() {
@@ -16,10 +17,8 @@ export default function ShopPage() {
     <div className="pt-24 pb-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
       {/* Header */}
       <div className="text-center mb-10">
-        <h1 className="section-title">Shop Equipment</h1>
-        <p className="section-subtitle mx-auto">
-          Quality tennis gear recommended by our professional coaches.
-        </p>
+        <h1 className="section-title"><EditableText contentKey="shop_title" /></h1>
+        <p className="section-subtitle mx-auto"><EditableText contentKey="shop_subtitle" /></p>
       </div>
 
       {/* Filters */}

@@ -10,27 +10,38 @@
   }
 
   body {
-    @apply bg-alma-cream text-alma-charcoal font-sans;
+    background-color: var(--color-cream, #FDF6E3);
+    color: var(--color-charcoal, #1A1A1A);
+    @apply font-sans;
   }
 }
 
 @layer components {
   .btn-primary {
-    @apply bg-alma-green text-white px-6 py-3 rounded-lg font-semibold
-           hover:bg-alma-green-light transition-all duration-300
-           hover:shadow-lg active:scale-95;
+    background-color: var(--color-primary, #2D4A2D);
+    @apply text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300 hover:shadow-lg active:scale-95;
+  }
+  .btn-primary:hover {
+    background-color: var(--color-primary-light, #3D6B3D);
   }
 
   .btn-secondary {
-    @apply bg-alma-lime text-alma-green px-6 py-3 rounded-lg font-semibold
-           hover:bg-alma-lime-light transition-all duration-300
-           hover:shadow-lg active:scale-95;
+    background-color: var(--color-accent, #A8D86E);
+    color: var(--color-primary, #2D4A2D);
+    @apply px-6 py-3 rounded-lg font-semibold transition-all duration-300 hover:shadow-lg active:scale-95;
+  }
+  .btn-secondary:hover {
+    background-color: var(--color-accent-light, #C4E8A0);
   }
 
   .btn-outline {
-    @apply border-2 border-alma-green text-alma-green px-6 py-3 rounded-lg font-semibold
-           hover:bg-alma-green hover:text-white transition-all duration-300
-           active:scale-95;
+    border-color: var(--color-primary, #2D4A2D);
+    color: var(--color-primary, #2D4A2D);
+    @apply border-2 px-6 py-3 rounded-lg font-semibold transition-all duration-300 active:scale-95;
+  }
+  .btn-outline:hover {
+    background-color: var(--color-primary, #2D4A2D);
+    @apply text-white;
   }
 
   .card {
@@ -38,16 +49,21 @@
   }
 
   .section-title {
-    @apply text-3xl md:text-4xl font-display font-bold text-alma-green;
+    color: var(--color-primary, #2D4A2D);
+    @apply text-3xl md:text-4xl font-display font-bold;
   }
 
   .section-subtitle {
-    @apply text-lg text-alma-charcoal/70 mt-2 max-w-2xl;
+    @apply text-lg mt-2 max-w-2xl;
+    color: color-mix(in srgb, var(--color-charcoal, #1A1A1A) 70%, transparent);
   }
 }
 
 @layer utilities {
   .text-gradient {
-    @apply bg-gradient-to-r from-alma-green to-alma-green-light bg-clip-text text-transparent;
+    -webkit-background-clip: text;
+    background-clip: text;
+    @apply text-transparent;
+    background-image: linear-gradient(to right, var(--color-primary), var(--color-primary-light));
   }
 }

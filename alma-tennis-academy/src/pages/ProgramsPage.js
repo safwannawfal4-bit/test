@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import ProgramCard from '../components/ProgramCard';
+import EditableText from '../components/EditableText';
 import { useData } from '../context/DataContext';
 
 export default function ProgramsPage() {
@@ -29,10 +30,8 @@ export default function ProgramsPage() {
   return (
     <div className="pt-24 pb-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
       <div className="text-center mb-10">
-        <h1 className="section-title">Programs & Lessons</h1>
-        <p className="section-subtitle mx-auto">
-          Find the perfect program for your skill level and goals.
-        </p>
+        <h1 className="section-title"><EditableText contentKey="programs_page_title" /></h1>
+        <p className="section-subtitle mx-auto"><EditableText contentKey="programs_page_subtitle" /></p>
       </div>
 
       {/* Filters */}
