@@ -2,7 +2,7 @@ name: Deploy InfluxData Redesign to GitHub Pages
 
 on:
   push:
-    branches: [claude/install-magic-mcp-zC28s, main]
+    branches: [claude/install-ui-ux-skill-RKXd9]
   workflow_dispatch:
 
 permissions:
