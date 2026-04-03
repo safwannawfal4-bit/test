@@ -24,7 +24,7 @@ const colorFields = [
 ];
 
 export default function AdminSettingsPage() {
-  const { theme, updateTheme, defaultTheme, logoUrl, updateLogo, heroBg, updateHeroBg, language, setLanguage } = usePageContent();
+  const { theme, updateTheme, defaultTheme, logoUrl, updateLogo, heroBg, updateHeroBg, language, setLanguage, content, updateContent } = usePageContent();
   const [uploading, setUploading] = useState(false);
   const [uploadingHero, setUploadingHero] = useState(false);
   const [saved, setSaved] = useState('');
@@ -224,6 +224,77 @@ export default function AdminSettingsPage() {
           >
             Remove image and use color
           </button>
+        )}
+
+        {/* Size recommendation */}
+        <div className="mt-4 bg-blue-50 rounded-lg p-3 text-xs text-blue-700 space-y-1">
+          <p className="font-semibold">Recommended image size:</p>
+          <ul className="list-disc list-inside space-y-0.5">
+            <li><strong>1920 x 1080 px</strong> (Full HD) - best for most screens</li>
+            <li><strong>2560 x 1440 px</strong> (2K) - sharper on large monitors</li>
+            <li>Landscape orientation (wider than tall)</li>
+            <li>File size: under 2MB for fast loading (JPG recommended)</li>
+            <li>Dark or medium-toned images work best (white text overlays on top)</li>
+          </ul>
+        </div>
+
+        {/* Floating emojis control (only when using color gradient) */}
+        {heroBg?.type !== 'image' && (
+          <div className="mt-4 border-t border-gray-100 pt-4">
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-sm font-medium text-alma-green">Floating Background Emojis</p>
+              <button
+                onClick={() => {
+                  const current = content.hero_show_emojis !== 'no';
+                  updateContent('hero_show_emojis', current ? 'no' : 'yes');
+                  setSaved(current ? 'Emojis hidden' : 'Emojis visible');
+                  setTimeout(() => setSaved(''), 3000);
+                }}
+                className={`relative w-11 h-6 rounded-full transition-colors ${content.hero_show_emojis !== 'no' ? 'bg-green-500' : 'bg-gray-300'}`}
+              >
+                <span className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${content.hero_show_emojis !== 'no' ? 'left-[22px]' : 'left-0.5'}`} />
+              </button>
+            </div>
+
+            {content.hero_show_emojis !== 'no' && (
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs text-alma-charcoal/50 mb-1">Large emoji (top-right)</label>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={content.hero_float_emoji_1 || '🎾'}
+                      onChange={e => updateContent('hero_float_emoji_1', e.target.value)}
+                      className="w-16 text-center text-2xl px-2 py-1.5 rounded-lg border border-gray-200 focus:border-alma-lime outline-none"
+                    />
+                    <div className="flex flex-wrap gap-1">
+                      {['🎾', '🏆', '⭐', '🌟', '💚', '🎯', '🏅', '✨'].map(e => (
+                        <button key={e} onClick={() => updateContent('hero_float_emoji_1', e)}
+                          className="text-lg hover:scale-125 transition-transform">{e}</button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-xs text-alma-charcoal/50 mb-1">Small emoji (bottom-left)</label>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={content.hero_float_emoji_2 || '🎾'}
+                      onChange={e => updateContent('hero_float_emoji_2', e.target.value)}
+                      className="w-16 text-center text-2xl px-2 py-1.5 rounded-lg border border-gray-200 focus:border-alma-lime outline-none"
+                    />
+                    <div className="flex flex-wrap gap-1">
+                      {['🎾', '🏆', '⭐', '🌟', '💚', '🎯', '🏅', '✨'].map(e => (
+                        <button key={e} onClick={() => updateContent('hero_float_emoji_2', e)}
+                          className="text-lg hover:scale-125 transition-transform">{e}</button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
         )}
       </div>
 

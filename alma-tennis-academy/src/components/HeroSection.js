@@ -3,13 +3,15 @@ import EditableText from './EditableText';
 import { usePageContent } from '../context/PageContentContext';
 
 export default function HeroSection() {
-  const { heroBg } = usePageContent();
+  const { heroBg, content } = usePageContent();
 
   const hasImage = heroBg?.type === 'image' && heroBg?.imageUrl;
+  const emoji1 = content.hero_float_emoji_1 || '🎾';
+  const emoji2 = content.hero_float_emoji_2 || '🎾';
+  const showEmojis = content.hero_show_emojis !== 'no';
 
   return (
     <section className="relative min-h-[90vh] flex items-center overflow-hidden">
-      {/* Background layer */}
       {hasImage ? (
         <>
           <div className="absolute inset-0">
@@ -24,8 +26,12 @@ export default function HeroSection() {
             <div className="absolute top-20 right-20 w-72 h-72 bg-alma-lime/20 rounded-full blur-3xl" />
             <div className="absolute bottom-20 left-20 w-96 h-96 bg-alma-lime/10 rounded-full blur-3xl" />
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] border border-white/5 rounded-full" />
-            <div className="absolute top-32 right-[15%] text-6xl opacity-20 animate-bounce-gentle">🎾</div>
-            <div className="absolute bottom-32 left-[10%] text-4xl opacity-15 animate-bounce-gentle" style={{ animationDelay: '0.5s' }}>🎾</div>
+            {showEmojis && (
+              <>
+                <div className="absolute top-32 right-[15%] text-6xl opacity-20 animate-bounce-gentle">{emoji1}</div>
+                <div className="absolute bottom-32 left-[10%] text-4xl opacity-15 animate-bounce-gentle" style={{ animationDelay: '0.5s' }}>{emoji2}</div>
+              </>
+            )}
           </div>
         </>
       )}
