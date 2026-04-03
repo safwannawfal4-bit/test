@@ -26,6 +26,7 @@ import AdminOrdersPage from './pages/admin/AdminOrdersPage';
 import AdminCustomersPage from './pages/admin/AdminCustomersPage';
 import AdminStaffPage from './pages/admin/AdminStaffPage';
 import AdminSettingsPage from './pages/admin/AdminSettingsPage';
+import AdminHelpPage from './pages/admin/AdminHelpPage';
 import { PageContentProvider } from './context/PageContentContext';
 import ThemeCustomizer from './components/ThemeCustomizer';
 
@@ -87,6 +88,7 @@ function AppContent() {
           <Route path="customers" element={<AdminCustomersPage />} />
           <Route path="staff" element={<AdminStaffPage />} />
           <Route path="settings" element={<AdminSettingsPage />} />
+          <Route path="help" element={<AdminHelpPage />} />
         </Route>
         <Route path="/*" element={<PublicLayout />} />
       </Routes>

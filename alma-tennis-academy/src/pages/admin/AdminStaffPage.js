@@ -10,6 +10,7 @@ const ALL_PERMISSIONS = [
   { key: 'orders', label: 'Orders', icon: '📦' },
   { key: 'customers', label: 'Customers', icon: '👥' },
   { key: 'staff', label: 'Staff Management', icon: '🏢' },
+  { key: 'help', label: 'Help & Guide', icon: '❓' },
 ];
 
 export default function AdminStaffPage() {
