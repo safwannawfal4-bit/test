@@ -8,6 +8,7 @@ const allLinks = [
   { to: '/admin/orders', label: 'Orders', icon: '📦', perm: 'orders' },
   { to: '/admin/customers', label: 'Customers', icon: '👥', perm: 'customers' },
   { to: '/admin/staff', label: 'Staff & Tasks', icon: '🏢', perm: 'staff' },
+  { to: '/admin/settings', label: 'Settings', icon: '⚙️', perm: 'staff' },
 ];
 
 export default function AdminLayout() {

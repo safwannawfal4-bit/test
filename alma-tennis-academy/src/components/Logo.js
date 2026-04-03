@@ -1,6 +1,26 @@
 import { Link } from 'react-router-dom';
+import { usePageContent } from '../context/PageContentContext';
 
 export default function Logo({ variant = 'dark', size = 'md' }) {
+  const { logoUrl } = usePageContent();
+
+  const heights = { sm: 'h-10', md: 'h-14', lg: 'h-20' };
+
+  // If a custom logo is uploaded, show it
+  if (logoUrl) {
+    return (
+      <Link to="/" className="inline-block group">
+        <img
+          src={logoUrl}
+          alt="Alma Tennis Academy"
+          className={`${heights[size]} w-auto object-contain group-hover:scale-105 transition-transform`}
+          style={variant === 'light' ? { filter: 'brightness(10)' } : {}}
+        />
+      </Link>
+    );
+  }
+
+  // Default text logo
   const sizes = {
     sm: { text: 'text-2xl', sub: 'text-[8px]', ball: 14, gap: 'tracking-[0.2em]' },
     md: { text: 'text-3xl', sub: 'text-[10px]', ball: 18, gap: 'tracking-[0.25em]' },
@@ -20,42 +40,14 @@ export default function Logo({ variant = 'dark', size = 'md' }) {
         >
           alma
         </span>
-        {/* Tennis Ball SVG */}
-        <svg
-          width={s.ball}
-          height={s.ball}
-          viewBox="0 0 40 40"
-          className="-ml-1 -mb-0.5 group-hover:rotate-12 transition-transform"
-        >
-          <circle cx="20" cy="20" r="19" fill="#A8D86E" />
-          <circle cx="20" cy="20" r="19" fill="url(#ballGrad)" />
-          <path
-            d="M8 8c4 6 4 18 0 24"
-            stroke="white"
-            strokeWidth="2"
-            fill="none"
-            strokeLinecap="round"
-            opacity="0.7"
-          />
-          <path
-            d="M32 8c-4 6-4 18 0 24"
-            stroke="white"
-            strokeWidth="2"
-            fill="none"
-            strokeLinecap="round"
-            opacity="0.7"
-          />
-          <defs>
-            <radialGradient id="ballGrad" cx="35%" cy="35%">
-              <stop offset="0%" stopColor="#C4E8A0" />
-              <stop offset="100%" stopColor="#A8D86E" />
-            </radialGradient>
-          </defs>
+        <svg width={s.ball} height={s.ball} viewBox="0 0 40 40"
+          className="-ml-1 -mb-0.5 group-hover:rotate-12 transition-transform">
+          <circle cx="20" cy="20" r="19" fill="var(--color-accent, #A8D86E)" />
+          <path d="M8 8c4 6 4 18 0 24" stroke="white" strokeWidth="2" fill="none" strokeLinecap="round" opacity="0.7" />
+          <path d="M32 8c-4 6-4 18 0 24" stroke="white" strokeWidth="2" fill="none" strokeLinecap="round" opacity="0.7" />
         </svg>
       </div>
-      <span
-        className={`${s.sub} ${s.gap} uppercase font-semibold ${subColor} mt-0.5`}
-      >
+      <span className={`${s.sub} ${s.gap} uppercase font-semibold ${subColor} mt-0.5`}>
         Tennis Academy
       </span>
     </Link>
