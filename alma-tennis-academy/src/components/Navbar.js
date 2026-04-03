@@ -9,7 +9,7 @@ export default function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const { cartCount } = useCart();
-  const { user, isAuthenticated, isAdmin, logout } = useAuth();
+  const { user, isAuthenticated, isAdmin, isStaff, logout } = useAuth();
   const location = useLocation();
 
   useEffect(() => {
@@ -73,9 +73,9 @@ export default function Navbar() {
             <div className="hidden md:flex items-center gap-3">
               {isAuthenticated ? (
                 <>
-                  {isAdmin && (
+                  {isStaff && (
                     <Link to="/admin" className="text-xs font-bold bg-alma-green text-white px-3 py-1.5 rounded-full hover:bg-alma-green-light transition-colors">
-                      Admin Panel
+                      {isAdmin ? 'Admin Panel' : 'Staff Panel'}
                     </Link>
                   )}
                   <span className="text-sm text-alma-charcoal/70">{user.name}</span>
@@ -152,9 +152,9 @@ export default function Navbar() {
                 <>
                   <div className="px-3 py-1 text-sm text-alma-charcoal/70">Hi, {user.name}</div>
                   {isAuthenticated && !isAdmin && <div className="px-3"><DiscountBadge /></div>}
-                  {isAdmin && (
+                  {isStaff && (
                     <Link to="/admin" className="block py-2 px-3 rounded-lg text-sm font-bold text-alma-green bg-alma-lime/20">
-                      Admin Panel
+                      {isAdmin ? 'Admin Panel' : 'Staff Panel'}
                     </Link>
                   )}
                   <button onClick={logout} className="block w-full text-left py-2 px-3 rounded-lg text-sm text-red-500">

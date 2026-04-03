@@ -7,11 +7,11 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const { login, isAuthenticated, isAdmin } = useAuth();
+  const { login, isAuthenticated, isStaff } = useAuth();
   const navigate = useNavigate();
 
   if (isAuthenticated) {
-    if (isAdmin) navigate('/admin', { replace: true });
+    if (isStaff) navigate('/admin', { replace: true });
     else navigate('/', { replace: true });
     return null;
   }

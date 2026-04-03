@@ -24,6 +24,8 @@ import AdminProductsPage from './pages/admin/AdminProductsPage';
 import AdminProgramsPage from './pages/admin/AdminProgramsPage';
 import AdminOrdersPage from './pages/admin/AdminOrdersPage';
 import AdminCustomersPage from './pages/admin/AdminCustomersPage';
+import AdminStaffPage from './pages/admin/AdminStaffPage';
+import { PageContentProvider } from './context/PageContentContext';
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -80,6 +82,7 @@ function AppContent() {
           <Route path="programs" element={<AdminProgramsPage />} />
           <Route path="orders" element={<AdminOrdersPage />} />
           <Route path="customers" element={<AdminCustomersPage />} />
+          <Route path="staff" element={<AdminStaffPage />} />
         </Route>
         <Route path="/*" element={<PublicLayout />} />
       </Routes>
@@ -94,9 +97,11 @@ function App() {
         <DataProvider>
           <OrderProvider>
             <EnrollmentProvider>
+              <PageContentProvider>
               <CartProvider>
                 <AppContent />
               </CartProvider>
+              </PageContentProvider>
             </EnrollmentProvider>
           </OrderProvider>
         </DataProvider>

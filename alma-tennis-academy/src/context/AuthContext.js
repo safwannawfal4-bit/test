@@ -116,10 +116,17 @@ export function AuthProvider({ children }) {
 
   const isAuthenticated = !!user;
   const isAdmin = user?.role === 'admin';
+  const isEmployee = user?.role === 'employee';
+  const isStaff = isAdmin || isEmployee;
+  const hasPermission = (perm) => {
+    if (isAdmin) return true;
+    if (isEmployee) return (user?.permissions || []).includes(perm);
+    return false;
+  };
 
   return (
     <AuthContext.Provider
-      value={{ user, loading, isAuthenticated, isAdmin, login, register, logout }}
+      value={{ user, loading, isAuthenticated, isAdmin, isEmployee, isStaff, hasPermission, login, register, logout }}
     >
       {children}
     </AuthContext.Provider>

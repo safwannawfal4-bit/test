@@ -1,23 +1,28 @@
 import { NavLink, Outlet, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 
-export default function AdminLayout() {
-  const { logout } = useAuth();
+const allLinks = [
+  { to: '/admin', label: 'Dashboard', icon: '📊', perm: 'dashboard', end: true },
+  { to: '/admin/products', label: 'Products', icon: '🎾', perm: 'products' },
+  { to: '/admin/programs', label: 'Programs', icon: '📋', perm: 'programs' },
+  { to: '/admin/orders', label: 'Orders', icon: '📦', perm: 'orders' },
+  { to: '/admin/customers', label: 'Customers', icon: '👥', perm: 'customers' },
+  { to: '/admin/staff', label: 'Staff & Tasks', icon: '🏢', perm: 'staff' },
+];
 
-  const links = [
-    { to: '/admin', label: 'Dashboard', icon: '📊', end: true },
-    { to: '/admin/products', label: 'Products', icon: '🎾' },
-    { to: '/admin/programs', label: 'Programs', icon: '📋' },
-    { to: '/admin/orders', label: 'Orders', icon: '📦' },
-    { to: '/admin/customers', label: 'Customers', icon: '👥' },
-  ];
+export default function AdminLayout() {
+  const { logout, hasPermission, isAdmin, user } = useAuth();
+
+  const links = allLinks.filter(link => hasPermission(link.perm));
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
       <aside className="w-64 bg-alma-green text-white flex-shrink-0 hidden md:flex flex-col">
         <div className="p-6 border-b border-white/10">
           <h1 className="text-xl font-display font-bold italic">Alma Admin</h1>
-          <p className="text-xs text-white/50 mt-1">Management Dashboard</p>
+          <p className="text-xs text-white/50 mt-1">
+            {isAdmin ? 'Administrator' : `Employee: ${user?.name}`}
+          </p>
         </div>
         <nav className="flex-grow p-4 space-y-1">
           {links.map(link => (
@@ -43,7 +48,7 @@ export default function AdminLayout() {
       </aside>
 
       <div className="md:hidden fixed top-0 left-0 right-0 bg-alma-green text-white z-50 px-4 py-3 flex items-center justify-between">
-        <h1 className="font-display font-bold italic">Alma Admin</h1>
+        <h1 className="font-display font-bold italic text-sm">Alma Admin</h1>
         <div className="flex gap-3">
           {links.map(link => (
             <NavLink key={link.to} to={link.to} end={link.end}
