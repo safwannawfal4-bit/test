@@ -6,6 +6,7 @@ import { useOrders } from '../context/OrderContext';
 import { useEnrollments } from '../context/EnrollmentContext';
 import { doc, updateDoc, increment } from 'firebase/firestore';
 import { db } from '../firebase';
+import MapPicker from '../components/MapPicker';
 
 export default function CheckoutPage() {
   const { cartItems, cartSubtotal, discountPercent, discountAmount, cartTotal, clearCart } = useCart();
@@ -15,15 +16,10 @@ export default function CheckoutPage() {
   const [orderPlaced, setOrderPlaced] = useState(false);
   const [placing, setPlacing] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState('card');
-  const [mapQuery, setMapQuery] = useState('');
+  const [pinLocation, setPinLocation] = useState(null);
   const [address, setAddress] = useState({
     street: '', city: '', state: '', zip: '', country: '',
   });
-
-  const updateMapFromAddress = () => {
-    const q = [address.street, address.city, address.state, address.country].filter(Boolean).join(', ');
-    setMapQuery(q);
-  };
 
   const handleAddressChange = (field, value) => {
     setAddress(prev => ({ ...prev, [field]: value }));
@@ -46,7 +42,7 @@ export default function CheckoutPage() {
         total: cartTotal,
         paymentMethod,
         shippingAddress: address,
-        mapLocation: mapQuery,
+        pinLocation: pinLocation ? { lat: pinLocation.lat, lng: pinLocation.lng } : null,
       };
 
       await placeOrder(orderData);
@@ -119,10 +115,6 @@ export default function CheckoutPage() {
     );
   }
 
-  const mapEmbedUrl = mapQuery
-    ? `https://www.google.com/maps?q=${encodeURIComponent(mapQuery)}&output=embed`
-    : '';
-
   return (
     <div className="pt-24 pb-16 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto">
       <h1 className="section-title mb-8">Checkout</h1>
@@ -174,34 +166,13 @@ export default function CheckoutPage() {
                 className="w-full px-4 py-3 rounded-lg border border-alma-cream-dark focus:border-alma-lime focus:ring-2 focus:ring-alma-lime/20 outline-none transition-all" />
             </div>
 
-            {/* Show on Map button */}
-            <button
-              type="button"
-              onClick={updateMapFromAddress}
-              className="mt-4 text-sm font-medium text-alma-green hover:text-alma-green-light transition-colors flex items-center gap-2"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-              </svg>
-              Show on Map
-            </button>
-
-            {/* Google Maps Embed */}
-            {mapEmbedUrl && (
-              <div className="mt-4 rounded-xl overflow-hidden border border-alma-cream-dark">
-                <iframe
-                  title="Delivery Location"
-                  src={mapEmbedUrl}
-                  width="100%"
-                  height="250"
-                  style={{ border: 0 }}
-                  allowFullScreen
-                  loading="lazy"
-                  referrerPolicy="no-referrer-when-downgrade"
-                />
-              </div>
-            )}
+            {/* Interactive Map - Drop a pin */}
+            <div className="mt-5">
+              <label className="block text-sm font-medium text-alma-green mb-2">
+                Drop a pin on your delivery location
+              </label>
+              <MapPicker onLocationSelect={setPinLocation} />
+            </div>
           </div>
 
           {/* Payment Method */}
