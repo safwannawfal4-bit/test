@@ -30,7 +30,7 @@ import AdminHelpPage from './pages/admin/AdminHelpPage';
 import AdminTrackingPage from './pages/admin/AdminTrackingPage';
 import { PageContentProvider } from './context/PageContentContext';
 import ThemeCustomizer from './components/ThemeCustomizer';
-import PublishBar from './components/PublishBar';
+// PublishBar removed - using instant saves now
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -81,7 +81,6 @@ function AppContent() {
   return (
     <>
       <ScrollToTop />
-      <PublishBar />
       <Routes>
         <Route path="/admin" element={<ProtectedRoute><AdminLayout /></ProtectedRoute>}>
           <Route index element={<DashboardPage />} />

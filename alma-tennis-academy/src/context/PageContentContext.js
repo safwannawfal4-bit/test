@@ -1,5 +1,5 @@
-import { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
-import { doc, setDoc, getDoc, onSnapshot } from 'firebase/firestore';
+import { createContext, useContext, useState, useEffect } from 'react';
+import { doc, setDoc, onSnapshot } from 'firebase/firestore';
 import { db } from '../firebase';
 
 const PageContentContext = createContext();
@@ -9,19 +9,14 @@ export function usePageContent() {
 }
 
 const defaultContentEN = {
-  site_title: 'Alma Tennis Academy',
-  favicon_emoji: '🎾',
-  social_media_enabled: 'no',
-  social_title: 'Follow Us',
+  site_title: 'Alma Tennis Academy', favicon_emoji: '🎾',
+  social_media_enabled: 'no', social_title: 'Follow Us',
   social_subtitle: "Stay connected and see what's happening at Alma Tennis Academy.",
   social_post_1: '', social_post_2: '', social_post_3: '',
   hero_title_1: 'Elevate Your', hero_title_2: 'Tennis Game',
   hero_subtitle: "Professional coaching, premium equipment, and a passionate community. Whether you're picking up a racket for the first time or training for competition, Alma Tennis Academy is your home court.",
-  hero_badge: 'Now Enrolling for Summer 2026',
-  hero_cta_1: 'Explore Programs', hero_cta_2: 'Shop Equipment',
-  hero_stat_1: '500+', hero_stat_1_label: 'Students',
-  hero_stat_2: '15+', hero_stat_2_label: 'Coaches',
-  hero_stat_3: '10+', hero_stat_3_label: 'Years',
+  hero_badge: 'Now Enrolling for Summer 2026', hero_cta_1: 'Explore Programs', hero_cta_2: 'Shop Equipment',
+  hero_stat_1: '500+', hero_stat_1_label: 'Students', hero_stat_2: '15+', hero_stat_2_label: 'Coaches', hero_stat_3: '10+', hero_stat_3_label: 'Years',
   featured_title: 'Featured Equipment', featured_subtitle: 'Premium tennis gear hand-picked by our coaches to help you perform your best.',
   why_title: 'Why Choose Alma', why_subtitle: "More than a tennis academy - we're a community dedicated to excellence.",
   why_1_icon: '🏆', why_1_title: 'Expert Coaches', why_1_desc: 'Our team of certified professionals brings decades of competitive and coaching experience to every lesson.',
@@ -29,9 +24,9 @@ const defaultContentEN = {
   why_3_icon: '🌟', why_3_title: 'Premium Facilities', why_3_desc: 'Train on beautifully maintained courts with top-tier equipment in an inspiring environment.',
   programs_title: 'Popular Programs', programs_subtitle: 'From beginners to advanced players, find the perfect program for your journey.',
   testimonial_title: 'What Our Players Say', testimonial_subtitle: 'Hear from the Alma Tennis Academy community',
-  testimonial_1_name: 'Sarah M.', testimonial_1_role: 'Adult Beginner Student', testimonial_1_text: "I started with zero experience and now I'm playing competitive matches. The coaches are incredibly patient and supportive!",
-  testimonial_2_name: 'James R.', testimonial_2_role: 'Parent', testimonial_2_text: "My kids love the junior program. They've improved so much and made great friends.",
-  testimonial_3_name: 'Lisa T.', testimonial_3_role: 'Competitive Player', testimonial_3_text: "The tournament prep program transformed my game. Highly recommend!",
+  testimonial_1_name: 'Sarah M.', testimonial_1_role: 'Adult Beginner Student', testimonial_1_text: "I started with zero experience and now I'm playing competitive matches!",
+  testimonial_2_name: 'James R.', testimonial_2_role: 'Parent', testimonial_2_text: "My kids love the junior program. They've improved so much!",
+  testimonial_3_name: 'Lisa T.', testimonial_3_role: 'Competitive Player', testimonial_3_text: "The tournament prep program transformed my game!",
   cta_title: 'Ready to Start Your Tennis Journey?', cta_subtitle: 'Join hundreds of players who have found their home court at Alma Tennis Academy.',
   about_title: 'About Alma Tennis Academy', about_subtitle: 'Founded with a passion for tennis and a commitment to excellence.',
   about_story_title: 'Our Story',
@@ -61,8 +56,8 @@ const defaultContentEN = {
   nav_login: 'Login', nav_logout: 'Logout', nav_register: 'Register', nav_cart: 'Cart', nav_checkout: 'Checkout',
   cart_empty_title: 'Your Cart is Empty', cart_empty_desc: "Looks like you haven't added any items yet.",
   cart_title: 'Shopping Cart', cart_summary: 'Order Summary', cart_subtotal: 'Subtotal',
-  cart_discount: 'Member Discount', cart_shipping: 'Shipping', cart_free: 'Free',
-  cart_total: 'Total', cart_checkout_btn: 'Proceed to Checkout', cart_register_prompt: 'Register to save 20% on your order!',
+  cart_discount: 'Member Discount', cart_shipping: 'Shipping', cart_free: 'Free', cart_total: 'Total',
+  cart_checkout_btn: 'Proceed to Checkout', cart_register_prompt: 'Register to save 20% on your order!',
   cart_continue: 'Continue Shopping', cart_clear: 'Clear entire cart',
   checkout_title: 'Checkout', checkout_contact: 'Contact Information', checkout_shipping: 'Shipping Address', checkout_payment: 'Payment Method',
   checkout_card: 'Credit / Debit Card', checkout_card_desc: 'Pay securely with your card',
@@ -73,24 +68,24 @@ const defaultContentEN = {
 
 const defaultContentAR = {
   site_title: 'أكاديمية ألما للتنس', favicon_emoji: '🎾',
-  social_media_enabled: 'no', social_title: 'تابعونا', social_subtitle: 'ابقوا على اتصال وشاهدوا ما يحدث في أكاديمية ألما للتنس.',
+  social_media_enabled: 'no', social_title: 'تابعونا', social_subtitle: 'ابقوا على اتصال.',
   social_post_1: '', social_post_2: '', social_post_3: '',
   hero_title_1: 'ارتقِ بمستوى', hero_title_2: 'لعبة التنس',
-  hero_subtitle: 'تدريب احترافي، معدات عالية الجودة، ومجتمع شغوف. سواء كنت تمسك المضرب لأول مرة أو تتدرب للمنافسات، أكاديمية ألما للتنس هي ملعبك.',
+  hero_subtitle: 'تدريب احترافي، معدات عالية الجودة، ومجتمع شغوف.',
   hero_badge: 'التسجيل مفتوح الآن لصيف 2026', hero_cta_1: 'استكشف البرامج', hero_cta_2: 'تسوق المعدات',
   hero_stat_1: '+500', hero_stat_1_label: 'طالب', hero_stat_2: '+15', hero_stat_2_label: 'مدرب', hero_stat_3: '+10', hero_stat_3_label: 'سنوات',
-  featured_title: 'معدات مميزة', featured_subtitle: 'معدات تنس عالية الجودة اختارها مدربونا المحترفون.',
-  why_title: 'لماذا تختار ألما', why_subtitle: 'أكثر من مجرد أكاديمية تنس - نحن مجتمع ملتزم بالتميز.',
-  why_1_icon: '🏆', why_1_title: 'مدربون خبراء', why_1_desc: 'فريقنا من المحترفين المعتمدين يجلب عقودًا من الخبرة.',
-  why_2_icon: '🎯', why_2_title: 'تدريب شخصي', why_2_desc: 'كل لاعب فريد. نصمم برامجنا حسب مستواك.',
-  why_3_icon: '🌟', why_3_title: 'مرافق متميزة', why_3_desc: 'تدرب على ملاعب محافظ عليها بشكل جميل.',
+  featured_title: 'معدات مميزة', featured_subtitle: 'معدات تنس عالية الجودة.',
+  why_title: 'لماذا تختار ألما', why_subtitle: 'أكثر من مجرد أكاديمية تنس.',
+  why_1_icon: '🏆', why_1_title: 'مدربون خبراء', why_1_desc: 'فريقنا من المحترفين المعتمدين.',
+  why_2_icon: '🎯', why_2_title: 'تدريب شخصي', why_2_desc: 'كل لاعب فريد.',
+  why_3_icon: '🌟', why_3_title: 'مرافق متميزة', why_3_desc: 'تدرب على ملاعب محافظ عليها.',
   programs_title: 'البرامج الشائعة', programs_subtitle: 'من المبتدئين إلى المتقدمين.',
-  testimonial_title: 'ماذا يقول لاعبونا', testimonial_subtitle: 'اسمع من مجتمع أكاديمية ألما للتنس',
-  testimonial_1_name: 'سارة م.', testimonial_1_role: 'طالبة مبتدئة', testimonial_1_text: 'بدأت بدون أي خبرة والآن ألعب مباريات تنافسية!',
+  testimonial_title: 'ماذا يقول لاعبونا', testimonial_subtitle: 'اسمع من مجتمع أكاديمية ألما',
+  testimonial_1_name: 'سارة م.', testimonial_1_role: 'طالبة مبتدئة', testimonial_1_text: 'بدأت بدون خبرة والآن ألعب مباريات تنافسية!',
   testimonial_2_name: 'جيمس ر.', testimonial_2_role: 'ولي أمر', testimonial_2_text: 'أطفالي يحبون برنامج الناشئين.',
-  testimonial_3_name: 'ليزا ت.', testimonial_3_role: 'لاعبة تنافسية', testimonial_3_text: 'برنامج الإعداد للبطولات غيّر لعبتي!',
-  cta_title: 'هل أنت مستعد لبدء رحلتك في التنس؟', cta_subtitle: 'انضم إلى مئات اللاعبين الذين وجدوا ملعبهم في أكاديمية ألما.',
-  about_title: 'عن أكاديمية ألما للتنس', about_subtitle: 'تأسست بشغف للتنس والتزام بالتميز.',
+  testimonial_3_name: 'ليزا ت.', testimonial_3_role: 'لاعبة تنافسية', testimonial_3_text: 'برنامج الإعداد غيّر لعبتي!',
+  cta_title: 'هل أنت مستعد لبدء رحلتك في التنس؟', cta_subtitle: 'انضم إلى مئات اللاعبين.',
+  about_title: 'عن أكاديمية ألما للتنس', about_subtitle: 'تأسست بشغف للتنس.',
   about_story_title: 'قصتنا', about_story_p1: 'وُلدت أكاديمية ألما من إيمان بسيط.',
   about_story_p2: '"ألما" تعني "الروح".', about_story_p3: 'نخدم أكثر من 500 طالب.',
   about_value_1_icon: '❤️', about_value_1_title: 'الشغف', about_value_1_desc: 'نحب التنس.',
@@ -104,8 +99,9 @@ const defaultContentAR = {
   about_stat_1: '+500', about_stat_1_label: 'طالب', about_stat_2: '+15', about_stat_2_label: 'مدرب',
   about_stat_3: '8', about_stat_3_label: 'ملاعب', about_stat_4: '+10', about_stat_4_label: 'سنوات',
   contact_title: 'اتصل بنا', contact_subtitle: 'هل لديك سؤال؟',
-  contact_address: '123 شارع ملعب التنس', contact_phone: '(555) 123-ALMA', contact_email: 'info@almatennisacademy.com', contact_hours: 'الإثنين-الجمعة: 6ص-9م | السبت-الأحد: 7ص-7م',
-  footer_desc: 'ارتقِ بلعبة التنس من خلال التدريب الاحترافي.', footer_address: '123 شارع ملعب التنس', footer_phone: '(555) 123-ALMA', footer_email: 'info@almatennisacademy.com',
+  contact_address: '123 شارع ملعب التنس', contact_phone: '(555) 123-ALMA', contact_email: 'info@almatennisacademy.com',
+  contact_hours: 'الإثنين-الجمعة: 6ص-9م | السبت-الأحد: 7ص-7م',
+  footer_desc: 'ارتقِ بلعبة التنس.', footer_address: '123 شارع ملعب التنس', footer_phone: '(555) 123-ALMA', footer_email: 'info@almatennisacademy.com',
   footer_copyright: 'أكاديمية ألما للتنس. جميع الحقوق محفوظة.',
   footer_program_1: 'تطوير الناشئين', footer_program_2: 'المبتدئون', footer_program_3: 'تدريب خاص', footer_program_4: 'معسكرات صيفية',
   shop_title: 'تسوق المعدات', shop_subtitle: 'معدات عالية الجودة.',
@@ -142,64 +138,42 @@ function applyThemeToDOM(t) {
 
 export function PageContentProvider({ children }) {
   const [language, setLanguageState] = useState('en');
-  // Published = what visitors see (from Firestore)
-  const [publishedEN, setPublishedEN] = useState(defaultContentEN);
-  const [publishedAR, setPublishedAR] = useState(defaultContentAR);
-  const [publishedTheme, setPublishedTheme] = useState(defaultTheme);
-  const [publishedBranding, setPublishedBranding] = useState({});
-
-  // Draft = admin's local edits (not yet published)
-  const [draftEN, setDraftEN] = useState(null);
-  const [draftAR, setDraftAR] = useState(null);
-  const [draftTheme, setDraftTheme] = useState(null);
-  const [draftBranding, setDraftBranding] = useState(null);
-
+  const [contentEN, setContentEN] = useState(defaultContentEN);
+  const [contentAR, setContentAR] = useState(defaultContentAR);
+  const [theme, setTheme] = useState(defaultTheme);
+  const [logoUrl, setLogoUrl] = useState('');
+  const [faviconUrl, setFaviconUrl] = useState('');
+  const [heroBg, setHeroBg] = useState({ type: 'color', imageUrl: '' });
   const [loading, setLoading] = useState(true);
-  const [publishing, setPublishing] = useState(false);
-
-  // Determine if admin has unpublished changes
-  const hasChanges = !!(draftEN || draftAR || draftTheme || draftBranding);
-
-  // Active values: use draft if exists (admin preview), else published
-  const contentEN = draftEN || publishedEN;
-  const contentAR = draftAR || publishedAR;
-  const theme = draftTheme || publishedTheme;
-  const branding = draftBranding || publishedBranding;
 
   const content = language === 'ar' ? contentAR : contentEN;
-  const logoUrl = branding.logoUrl || '';
-  const faviconUrl = branding.faviconUrl || '';
-  const heroBg = branding.heroBg || { type: 'color', imageUrl: '' };
 
-  // Listen to Firestore for published data
+  // Real-time listeners from Firestore
   useEffect(() => {
     const unsub1 = onSnapshot(doc(db, 'settings', 'pageContent'), (snap) => {
-      if (snap.exists()) setPublishedEN({ ...defaultContentEN, ...snap.data() });
+      if (snap.exists()) setContentEN({ ...defaultContentEN, ...snap.data() });
       setLoading(false);
     }, () => setLoading(false));
 
     const unsub1ar = onSnapshot(doc(db, 'settings', 'pageContentAR'), (snap) => {
-      if (snap.exists()) setPublishedAR({ ...defaultContentAR, ...snap.data() });
+      if (snap.exists()) setContentAR({ ...defaultContentAR, ...snap.data() });
     });
 
     const unsub2 = onSnapshot(doc(db, 'settings', 'theme'), (snap) => {
-      if (snap.exists()) {
-        const t = { ...defaultTheme, ...snap.data() };
-        setPublishedTheme(t);
-        if (!draftTheme) applyThemeToDOM(t);
-      }
+      if (snap.exists()) { const t = { ...defaultTheme, ...snap.data() }; setTheme(t); applyThemeToDOM(t); }
     });
 
     const unsub3 = onSnapshot(doc(db, 'settings', 'branding'), (snap) => {
       if (snap.exists()) {
-        setPublishedBranding(snap.data());
+        setLogoUrl(snap.data().logoUrl || '');
+        if (snap.data().faviconUrl !== undefined) setFaviconUrl(snap.data().faviconUrl);
         if (snap.data().language) setLanguageState(snap.data().language);
+        if (snap.data().heroBg) setHeroBg(snap.data().heroBg);
       }
     });
 
     applyThemeToDOM(defaultTheme);
     return () => { unsub1(); unsub1ar(); unsub2(); unsub3(); };
-  // eslint-disable-next-line
   }, []);
 
   useEffect(() => {
@@ -237,108 +211,59 @@ export function PageContentProvider({ children }) {
     document.title = content.site_title || 'Alma Tennis Academy';
   }, [content.site_title]);
 
-  // ---- LOCAL UPDATE FUNCTIONS (draft only, no Firestore write) ----
+  // ---- IMMEDIATE SAVE FUNCTIONS ----
+  // Every change updates local state AND writes to Firestore instantly
 
-  const updateContent = (key, value) => {
+  const updateContent = async (key, value) => {
     if (language === 'ar') {
-      setDraftAR(prev => ({ ...(prev || publishedAR), [key]: value }));
+      const updated = { ...contentAR, [key]: value };
+      setContentAR(updated);
+      try { await setDoc(doc(db, 'settings', 'pageContentAR'), updated); }
+      catch (err) { console.error('Save failed:', err); }
     } else {
-      setDraftEN(prev => ({ ...(prev || publishedEN), [key]: value }));
+      const updated = { ...contentEN, [key]: value };
+      setContentEN(updated);
+      try { await setDoc(doc(db, 'settings', 'pageContent'), updated); }
+      catch (err) { console.error('Save failed:', err); }
     }
   };
 
-  const updateTheme = (newTheme) => {
-    setDraftTheme(newTheme);
+  const updateTheme = async (newTheme) => {
+    setTheme(newTheme);
     applyThemeToDOM(newTheme);
+    try { await setDoc(doc(db, 'settings', 'theme'), newTheme); }
+    catch (err) { console.error('Save failed:', err); }
   };
 
-  const updateLogo = (url) => {
-    setDraftBranding(prev => ({ ...(prev || publishedBranding), logoUrl: url }));
+  const updateLogo = async (url) => {
+    setLogoUrl(url);
+    try { await setDoc(doc(db, 'settings', 'branding'), { logoUrl: url }, { merge: true }); }
+    catch (err) { console.error('Save failed:', err); }
   };
 
-  const updateFavicon = (url) => {
-    setDraftBranding(prev => ({ ...(prev || publishedBranding), faviconUrl: url }));
+  const updateFavicon = async (url) => {
+    setFaviconUrl(url);
+    try { await setDoc(doc(db, 'settings', 'branding'), { faviconUrl: url }, { merge: true }); }
+    catch (err) { console.error('Save failed:', err); }
   };
 
-  const updateHeroBg = (bg) => {
-    setDraftBranding(prev => ({ ...(prev || publishedBranding), heroBg: bg }));
+  const updateHeroBg = async (bg) => {
+    setHeroBg(bg);
+    try { await setDoc(doc(db, 'settings', 'branding'), { heroBg: bg }, { merge: true }); }
+    catch (err) { console.error('Save failed:', err); }
   };
 
-  const setLanguage = (lang) => {
+  const setLanguage = async (lang) => {
     setLanguageState(lang);
-    setDraftBranding(prev => ({ ...(prev || publishedBranding), language: lang }));
-  };
-
-  // ---- PUBLISH ALL CHANGES TO FIRESTORE ----
-
-  const publishAll = async () => {
-    setPublishing(true);
-    try {
-      const promises = [];
-
-      if (draftEN) {
-        promises.push(setDoc(doc(db, 'settings', 'pageContent'), draftEN));
-      }
-      if (draftAR) {
-        promises.push(setDoc(doc(db, 'settings', 'pageContentAR'), draftAR));
-      }
-      if (draftTheme) {
-        promises.push(setDoc(doc(db, 'settings', 'theme'), draftTheme));
-      }
-      if (draftBranding) {
-        promises.push(setDoc(doc(db, 'settings', 'branding'), { ...publishedBranding, ...draftBranding }));
-      }
-
-      await Promise.all(promises);
-
-      // VERIFY the write actually reached the server by reading it back
-      const verifyDoc = await getDoc(doc(db, 'settings', 'pageContent'));
-      if (draftEN && verifyDoc.exists()) {
-        const serverData = verifyDoc.data();
-        // Check if at least one changed field actually persisted
-        const testKey = Object.keys(draftEN).find(k => draftEN[k] !== defaultContentEN[k]);
-        if (testKey && serverData[testKey] !== draftEN[testKey]) {
-          throw new Error('Write appeared to succeed but data did not persist on server. Your Firestore security rules are blocking writes. Go to Firebase Console → Firestore Database → Rules and allow read/write.');
-        }
-      }
-
-      // Update published state with draft values BEFORE clearing drafts
-      if (draftEN) setPublishedEN(draftEN);
-      if (draftAR) setPublishedAR(draftAR);
-      if (draftTheme) setPublishedTheme(draftTheme);
-      if (draftBranding) setPublishedBranding(prev => ({ ...prev, ...draftBranding }));
-
-      // Now clear drafts
-      setDraftEN(null);
-      setDraftAR(null);
-      setDraftTheme(null);
-      setDraftBranding(null);
-
-      setPublishing(false);
-      return { success: true };
-    } catch (err) {
-      console.error('PUBLISH FAILED:', err);
-      setPublishing(false);
-      return { success: false, error: err.message };
-    }
-  };
-
-  // ---- DISCARD CHANGES ----
-
-  const discardChanges = () => {
-    setDraftEN(null);
-    setDraftAR(null);
-    setDraftTheme(null);
-    setDraftBranding(null);
-    applyThemeToDOM(publishedTheme);
+    try { await setDoc(doc(db, 'settings', 'branding'), { language: lang }, { merge: true }); }
+    catch (err) { console.error('Save failed:', err); }
   };
 
   return (
     <PageContentContext.Provider value={{
       content, theme, logoUrl, faviconUrl, heroBg, language, loading,
-      hasChanges, publishing,
       updateContent, updateTheme, updateLogo, updateFavicon, updateHeroBg, setLanguage,
-      publishAll, discardChanges, defaultTheme,
+      defaultTheme,
     }}>
       {children}
     </PageContentContext.Provider>
