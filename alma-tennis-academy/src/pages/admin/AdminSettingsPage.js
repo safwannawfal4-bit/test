@@ -333,78 +333,78 @@ async function fetchPostMetrics(url) {
     // ==================== INSTAGRAM ====================
     if (url.includes('instagram.com')) {
       const postCode = url.match(/instagram\.com\/(p|reel|tv)\/([^/?]+)/)?.[2];
+      const RAPID_API_KEY = '64e684dbf2mshe45e0b3add984b6p136f6ajsne89a41528e4f';
 
-      // Method 1: Instagram's own oEmbed API (most reliable for basic info)
-      try {
-        const oembedRes = await fetch(`https://noembed.com/embed?url=${encodeURIComponent(url)}`);
-        if (oembedRes.ok) {
-          const data = await oembedRes.json();
-          result.handle = data.author_name ? '@' + data.author_name : '';
-          result.title = data.title || '';
-          result.thumbnail = data.thumbnail_url || '';
-          result.fetched = true;
-        }
-      } catch {}
-
-      // Method 2: Try the embed page (less restricted than main page)
+      // Method 1: RapidAPI Instagram Scraper (gets full metrics)
       if (postCode) {
         try {
-          const embedUrl = `https://www.instagram.com/p/${postCode}/embed/`;
-          const html = await fetchViaProxy(embedUrl);
-          if (html) {
-            // The embed page has likes in the HTML
-            const likeMatch = html.match(/([\d,]+)\s*likes?/i) || html.match(/"like_count":\s*(\d+)/);
-            const commentMatch = html.match(/([\d,]+)\s*comments?/i) || html.match(/"comment_count":\s*(\d+)/);
-            const viewMatch = html.match(/([\d,]+)\s*views?/i) || html.match(/"view_count":\s*(\d+)/) || html.match(/"video_view_count":\s*(\d+)/);
-
-            if (likeMatch) { result.likes = parseInt(likeMatch[1].replace(/,/g, '')); result.fetched = true; }
-            if (commentMatch) { result.comments = parseInt(commentMatch[1].replace(/,/g, '')); result.fetched = true; }
-            if (viewMatch) { result.views = parseInt(viewMatch[1].replace(/,/g, '')); result.fetched = true; }
-
-            // Handle from embed
-            if (!result.handle) {
-              const handleMatch = html.match(/"username":\s*"([^"]+)"/) || html.match(/instagram\.com\/([a-zA-Z0-9_.]+)/);
-              if (handleMatch) result.handle = '@' + handleMatch[1];
+          const res = await fetch(`https://instagram-scraper-20251.p.rapidapi.com/mediainfobyshortcode/?short_code=${postCode}`, {
+            headers: {
+              'x-rapidapi-host': 'instagram-scraper-20251.p.rapidapi.com',
+              'x-rapidapi-key': RAPID_API_KEY,
+            },
+            signal: AbortSignal.timeout(15000),
+          });
+          if (res.ok) {
+            const data = await res.json();
+            // Try different response shapes
+            const media = data?.data || data?.items?.[0] || data;
+            if (media) {
+              result.likes = media.like_count || media.edge_media_preview_like?.count || 0;
+              result.comments = media.comment_count || media.edge_media_preview_comment?.count || 0;
+              result.views = media.play_count || media.video_view_count || media.view_count || 0;
+              result.shares = media.share_count || media.reshare_count || 0;
+              result.handle = '@' + (media.user?.username || media.owner?.username || '');
+              result.title = media.caption?.text || media.edge_media_to_caption?.edges?.[0]?.node?.text || '';
+              result.thumbnail = media.image_versions2?.candidates?.[0]?.url || media.thumbnail_src || media.display_url || '';
+              if (result.likes || result.views) result.fetched = true;
             }
           }
         } catch (err) {
-          console.warn('Instagram embed fetch failed:', err);
+          console.warn('RapidAPI Instagram failed:', err.message);
         }
       }
 
-      // Method 3: Try the main post page
-      if (!result.likes && postCode) {
+      // Method 2: Try alternative RapidAPI endpoint
+      if (!result.fetched && postCode) {
         try {
-          const html = await fetchViaProxy(url);
-          if (html) {
-            const likeMatch = html.match(/"edge_media_preview_like":\s*\{"count":\s*(\d+)/) ||
-                              html.match(/"like_count":\s*(\d+)/);
-            const commentMatch = html.match(/"edge_media_preview_comment":\s*\{"count":\s*(\d+)/) ||
-                                 html.match(/"edge_media_to_parent_comment":\s*\{"count":\s*(\d+)/) ||
-                                 html.match(/"comment_count":\s*(\d+)/);
-            const viewMatch = html.match(/"video_view_count":\s*(\d+)/) ||
-                              html.match(/"play_count":\s*(\d+)/);
-
-            if (likeMatch) { result.likes = parseInt(likeMatch[1]); result.fetched = true; }
-            if (commentMatch) { result.comments = parseInt(commentMatch[1]); result.fetched = true; }
-            if (viewMatch) { result.views = parseInt(viewMatch[1]); result.fetched = true; }
-
-            // og:description fallback "X likes, Y comments"
-            const ogMatch = html.match(/content="([\d,]+)\s+likes?,\s*([\d,]+)\s+comments?/i);
-            if (ogMatch && !result.likes) {
-              result.likes = parseInt(ogMatch[1].replace(/,/g, ''));
-              result.comments = parseInt(ogMatch[2].replace(/,/g, ''));
-              result.fetched = true;
-            }
-
-            if (!result.handle) {
-              const handleMatch = html.match(/"username":\s*"([^"]+)"/);
-              if (handleMatch) result.handle = '@' + handleMatch[1];
+          const res = await fetch(`https://instagram-scraper-20251.p.rapidapi.com/media_info/?short_code=${postCode}`, {
+            headers: {
+              'x-rapidapi-host': 'instagram-scraper-20251.p.rapidapi.com',
+              'x-rapidapi-key': RAPID_API_KEY,
+            },
+            signal: AbortSignal.timeout(15000),
+          });
+          if (res.ok) {
+            const raw = await res.json();
+            const media = raw?.data || raw;
+            if (media) {
+              result.likes = media.like_count || result.likes;
+              result.comments = media.comment_count || result.comments;
+              result.views = media.play_count || media.video_view_count || result.views;
+              result.handle = media.user?.username ? '@' + media.user.username : result.handle;
+              result.title = media.caption?.text || result.title;
+              result.thumbnail = media.image_versions2?.candidates?.[0]?.url || media.thumbnail_src || result.thumbnail;
+              if (result.likes || result.views) result.fetched = true;
             }
           }
         } catch (err) {
-          console.warn('Instagram page fetch failed:', err);
+          console.warn('RapidAPI Instagram alt endpoint failed:', err.message);
         }
+      }
+
+      // Method 3: Fallback to noembed for basic info if API failed
+      if (!result.handle) {
+        try {
+          const oembedRes = await fetch(`https://noembed.com/embed?url=${encodeURIComponent(url)}`);
+          if (oembedRes.ok) {
+            const data = await oembedRes.json();
+            result.handle = data.author_name ? '@' + data.author_name : '';
+            result.title = result.title || data.title || '';
+            result.thumbnail = result.thumbnail || data.thumbnail_url || '';
+            result.fetched = true;
+          }
+        } catch {}
       }
     }
   } catch (err) {
