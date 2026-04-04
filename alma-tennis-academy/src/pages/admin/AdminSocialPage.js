@@ -129,7 +129,21 @@ function detectPlatform(url) {
   return null;
 }
 
+const DASHBOARD_PALETTES = [
+  { name: 'Default', stats: ['border-blue-200 bg-blue-50', 'border-pink-200 bg-pink-50', 'border-amber-200 bg-amber-50', 'border-purple-200 bg-purple-50'], bar: 'from-blue-400 to-blue-600', donut: ['#3B82F6', '#EF4444', '#111827', '#8B5CF6', '#F59E0B'], likes: 'bg-pink-400', comments: 'bg-amber-400', shares: 'bg-purple-500' },
+  { name: 'Ocean', stats: ['border-cyan-200 bg-cyan-50', 'border-sky-200 bg-sky-50', 'border-teal-200 bg-teal-50', 'border-indigo-200 bg-indigo-50'], bar: 'from-cyan-400 to-teal-600', donut: ['#06B6D4', '#0EA5E9', '#14B8A6', '#6366F1', '#0D9488'], likes: 'bg-sky-400', comments: 'bg-teal-400', shares: 'bg-indigo-500' },
+  { name: 'Sunset', stats: ['border-orange-200 bg-orange-50', 'border-rose-200 bg-rose-50', 'border-amber-200 bg-amber-50', 'border-red-200 bg-red-50'], bar: 'from-orange-400 to-rose-600', donut: ['#F97316', '#FB7185', '#F59E0B', '#EF4444', '#E11D48'], likes: 'bg-rose-400', comments: 'bg-orange-400', shares: 'bg-red-500' },
+  { name: 'Forest', stats: ['border-emerald-200 bg-emerald-50', 'border-green-200 bg-green-50', 'border-lime-200 bg-lime-50', 'border-teal-200 bg-teal-50'], bar: 'from-emerald-400 to-green-700', donut: ['#10B981', '#22C55E', '#84CC16', '#14B8A6', '#059669'], likes: 'bg-green-400', comments: 'bg-lime-500', shares: 'bg-teal-500' },
+  { name: 'Neon', stats: ['border-fuchsia-200 bg-fuchsia-50', 'border-violet-200 bg-violet-50', 'border-pink-200 bg-pink-50', 'border-cyan-200 bg-cyan-50'], bar: 'from-fuchsia-500 to-violet-600', donut: ['#D946EF', '#8B5CF6', '#EC4899', '#06B6D4', '#A855F7'], likes: 'bg-fuchsia-400', comments: 'bg-violet-400', shares: 'bg-cyan-500' },
+  { name: 'Mono', stats: ['border-gray-300 bg-gray-50', 'border-gray-300 bg-gray-100', 'border-gray-300 bg-gray-50', 'border-gray-300 bg-gray-100'], bar: 'from-gray-500 to-gray-800', donut: ['#374151', '#6B7280', '#9CA3AF', '#4B5563', '#D1D5DB'], likes: 'bg-gray-500', comments: 'bg-gray-400', shares: 'bg-gray-700' },
+];
+
 function SocialDashboard({ content, postCount }) {
+  const [paletteIdx, setPaletteIdx] = useState(parseInt(localStorage.getItem('alma_social_palette') || '0'));
+  const palette = DASHBOARD_PALETTES[paletteIdx] || DASHBOARD_PALETTES[0];
+
+  const savePalette = (idx) => { setPaletteIdx(idx); localStorage.setItem('alma_social_palette', idx.toString()); };
+
   // Gather all post data
   const posts = [];
   for (let i = 1; i <= postCount; i++) {
@@ -189,13 +203,31 @@ function SocialDashboard({ content, postCount }) {
 
   return (
     <div className="space-y-6">
+      {/* Palette Selector */}
+      <div className="bg-white rounded-xl shadow-sm p-4 flex items-center justify-between">
+        <span className="text-sm font-medium text-alma-green">Dashboard Theme</span>
+        <div className="flex gap-2">
+          {DASHBOARD_PALETTES.map((p, idx) => (
+            <button key={p.name} onClick={() => savePalette(idx)} title={p.name}
+              className={`w-8 h-8 rounded-lg overflow-hidden grid grid-cols-2 grid-rows-2 transition-all hover:scale-110 ${
+                idx === paletteIdx ? 'ring-2 ring-alma-green ring-offset-1 scale-110' : 'opacity-70'
+              }`}>
+              <div className={p.stats[0].split(' ').pop()} />
+              <div className={p.stats[1].split(' ').pop()} />
+              <div className={p.stats[2].split(' ').pop()} />
+              <div className={p.stats[3].split(' ').pop()} />
+            </button>
+          ))}
+        </div>
+      </div>
+
       {/* Overview Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
-          { icon: '👁', label: 'Total Views', value: totalViews.toLocaleString(), color: 'border-blue-200 bg-blue-50' },
-          { icon: '❤️', label: 'Total Likes', value: totalLikes.toLocaleString(), color: 'border-pink-200 bg-pink-50' },
-          { icon: '💬', label: 'Total Comments', value: totalComments.toLocaleString(), color: 'border-amber-200 bg-amber-50' },
-          { icon: '🔄', label: 'Total Shares', value: totalShares.toLocaleString(), color: 'border-purple-200 bg-purple-50' },
+          { icon: '👁', label: 'Total Views', value: totalViews.toLocaleString(), color: palette.stats[0] },
+          { icon: '❤️', label: 'Total Likes', value: totalLikes.toLocaleString(), color: palette.stats[1] },
+          { icon: '💬', label: 'Total Comments', value: totalComments.toLocaleString(), color: palette.stats[2] },
+          { icon: '🔄', label: 'Total Shares', value: totalShares.toLocaleString(), color: palette.stats[3] },
         ].map(s => (
           <div key={s.label} className={`rounded-xl border-2 p-4 ${s.color}`}>
             <span className="text-xl">{s.icon}</span>
@@ -238,7 +270,7 @@ function SocialDashboard({ content, postCount }) {
                   <span className="text-xs font-bold text-alma-charcoal">{p.views.toLocaleString()}</span>
                 </div>
                 <div className="w-full bg-gray-100 rounded-full h-3">
-                  <div className="bg-gradient-to-r from-blue-400 to-blue-600 rounded-full h-3 transition-all relative"
+                  <div className={`bg-gradient-to-r ${palette.bar} rounded-full h-3 transition-all relative`}
                     style={{ width: `${(p.views / maxViews) * 100}%`, minWidth: p.views > 0 ? '8px' : '0' }}>
                   </div>
                 </div>
@@ -258,7 +290,7 @@ function SocialDashboard({ content, postCount }) {
             <div className="relative w-36 h-36 flex-shrink-0">
               <svg viewBox="0 0 36 36" className="w-full h-full -rotate-90">
                 {(() => {
-                  const colors = ['#3B82F6', '#EF4444', '#111827', '#8B5CF6', '#F59E0B'];
+                  const colors = palette.donut;
                   let offset = 0;
                   return Object.entries(platforms).map(([name, data], idx) => {
                     const pct = totalViews > 0 ? (data.views / totalViews) * 100 : 0;
@@ -282,11 +314,11 @@ function SocialDashboard({ content, postCount }) {
             {/* Legend */}
             <div className="space-y-2 flex-grow">
               {(() => {
-                const colors = ['bg-blue-500', 'bg-red-500', 'bg-gray-900', 'bg-purple-500', 'bg-amber-500'];
+                const colors = palette.donut.map(c => '');  // use inline style instead
                 return Object.entries(platforms).map(([name, data], idx) => (
                   <div key={name} className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <div className={`w-3 h-3 rounded-full ${colors[idx % colors.length]}`} />
+                      <div className="w-3 h-3 rounded-full" style={{ background: palette.donut[idx % palette.donut.length] }} />
                       <span className="text-xs font-medium">{data.icon} {name}</span>
                     </div>
                     <div className="text-right">
@@ -394,13 +426,13 @@ function SocialDashboard({ content, postCount }) {
                   <span className="text-[10px] text-alma-charcoal/40">{total.toLocaleString()} total</span>
                 </div>
                 <div className="flex h-5 rounded-full overflow-hidden bg-gray-100">
-                  {p.likes > 0 && <div className="bg-pink-400 transition-all flex items-center justify-center" style={{ width: `${(p.likes / total) * 100}%` }}>
+                  {p.likes > 0 && <div className={`${palette.likes} transition-all flex items-center justify-center`} style={{ width: `${(p.likes / total) * 100}%` }}>
                     <span className="text-[8px] text-white font-bold">{Math.round((p.likes / total) * 100)}%</span>
                   </div>}
-                  {p.comments > 0 && <div className="bg-amber-400 transition-all flex items-center justify-center" style={{ width: `${(p.comments / total) * 100}%` }}>
+                  {p.comments > 0 && <div className={`${palette.comments} transition-all flex items-center justify-center`} style={{ width: `${(p.comments / total) * 100}%` }}>
                     <span className="text-[8px] text-white font-bold">{Math.round((p.comments / total) * 100)}%</span>
                   </div>}
-                  {p.shares > 0 && <div className="bg-purple-500 transition-all flex items-center justify-center" style={{ width: `${(p.shares / total) * 100}%` }}>
+                  {p.shares > 0 && <div className={`${palette.shares} transition-all flex items-center justify-center`} style={{ width: `${(p.shares / total) * 100}%` }}>
                     <span className="text-[8px] text-white font-bold">{Math.round((p.shares / total) * 100)}%</span>
                   </div>}
                 </div>
@@ -409,9 +441,9 @@ function SocialDashboard({ content, postCount }) {
           })}
         </div>
         <div className="flex items-center gap-4 mt-3 text-[10px] text-alma-charcoal/40">
-          <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-pink-400" /> Likes</span>
-          <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-amber-400" /> Comments</span>
-          <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-purple-500" /> Shares</span>
+          <span className="flex items-center gap-1"><span className={`w-3 h-3 rounded ${palette.likes}`} /> Likes</span>
+          <span className="flex items-center gap-1"><span className={`w-3 h-3 rounded ${palette.comments}`} /> Comments</span>
+          <span className="flex items-center gap-1"><span className={`w-3 h-3 rounded ${palette.shares}`} /> Shares</span>
         </div>
       </div>
     </div>
