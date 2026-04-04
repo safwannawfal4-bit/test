@@ -258,9 +258,11 @@ async function fetchPostMetrics(url) {
       else if (url.includes('/shorts/')) videoId = url.split('/shorts/')[1]?.split(/[?&#]/)[0];
 
       if (videoId) {
-        const [metricsRes, oembedRes] = await Promise.allSettled([
+        // Fetch metrics, oEmbed info, and page HTML in parallel
+        const [metricsRes, oembedRes, pageRes] = await Promise.allSettled([
           fetch(`https://returnyoutubedislikeapi.com/votes?videoId=${videoId}`),
           fetch(`https://noembed.com/embed?url=https://www.youtube.com/watch?v=${videoId}`),
+          fetchViaProxy(`https://www.youtube.com/watch?v=${videoId}`),
         ]);
 
         if (metricsRes.status === 'fulfilled' && metricsRes.value.ok) {
@@ -275,6 +277,19 @@ async function fetchPostMetrics(url) {
           result.handle = data.author_name || '';
           result.title = data.title || '';
           result.thumbnail = data.thumbnail_url || '';
+        }
+
+        // Extract comment count from YouTube page HTML
+        if (pageRes.status === 'fulfilled' && pageRes.value) {
+          const html = pageRes.value;
+          // YouTube stores comment count in the initial page data
+          const commentMatch = html.match(/"commentCount":\s*"(\d+)"/) ||
+                               html.match(/"comments":\s*\{"count":\s*(\d+)/) ||
+                               html.match(/"commentCountText":\s*\{"simpleText":\s*"([\d,]+)/) ||
+                               html.match(/([\d,]+)\s*Comments?/);
+          if (commentMatch) {
+            result.comments = parseInt(commentMatch[1].replace(/,/g, ''));
+          }
         }
       }
     }
