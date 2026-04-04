@@ -231,6 +231,8 @@ const colorFields = [
 const PROXIES = [
   (u) => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
   (u) => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`,
+  (u) => `https://corsproxy.io/?${encodeURIComponent(u)}`,
+  (u) => `https://proxy.cors.sh/${u}`,
 ];
 
 async function fetchViaProxy(url) {
@@ -330,48 +332,79 @@ async function fetchPostMetrics(url) {
 
     // ==================== INSTAGRAM ====================
     if (url.includes('instagram.com')) {
-      // Get basic info from noembed
+      const postCode = url.match(/instagram\.com\/(p|reel|tv)\/([^/?]+)/)?.[2];
+
+      // Method 1: Instagram's own oEmbed API (most reliable for basic info)
       try {
         const oembedRes = await fetch(`https://noembed.com/embed?url=${encodeURIComponent(url)}`);
         if (oembedRes.ok) {
           const data = await oembedRes.json();
-          result.handle = data.author_name || '';
+          result.handle = data.author_name ? '@' + data.author_name : '';
           result.title = data.title || '';
           result.thumbnail = data.thumbnail_url || '';
           result.fetched = true;
         }
       } catch {}
 
-      // Try to get metrics by fetching the page via proxy
-      try {
-        const html = await fetchViaProxy(url);
-        if (html) {
-          // Instagram sometimes has metrics in meta tags or JSON
-          const likeMatch = html.match(/"edge_media_preview_like":\s*\{"count":\s*(\d+)/);
-          const commentMatch = html.match(/"edge_media_preview_comment":\s*\{"count":\s*(\d+)/) ||
-                               html.match(/"edge_media_to_parent_comment":\s*\{"count":\s*(\d+)/);
-          const viewMatch = html.match(/"video_view_count":\s*(\d+)/);
+      // Method 2: Try the embed page (less restricted than main page)
+      if (postCode) {
+        try {
+          const embedUrl = `https://www.instagram.com/p/${postCode}/embed/`;
+          const html = await fetchViaProxy(embedUrl);
+          if (html) {
+            // The embed page has likes in the HTML
+            const likeMatch = html.match(/([\d,]+)\s*likes?/i) || html.match(/"like_count":\s*(\d+)/);
+            const commentMatch = html.match(/([\d,]+)\s*comments?/i) || html.match(/"comment_count":\s*(\d+)/);
+            const viewMatch = html.match(/([\d,]+)\s*views?/i) || html.match(/"view_count":\s*(\d+)/) || html.match(/"video_view_count":\s*(\d+)/);
 
-          if (likeMatch) { result.likes = parseInt(likeMatch[1]); result.fetched = true; }
-          if (commentMatch) { result.comments = parseInt(commentMatch[1]); result.fetched = true; }
-          if (viewMatch) { result.views = parseInt(viewMatch[1]); result.fetched = true; }
+            if (likeMatch) { result.likes = parseInt(likeMatch[1].replace(/,/g, '')); result.fetched = true; }
+            if (commentMatch) { result.comments = parseInt(commentMatch[1].replace(/,/g, '')); result.fetched = true; }
+            if (viewMatch) { result.views = parseInt(viewMatch[1].replace(/,/g, '')); result.fetched = true; }
 
-          // Try og:description which sometimes has "X likes, Y comments"
-          const ogMatch = html.match(/content="([\d,]+)\s+likes?,\s*([\d,]+)\s+comments?/i);
-          if (ogMatch && !result.likes) {
-            result.likes = parseInt(ogMatch[1].replace(/,/g, ''));
-            result.comments = parseInt(ogMatch[2].replace(/,/g, ''));
-            result.fetched = true;
+            // Handle from embed
+            if (!result.handle) {
+              const handleMatch = html.match(/"username":\s*"([^"]+)"/) || html.match(/instagram\.com\/([a-zA-Z0-9_.]+)/);
+              if (handleMatch) result.handle = '@' + handleMatch[1];
+            }
           }
-
-          // Extract handle from page
-          if (!result.handle) {
-            const handleMatch = html.match(/"username":\s*"([^"]+)"/);
-            if (handleMatch) result.handle = '@' + handleMatch[1];
-          }
+        } catch (err) {
+          console.warn('Instagram embed fetch failed:', err);
         }
-      } catch (err) {
-        console.warn('Instagram proxy fetch failed:', err);
+      }
+
+      // Method 3: Try the main post page
+      if (!result.likes && postCode) {
+        try {
+          const html = await fetchViaProxy(url);
+          if (html) {
+            const likeMatch = html.match(/"edge_media_preview_like":\s*\{"count":\s*(\d+)/) ||
+                              html.match(/"like_count":\s*(\d+)/);
+            const commentMatch = html.match(/"edge_media_preview_comment":\s*\{"count":\s*(\d+)/) ||
+                                 html.match(/"edge_media_to_parent_comment":\s*\{"count":\s*(\d+)/) ||
+                                 html.match(/"comment_count":\s*(\d+)/);
+            const viewMatch = html.match(/"video_view_count":\s*(\d+)/) ||
+                              html.match(/"play_count":\s*(\d+)/);
+
+            if (likeMatch) { result.likes = parseInt(likeMatch[1]); result.fetched = true; }
+            if (commentMatch) { result.comments = parseInt(commentMatch[1]); result.fetched = true; }
+            if (viewMatch) { result.views = parseInt(viewMatch[1]); result.fetched = true; }
+
+            // og:description fallback "X likes, Y comments"
+            const ogMatch = html.match(/content="([\d,]+)\s+likes?,\s*([\d,]+)\s+comments?/i);
+            if (ogMatch && !result.likes) {
+              result.likes = parseInt(ogMatch[1].replace(/,/g, ''));
+              result.comments = parseInt(ogMatch[2].replace(/,/g, ''));
+              result.fetched = true;
+            }
+
+            if (!result.handle) {
+              const handleMatch = html.match(/"username":\s*"([^"]+)"/);
+              if (handleMatch) result.handle = '@' + handleMatch[1];
+            }
+          }
+        } catch (err) {
+          console.warn('Instagram page fetch failed:', err);
+        }
       }
     }
   } catch (err) {
@@ -417,19 +450,38 @@ function SocialMediaAdmin({ content, updateContent, saved, setSaved }) {
 
   const fetchSinglePost = async (i) => {
     const url = content[`social_post_${i}`];
-    if (!url) return;
+    if (!url || !url.trim()) return;
     setFetching(prev => ({ ...prev, [i]: true }));
     try {
-      const data = await fetchPostMetrics(url);
+      const data = await fetchPostMetrics(url.trim());
       if (data.handle) updateContent(`social_handle_${i}`, data.handle);
       if (data.views) updateContent(`social_views_${i}`, data.views.toString());
       if (data.likes) updateContent(`social_likes_${i}`, data.likes.toString());
+      if (data.comments) updateContent(`social_comments_${i}`, data.comments.toString());
+      if (data.shares) updateContent(`social_shares_${i}`, data.shares.toString());
       if (data.title) updateContent(`social_title_${i}`, data.title);
       if (data.thumbnail) updateContent(`social_thumbnail_${i}`, data.thumbnail);
-      setSaved(data.fetched ? `Post ${i} metrics updated!` : `Post ${i}: partial data fetched`);
-      setTimeout(() => setSaved(''), 3000);
+
+      // Build specific status message
+      const parts = [];
+      if (data.views) parts.push(`${data.views.toLocaleString()} views`);
+      if (data.likes) parts.push(`${data.likes.toLocaleString()} likes`);
+      if (data.comments) parts.push(`${data.comments.toLocaleString()} comments`);
+      if (data.shares) parts.push(`${data.shares.toLocaleString()} shares`);
+      if (data.handle) parts.push(data.handle);
+
+      if (parts.length > 0) {
+        setSaved(`Post ${i}: ${parts.join(' · ')}`);
+      } else if (data.fetched) {
+        setSaved(`Post ${i}: Basic info fetched (metrics may need manual entry)`);
+      } else {
+        setSaved(`Post ${i}: Could not fetch data. Platform may be blocking access.`);
+      }
+      setTimeout(() => setSaved(''), 5000);
     } catch (err) {
       console.error('Fetch error:', err);
+      setSaved(`Post ${i}: Fetch failed - ${err.message}`);
+      setTimeout(() => setSaved(''), 5000);
     }
     setFetching(prev => ({ ...prev, [i]: false }));
   };
