@@ -288,71 +288,116 @@ export default function AdminSettingsPage() {
         </div>
       </div>
 
-      {/* Favicon / Browser Icon Section */}
+      {/* Favicon / Browser Icon & Tab Title Section */}
       <div id="favicon"></div>
       <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
-        <h2 className="text-lg font-semibold text-alma-green mb-4">Browser Tab Icon (Favicon)</h2>
-        <p className="text-sm text-alma-charcoal/50 mb-4">This is the small icon that appears in the browser tab next to your page title. Currently showing a tennis ball.</p>
+        <h2 className="text-lg font-semibold text-alma-green mb-4">Browser Tab</h2>
+        <p className="text-sm text-alma-charcoal/50 mb-4">Customize the icon and title text that appear in the browser tab.</p>
 
-        <div className="flex items-start gap-6">
-          <div className="w-20 h-20 bg-gray-50 rounded-xl border-2 border-dashed border-gray-200 flex items-center justify-center overflow-hidden flex-shrink-0">
-            {faviconUrl ? (
-              <img src={faviconUrl} alt="Current favicon" className="w-12 h-12 object-contain" />
-            ) : (
-              <span className="text-3xl">🎾</span>
-            )}
+        {/* Tab Title */}
+        <div className="mb-6">
+          <label className="block text-sm font-medium text-alma-green mb-2">Tab Title</label>
+          <input
+            type="text"
+            value={content.site_title || 'Alma Tennis Academy'}
+            onChange={e => updateContent('site_title', e.target.value)}
+            placeholder="Alma Tennis Academy"
+            className="w-full max-w-md px-4 py-2.5 rounded-lg border border-gray-200 focus:border-alma-lime focus:ring-2 focus:ring-alma-lime/20 outline-none text-sm"
+          />
+          <p className="text-xs text-alma-charcoal/40 mt-1">This is the text shown in the browser tab next to the icon.</p>
+        </div>
+
+        {/* Favicon */}
+        <div>
+          <label className="block text-sm font-medium text-alma-green mb-2">Tab Icon (Favicon)</label>
+
+          <div className="flex items-start gap-6">
+            <div className="w-20 h-20 bg-gray-50 rounded-xl border-2 border-dashed border-gray-200 flex items-center justify-center overflow-hidden flex-shrink-0">
+              {faviconUrl ? (
+                <img src={faviconUrl} alt="Current favicon" className="w-12 h-12 object-contain" />
+              ) : (
+                <span className="text-3xl">{content.favicon_emoji || '🎾'}</span>
+              )}
+            </div>
+
+            <div className="flex-grow space-y-3">
+              {/* Option 1: Upload image */}
+              <div>
+                <p className="text-xs font-semibold text-alma-charcoal/50 mb-2 uppercase tracking-wide">Option 1: Upload an image</p>
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={() => faviconRef.current?.click()}
+                    disabled={uploadingFavicon}
+                    className="btn-primary text-sm disabled:opacity-50"
+                  >
+                    {uploadingFavicon ? 'Uploading...' : faviconUrl ? 'Change Image' : 'Upload Image'}
+                  </button>
+                  {faviconUrl && (
+                    <button
+                      onClick={async () => {
+                        await updateFavicon('');
+                        setSaved('Image icon removed');
+                        setTimeout(() => setSaved(''), 3000);
+                      }}
+                      className="text-sm text-red-400 hover:text-red-600 transition-colors"
+                    >
+                      Remove
+                    </button>
+                  )}
+                  <input ref={faviconRef} type="file" accept="image/png,image/svg+xml,image/x-icon,image/ico" className="hidden"
+                    onChange={async (e) => {
+                      const file = e.target.files[0];
+                      if (!file) return;
+                      setUploadingFavicon(true);
+                      try {
+                        const url = await uploadImage(file, 'branding');
+                        await updateFavicon(url);
+                        setSaved('Favicon uploaded!');
+                        setTimeout(() => setSaved(''), 3000);
+                      } catch (err) { alert('Failed: ' + err.message); }
+                      setUploadingFavicon(false);
+                    }} />
+                </div>
+                <p className="text-xs text-alma-charcoal/40 mt-1">Square, 32x32 or 64x64 px. PNG or SVG.</p>
+              </div>
+
+              {/* Option 2: Use emoji */}
+              {!faviconUrl && (
+                <div>
+                  <p className="text-xs font-semibold text-alma-charcoal/50 mb-2 uppercase tracking-wide">Option 2: Use an emoji</p>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      value={content.favicon_emoji || '🎾'}
+                      onChange={e => { updateContent('favicon_emoji', e.target.value); }}
+                      className="w-16 text-center text-2xl px-2 py-1.5 rounded-lg border border-gray-200 focus:border-alma-lime outline-none"
+                    />
+                    <div className="flex flex-wrap gap-1">
+                      {['🎾','🏆','⭐','💚','🎯','🏅','🌟','✨','🥇','🎪','🏟️','💎'].map(e => (
+                        <button key={e} onClick={() => updateContent('favicon_emoji', e)}
+                          className="text-lg hover:scale-125 transition-transform">{e}</button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
 
-          <div className="flex-grow space-y-3">
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => faviconRef.current?.click()}
-                disabled={uploadingFavicon}
-                className="btn-primary text-sm disabled:opacity-50"
-              >
-                {uploadingFavicon ? 'Uploading...' : faviconUrl ? 'Change Icon' : 'Upload Icon'}
-              </button>
-              {faviconUrl && (
-                <button
-                  onClick={async () => {
-                    await updateFavicon('');
-                    setSaved('Favicon reset to default');
-                    setTimeout(() => setSaved(''), 3000);
-                  }}
-                  className="text-sm text-red-400 hover:text-red-600 transition-colors"
-                >
-                  Reset to Default
-                </button>
-              )}
-              <input ref={faviconRef} type="file" accept="image/*" className="hidden"
-                onChange={async (e) => {
-                  const file = e.target.files[0];
-                  if (!file) return;
-                  setUploadingFavicon(true);
-                  try {
-                    const url = await uploadImage(file, 'branding');
-                    await updateFavicon(url);
-                    setSaved('Favicon updated! Refresh the page to see it.');
-                    setTimeout(() => setSaved(''), 5000);
-                  } catch (err) { alert('Failed: ' + err.message); }
-                  setUploadingFavicon(false);
-                }} />
-            </div>
-            <p className="text-xs text-alma-charcoal/40">Recommended: Square image, 32x32 or 64x64 px. PNG, SVG, or ICO format. The image will show as a tiny icon in the browser tab.</p>
-            <div className="bg-gray-50 rounded-lg p-3 flex items-center gap-3">
-              <div className="flex items-center gap-2 bg-white rounded px-3 py-1.5 shadow-sm border border-gray-200">
-                <div className="w-4 h-4 flex items-center justify-center overflow-hidden">
-                  {faviconUrl ? (
-                    <img src={faviconUrl} alt="" className="w-full h-full object-contain" />
-                  ) : (
-                    <span className="text-[10px]">🎾</span>
-                  )}
-                </div>
-                <span className="text-xs text-alma-charcoal/70">Alma Tennis Academy</span>
-                <span className="text-xs text-alma-charcoal/30 ml-2">✕</span>
+          {/* Live preview */}
+          <div className="mt-4 bg-gray-50 rounded-lg p-3 flex items-center gap-3">
+            <div className="flex items-center gap-2 bg-white rounded px-3 py-1.5 shadow-sm border border-gray-200">
+              <div className="w-4 h-4 flex items-center justify-center overflow-hidden">
+                {faviconUrl ? (
+                  <img src={faviconUrl} alt="" className="w-full h-full object-contain" />
+                ) : (
+                  <span className="text-[10px]">{content.favicon_emoji || '🎾'}</span>
+                )}
               </div>
-              <span className="text-[10px] text-alma-charcoal/30">← Preview of browser tab</span>
+              <span className="text-xs text-alma-charcoal/70">{content.site_title || 'Alma Tennis Academy'}</span>
+              <span className="text-xs text-alma-charcoal/30 ml-2">✕</span>
             </div>
+            <span className="text-[10px] text-alma-charcoal/30">← Preview of browser tab</span>
           </div>
         </div>
       </div>

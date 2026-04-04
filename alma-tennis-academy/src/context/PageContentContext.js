@@ -9,6 +9,8 @@ export function usePageContent() {
 }
 
 const defaultContentEN = {
+  site_title: 'Alma Tennis Academy',
+  favicon_emoji: '🎾',
   hero_title_1: 'Elevate Your',
   hero_title_2: 'Tennis Game',
   hero_subtitle: "Professional coaching, premium equipment, and a passionate community. Whether you're picking up a racket for the first time or training for competition, Alma Tennis Academy is your home court.",
@@ -264,26 +266,39 @@ export function PageContentProvider({ children }) {
     try { await setDoc(doc(db, 'settings', 'branding'), { language: lang }, { merge: true }); } catch (err) { alert('Failed to save language: ' + err.message); }
   };
 
-  // Apply favicon to DOM
+  // Apply favicon + title to DOM
   useEffect(() => {
-    if (faviconUrl) {
-      // Remove ALL existing favicon links to force browser to use the new one
-      document.querySelectorAll("link[rel='icon'], link[rel='shortcut icon'], link[rel='apple-touch-icon']").forEach(el => el.remove());
+    // Remove ALL existing favicon links
+    document.querySelectorAll("link[rel='icon'], link[rel='shortcut icon']").forEach(el => el.remove());
 
-      // Create fresh link elements
+    if (faviconUrl) {
+      // Use uploaded image
       const link = document.createElement('link');
       link.rel = 'icon';
-      // Add cache-busting query param so browser doesn't use cached version
       link.href = faviconUrl + (faviconUrl.includes('?') ? '&' : '?') + 'v=' + Date.now();
       document.head.appendChild(link);
-
-      // Also set shortcut icon for older browsers
-      const link2 = document.createElement('link');
-      link2.rel = 'shortcut icon';
-      link2.href = link.href;
-      document.head.appendChild(link2);
+    } else {
+      // Use emoji as favicon via canvas
+      const emoji = content.favicon_emoji || '🎾';
+      const canvas = document.createElement('canvas');
+      canvas.width = 64;
+      canvas.height = 64;
+      const ctx = canvas.getContext('2d');
+      ctx.font = '52px serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(emoji, 32, 36);
+      const link = document.createElement('link');
+      link.rel = 'icon';
+      link.href = canvas.toDataURL();
+      document.head.appendChild(link);
     }
-  }, [faviconUrl]);
+  }, [faviconUrl, content.favicon_emoji]);
+
+  // Apply tab title
+  useEffect(() => {
+    document.title = content.site_title || 'Alma Tennis Academy';
+  }, [content.site_title]);
 
   const updateFavicon = async (url) => {
     setFaviconUrl(url);
