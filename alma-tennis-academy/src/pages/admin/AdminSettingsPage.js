@@ -257,39 +257,47 @@ async function fetchPostMetrics(url) {
       else if (url.includes('v=')) videoId = url.split('v=')[1]?.split(/[?&#]/)[0];
       else if (url.includes('/shorts/')) videoId = url.split('/shorts/')[1]?.split(/[?&#]/)[0];
 
+      const YT_API_KEY = 'AIzaSyC144vvBold_KvkxOkqgCsbI6TuIlaJqe4';
+
       if (videoId) {
-        // Fetch metrics, oEmbed info, and page HTML in parallel
-        const [metricsRes, oembedRes, pageRes] = await Promise.allSettled([
+        // Fetch from YouTube Data API, Return YT Dislike API, and oEmbed in parallel
+        const [ytApiRes, metricsRes, oembedRes] = await Promise.allSettled([
+          fetch(`https://www.googleapis.com/youtube/v3/videos?part=statistics,snippet&id=${videoId}&key=${YT_API_KEY}`),
           fetch(`https://returnyoutubedislikeapi.com/votes?videoId=${videoId}`),
           fetch(`https://noembed.com/embed?url=https://www.youtube.com/watch?v=${videoId}`),
-          fetchViaProxy(`https://www.youtube.com/watch?v=${videoId}`),
         ]);
 
-        if (metricsRes.status === 'fulfilled' && metricsRes.value.ok) {
+        // YouTube Data API v3 - gives views, likes, comments, title, channel, thumbnail
+        if (ytApiRes.status === 'fulfilled' && ytApiRes.value.ok) {
+          const data = await ytApiRes.value.json();
+          const video = data?.items?.[0];
+          if (video) {
+            const stats = video.statistics || {};
+            const snippet = video.snippet || {};
+            result.views = parseInt(stats.viewCount) || 0;
+            result.likes = parseInt(stats.likeCount) || 0;
+            result.comments = parseInt(stats.commentCount) || 0;
+            result.handle = snippet.channelTitle || '';
+            result.title = snippet.title || '';
+            result.thumbnail = snippet.thumbnails?.high?.url || snippet.thumbnails?.medium?.url || snippet.thumbnails?.default?.url || '';
+            result.fetched = true;
+          }
+        }
+
+        // Fallback: Return YouTube Dislike API for views/likes if Google API failed
+        if (!result.fetched && metricsRes.status === 'fulfilled' && metricsRes.value.ok) {
           const data = await metricsRes.value.json();
           result.views = data.viewCount || 0;
           result.likes = data.likes || 0;
           result.fetched = true;
         }
 
-        if (oembedRes.status === 'fulfilled' && oembedRes.value.ok) {
+        // Fallback: oEmbed for title/channel/thumbnail if not already set
+        if (!result.handle && oembedRes.status === 'fulfilled' && oembedRes.value.ok) {
           const data = await oembedRes.value.json();
-          result.handle = data.author_name || '';
-          result.title = data.title || '';
-          result.thumbnail = data.thumbnail_url || '';
-        }
-
-        // Extract comment count from YouTube page HTML
-        if (pageRes.status === 'fulfilled' && pageRes.value) {
-          const html = pageRes.value;
-          // YouTube stores comment count in the initial page data
-          const commentMatch = html.match(/"commentCount":\s*"(\d+)"/) ||
-                               html.match(/"comments":\s*\{"count":\s*(\d+)/) ||
-                               html.match(/"commentCountText":\s*\{"simpleText":\s*"([\d,]+)/) ||
-                               html.match(/([\d,]+)\s*Comments?/);
-          if (commentMatch) {
-            result.comments = parseInt(commentMatch[1].replace(/,/g, ''));
-          }
+          result.handle = result.handle || data.author_name || '';
+          result.title = result.title || data.title || '';
+          result.thumbnail = result.thumbnail || data.thumbnail_url || '';
         }
       }
     }
