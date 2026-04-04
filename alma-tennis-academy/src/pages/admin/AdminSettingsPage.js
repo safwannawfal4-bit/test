@@ -227,6 +227,210 @@ const colorFields = [
   { key: 'charcoal', label: 'Text Color' },
 ];
 
+function detectPlatform(url) {
+  if (!url) return null;
+  if (url.includes('instagram')) return { icon: '📸', name: 'Instagram', color: 'bg-gradient-to-r from-purple-500 via-pink-500 to-yellow-500' };
+  if (url.includes('youtube') || url.includes('youtu.be')) return { icon: '▶️', name: 'YouTube', color: 'bg-red-500' };
+  if (url.includes('tiktok')) return { icon: '🎵', name: 'TikTok', color: 'bg-gray-900' };
+  return null;
+}
+
+function SocialMediaAdmin({ content, updateContent, saved, setSaved }) {
+  // Count existing posts
+  const postCount = (() => {
+    let n = 0;
+    while (content[`social_post_${n + 1}`]) n++;
+    return n;
+  })();
+
+  const addPost = () => {
+    updateContent(`social_post_${postCount + 1}`, ' '); // space placeholder to create slot
+    // immediately clear it so user can type
+    setTimeout(() => updateContent(`social_post_${postCount + 1}`, ''), 50);
+  };
+
+  const removePost = (index) => {
+    // Shift all posts after this one up by 1
+    let i = index;
+    while (content[`social_post_${i + 1}`]) {
+      updateContent(`social_post_${i}`, content[`social_post_${i + 1}`]);
+      updateContent(`social_handle_${i}`, content[`social_handle_${i + 1}`] || '');
+      updateContent(`social_views_${i}`, content[`social_views_${i + 1}`] || '');
+      updateContent(`social_likes_${i}`, content[`social_likes_${i + 1}`] || '');
+      updateContent(`social_comments_${i}`, content[`social_comments_${i + 1}`] || '');
+      updateContent(`social_shares_${i}`, content[`social_shares_${i + 1}`] || '');
+      i++;
+    }
+    // Clear the last slot
+    updateContent(`social_post_${i}`, '');
+    updateContent(`social_handle_${i}`, '');
+    updateContent(`social_views_${i}`, '');
+    updateContent(`social_likes_${i}`, '');
+    updateContent(`social_comments_${i}`, '');
+    updateContent(`social_shares_${i}`, '');
+  };
+
+  // Build post list (including empty slots for adding)
+  const posts = [];
+  for (let i = 1; i <= Math.max(postCount, 1); i++) {
+    posts.push(i);
+  }
+
+  return (
+    <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-lg font-semibold text-alma-green">Social Media Posts ({postCount})</h2>
+        <div className="flex items-center gap-3">
+          <span className={`text-xs font-medium ${content.social_media_enabled === 'yes' ? 'text-green-600' : 'text-alma-charcoal/40'}`}>
+            {content.social_media_enabled === 'yes' ? 'Visible on site' : 'Hidden'}
+          </span>
+          <button
+            onClick={() => {
+              const newVal = content.social_media_enabled === 'yes' ? 'no' : 'yes';
+              updateContent('social_media_enabled', newVal);
+              setSaved(newVal === 'yes' ? 'Social section enabled!' : 'Social section hidden');
+              setTimeout(() => setSaved(''), 3000);
+            }}
+            className={`relative w-11 h-6 rounded-full transition-colors ${content.social_media_enabled === 'yes' ? 'bg-green-500' : 'bg-gray-300'}`}
+          >
+            <span className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${content.social_media_enabled === 'yes' ? 'left-[22px]' : 'left-0.5'}`} />
+          </button>
+        </div>
+      </div>
+      <p className="text-sm text-alma-charcoal/50 mb-4">Add unlimited social media posts. They display in a swipeable carousel with iPhone frames on your homepage.</p>
+
+      {/* Section title/subtitle */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-5">
+        <div>
+          <label className="block text-xs font-medium text-alma-green mb-1">Section Title</label>
+          <input type="text" value={content.social_title || 'Follow Us'}
+            onChange={e => updateContent('social_title', e.target.value)}
+            className="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-alma-lime focus:ring-2 focus:ring-alma-lime/20 outline-none text-sm" />
+        </div>
+        <div>
+          <label className="block text-xs font-medium text-alma-green mb-1">Section Subtitle</label>
+          <input type="text" value={content.social_subtitle || ''}
+            onChange={e => updateContent('social_subtitle', e.target.value)}
+            className="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-alma-lime focus:ring-2 focus:ring-alma-lime/20 outline-none text-sm" />
+        </div>
+      </div>
+
+      {/* Posts */}
+      <div className="space-y-4">
+        {posts.map(i => {
+          const url = content[`social_post_${i}`] || '';
+          const platform = detectPlatform(url);
+          const views = parseInt(content[`social_views_${i}`]) || 0;
+          const likes = parseInt(content[`social_likes_${i}`]) || 0;
+          const comments = parseInt(content[`social_comments_${i}`]) || 0;
+          const shares = parseInt(content[`social_shares_${i}`]) || 0;
+          const totalInteractions = likes + comments + shares;
+          const engagementRate = views > 0 ? ((totalInteractions / views) * 100).toFixed(2) : '0.00';
+
+          return (
+            <div key={i} className="border border-gray-200 rounded-xl p-4">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-bold text-alma-green">Post {i}</span>
+                  {platform && (
+                    <span className={`text-[10px] px-2 py-0.5 rounded-full text-white ${platform.color}`}>
+                      {platform.icon} {platform.name}
+                    </span>
+                  )}
+                </div>
+                {url && (
+                  <button onClick={() => removePost(i)} className="text-xs text-red-400 hover:text-red-600 transition-colors">
+                    Remove
+                  </button>
+                )}
+              </div>
+
+              {/* URL + Handle */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
+                <div className="md:col-span-2">
+                  <label className="block text-[10px] font-medium text-alma-charcoal/50 mb-1 uppercase tracking-wide">Post URL</label>
+                  <input type="url" value={url} onChange={e => updateContent(`social_post_${i}`, e.target.value)}
+                    placeholder="Paste Instagram, YouTube, or TikTok link..."
+                    className="w-full px-3 py-2 rounded-lg border border-gray-200 focus:border-alma-lime outline-none text-sm" />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-medium text-alma-charcoal/50 mb-1 uppercase tracking-wide">Handle / Account Name</label>
+                  <input type="text" value={content[`social_handle_${i}`] || ''}
+                    onChange={e => updateContent(`social_handle_${i}`, e.target.value)}
+                    placeholder="@almatennisacademy"
+                    className="w-full px-3 py-2 rounded-lg border border-gray-200 focus:border-alma-lime outline-none text-sm" />
+                </div>
+              </div>
+
+              {/* Metrics */}
+              {url && (
+                <div>
+                  <label className="block text-[10px] font-medium text-alma-charcoal/50 mb-2 uppercase tracking-wide">Post Metrics</label>
+                  <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+                    <div>
+                      <label className="block text-[9px] text-alma-charcoal/40 mb-0.5">👁 Views</label>
+                      <input type="number" min="0" value={content[`social_views_${i}`] || ''}
+                        onChange={e => updateContent(`social_views_${i}`, e.target.value)}
+                        placeholder="0" className="w-full px-2 py-1.5 rounded border border-gray-200 text-xs outline-none focus:border-alma-lime" />
+                    </div>
+                    <div>
+                      <label className="block text-[9px] text-alma-charcoal/40 mb-0.5">❤️ Likes</label>
+                      <input type="number" min="0" value={content[`social_likes_${i}`] || ''}
+                        onChange={e => updateContent(`social_likes_${i}`, e.target.value)}
+                        placeholder="0" className="w-full px-2 py-1.5 rounded border border-gray-200 text-xs outline-none focus:border-alma-lime" />
+                    </div>
+                    <div>
+                      <label className="block text-[9px] text-alma-charcoal/40 mb-0.5">💬 Comments</label>
+                      <input type="number" min="0" value={content[`social_comments_${i}`] || ''}
+                        onChange={e => updateContent(`social_comments_${i}`, e.target.value)}
+                        placeholder="0" className="w-full px-2 py-1.5 rounded border border-gray-200 text-xs outline-none focus:border-alma-lime" />
+                    </div>
+                    <div>
+                      <label className="block text-[9px] text-alma-charcoal/40 mb-0.5">🔄 Shares</label>
+                      <input type="number" min="0" value={content[`social_shares_${i}`] || ''}
+                        onChange={e => updateContent(`social_shares_${i}`, e.target.value)}
+                        placeholder="0" className="w-full px-2 py-1.5 rounded border border-gray-200 text-xs outline-none focus:border-alma-lime" />
+                    </div>
+                    <div>
+                      <label className="block text-[9px] text-alma-charcoal/40 mb-0.5">📊 Engagement</label>
+                      <div className="px-2 py-1.5 rounded bg-alma-lime/10 text-xs font-bold text-alma-green text-center">
+                        {engagementRate}%
+                      </div>
+                    </div>
+                  </div>
+                  {/* Engagement bar */}
+                  <div className="mt-2 flex items-center gap-2">
+                    <div className="flex-grow bg-gray-100 rounded-full h-1.5">
+                      <div className="bg-alma-lime rounded-full h-1.5 transition-all" style={{ width: `${Math.min(parseFloat(engagementRate), 100)}%` }} />
+                    </div>
+                    <span className="text-[10px] text-alma-charcoal/40 whitespace-nowrap">
+                      {totalInteractions.toLocaleString()} interactions / {views.toLocaleString()} views
+                    </span>
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Add Post button */}
+      <button onClick={addPost}
+        className="mt-4 w-full py-3 border-2 border-dashed border-gray-300 rounded-xl text-sm font-medium text-alma-charcoal/50 hover:border-alma-lime hover:text-alma-green transition-all">
+        + Add Another Post
+      </button>
+
+      <div className="mt-4 bg-gray-50 rounded-lg p-3 text-xs text-alma-charcoal/50 space-y-1">
+        <p className="font-semibold text-alma-charcoal/60">Supported links:</p>
+        <p>📸 <strong>Instagram</strong> — https://www.instagram.com/p/ABC123/ or /reel/ABC123/</p>
+        <p>▶️ <strong>YouTube</strong> — https://www.youtube.com/watch?v=ABC123 or /shorts/ABC123</p>
+        <p>🎵 <strong>TikTok</strong> — https://www.tiktok.com/@user/video/1234567890</p>
+        <p className="mt-2 text-alma-charcoal/40">Engagement Rate = (Likes + Comments + Shares) / Views × 100</p>
+      </div>
+    </div>
+  );
+}
+
 export default function AdminSettingsPage() {
   const { theme, updateTheme, defaultTheme, logoUrl, updateLogo, faviconUrl, updateFavicon, heroBg, updateHeroBg, language, setLanguage, content, updateContent } = usePageContent();
   const [uploading, setUploading] = useState(false);
@@ -608,89 +812,7 @@ export default function AdminSettingsPage() {
 
       {/* Social Media Posts Section */}
       <div id="social"></div>
-      <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-alma-green">Social Media Posts</h2>
-          <div className="flex items-center gap-3">
-            <span className={`text-xs font-medium ${content.social_media_enabled === 'yes' ? 'text-green-600' : 'text-alma-charcoal/40'}`}>
-              {content.social_media_enabled === 'yes' ? 'Visible on site' : 'Hidden'}
-            </span>
-            <button
-              onClick={() => {
-                const newVal = content.social_media_enabled === 'yes' ? 'no' : 'yes';
-                updateContent('social_media_enabled', newVal);
-                setSaved(newVal === 'yes' ? 'Social section enabled!' : 'Social section hidden');
-                setTimeout(() => setSaved(''), 3000);
-              }}
-              className={`relative w-11 h-6 rounded-full transition-colors ${content.social_media_enabled === 'yes' ? 'bg-green-500' : 'bg-gray-300'}`}
-            >
-              <span className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${content.social_media_enabled === 'yes' ? 'left-[22px]' : 'left-0.5'}`} />
-            </button>
-          </div>
-        </div>
-        <p className="text-sm text-alma-charcoal/50 mb-4">Add up to 3 social media posts that will display on your homepage in iPhone frames. Paste any Instagram, YouTube, or TikTok post link.</p>
-
-        {/* Section title/subtitle */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-5">
-          <div>
-            <label className="block text-xs font-medium text-alma-green mb-1">Section Title</label>
-            <input
-              type="text"
-              value={content.social_title || 'Follow Us'}
-              onChange={e => updateContent('social_title', e.target.value)}
-              className="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-alma-lime focus:ring-2 focus:ring-alma-lime/20 outline-none text-sm"
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-alma-green mb-1">Section Subtitle</label>
-            <input
-              type="text"
-              value={content.social_subtitle || ''}
-              onChange={e => updateContent('social_subtitle', e.target.value)}
-              className="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-alma-lime focus:ring-2 focus:ring-alma-lime/20 outline-none text-sm"
-            />
-          </div>
-        </div>
-
-        {/* Post links */}
-        <div className="space-y-3">
-          {[1, 2, 3].map(i => {
-            const url = content[`social_post_${i}`] || '';
-            const detected = url.includes('instagram') ? '📸 Instagram' : url.includes('youtube') || url.includes('youtu.be') ? '▶️ YouTube' : url.includes('tiktok') ? '🎵 TikTok' : '';
-            return (
-              <div key={i}>
-                <label className="block text-xs font-medium text-alma-green mb-1">
-                  Post {i} {detected && <span className="ml-1 text-alma-charcoal/40">— {detected}</span>}
-                </label>
-                <div className="flex gap-2">
-                  <input
-                    type="url"
-                    value={url}
-                    onChange={e => updateContent(`social_post_${i}`, e.target.value)}
-                    placeholder="Paste Instagram, YouTube, or TikTok link..."
-                    className="flex-grow px-4 py-2.5 rounded-lg border border-gray-200 focus:border-alma-lime focus:ring-2 focus:ring-alma-lime/20 outline-none text-sm"
-                  />
-                  {url && (
-                    <button
-                      onClick={() => updateContent(`social_post_${i}`, '')}
-                      className="px-3 py-2.5 text-red-400 hover:text-red-600 text-sm transition-colors"
-                    >
-                      ✕
-                    </button>
-                  )}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-
-        <div className="mt-4 bg-gray-50 rounded-lg p-3 text-xs text-alma-charcoal/50 space-y-1">
-          <p className="font-semibold text-alma-charcoal/60">Supported links:</p>
-          <p>📸 <strong>Instagram</strong> — https://www.instagram.com/p/ABC123/ or /reel/ABC123/</p>
-          <p>▶️ <strong>YouTube</strong> — https://www.youtube.com/watch?v=ABC123 or /shorts/ABC123</p>
-          <p>🎵 <strong>TikTok</strong> — https://www.tiktok.com/@user/video/1234567890</p>
-        </div>
-      </div>
+      <SocialMediaAdmin content={content} updateContent={updateContent} saved={saved} setSaved={setSaved} />
 
       {/* Color Palette Section */}
       <div id="colors"></div>
