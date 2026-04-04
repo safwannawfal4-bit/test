@@ -196,6 +196,7 @@ export default function AdminSettingsPage() {
           { id: 'logo', label: '🖼️ Logo' },
           { id: 'favicon', label: '🔖 Browser Icon' },
           { id: 'hero', label: '🏔️ Hero Background' },
+          { id: 'social', label: '📱 Social Media' },
           { id: 'colors', label: '🎨 Colors' },
         ].map(s => (
           <button key={s.id} onClick={() => document.getElementById(s.id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
@@ -510,6 +511,92 @@ export default function AdminSettingsPage() {
             )}
           </div>
         )}
+      </div>
+
+      {/* Social Media Posts Section */}
+      <div id="social"></div>
+      <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-semibold text-alma-green">Social Media Posts</h2>
+          <div className="flex items-center gap-3">
+            <span className={`text-xs font-medium ${content.social_media_enabled === 'yes' ? 'text-green-600' : 'text-alma-charcoal/40'}`}>
+              {content.social_media_enabled === 'yes' ? 'Visible on site' : 'Hidden'}
+            </span>
+            <button
+              onClick={() => {
+                const newVal = content.social_media_enabled === 'yes' ? 'no' : 'yes';
+                updateContent('social_media_enabled', newVal);
+                setSaved(newVal === 'yes' ? 'Social section enabled!' : 'Social section hidden');
+                setTimeout(() => setSaved(''), 3000);
+              }}
+              className={`relative w-11 h-6 rounded-full transition-colors ${content.social_media_enabled === 'yes' ? 'bg-green-500' : 'bg-gray-300'}`}
+            >
+              <span className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${content.social_media_enabled === 'yes' ? 'left-[22px]' : 'left-0.5'}`} />
+            </button>
+          </div>
+        </div>
+        <p className="text-sm text-alma-charcoal/50 mb-4">Add up to 3 social media posts that will display on your homepage in iPhone frames. Paste any Instagram, YouTube, or TikTok post link.</p>
+
+        {/* Section title/subtitle */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-5">
+          <div>
+            <label className="block text-xs font-medium text-alma-green mb-1">Section Title</label>
+            <input
+              type="text"
+              value={content.social_title || 'Follow Us'}
+              onChange={e => updateContent('social_title', e.target.value)}
+              className="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-alma-lime focus:ring-2 focus:ring-alma-lime/20 outline-none text-sm"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-alma-green mb-1">Section Subtitle</label>
+            <input
+              type="text"
+              value={content.social_subtitle || ''}
+              onChange={e => updateContent('social_subtitle', e.target.value)}
+              className="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-alma-lime focus:ring-2 focus:ring-alma-lime/20 outline-none text-sm"
+            />
+          </div>
+        </div>
+
+        {/* Post links */}
+        <div className="space-y-3">
+          {[1, 2, 3].map(i => {
+            const url = content[`social_post_${i}`] || '';
+            const detected = url.includes('instagram') ? '📸 Instagram' : url.includes('youtube') || url.includes('youtu.be') ? '▶️ YouTube' : url.includes('tiktok') ? '🎵 TikTok' : '';
+            return (
+              <div key={i}>
+                <label className="block text-xs font-medium text-alma-green mb-1">
+                  Post {i} {detected && <span className="ml-1 text-alma-charcoal/40">— {detected}</span>}
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="url"
+                    value={url}
+                    onChange={e => updateContent(`social_post_${i}`, e.target.value)}
+                    placeholder="Paste Instagram, YouTube, or TikTok link..."
+                    className="flex-grow px-4 py-2.5 rounded-lg border border-gray-200 focus:border-alma-lime focus:ring-2 focus:ring-alma-lime/20 outline-none text-sm"
+                  />
+                  {url && (
+                    <button
+                      onClick={() => updateContent(`social_post_${i}`, '')}
+                      className="px-3 py-2.5 text-red-400 hover:text-red-600 text-sm transition-colors"
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        <div className="mt-4 bg-gray-50 rounded-lg p-3 text-xs text-alma-charcoal/50 space-y-1">
+          <p className="font-semibold text-alma-charcoal/60">Supported links:</p>
+          <p>📸 <strong>Instagram</strong> — https://www.instagram.com/p/ABC123/ or /reel/ABC123/</p>
+          <p>▶️ <strong>YouTube</strong> — https://www.youtube.com/watch?v=ABC123 or /shorts/ABC123</p>
+          <p>🎵 <strong>TikTok</strong> — https://www.tiktok.com/@user/video/1234567890</p>
+        </div>
       </div>
 
       {/* Color Palette Section */}

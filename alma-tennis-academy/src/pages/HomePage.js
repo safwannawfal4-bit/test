@@ -3,6 +3,7 @@ import HeroSection from '../components/HeroSection';
 import ProductCard from '../components/ProductCard';
 import ProgramCard from '../components/ProgramCard';
 import EditableText from '../components/EditableText';
+import SocialMediaSection from '../components/SocialMediaSection';
 import useScrollReveal from '../hooks/useScrollReveal';
 import { useData } from '../context/DataContext';
 
@@ -108,6 +109,9 @@ export default function HomePage() {
           </RevealSection>
         </div>
       </section>
+
+      {/* Social Media Posts */}
+      <SocialMediaSection />
 
       <section className="py-20 text-center px-4">
         <RevealSection>
