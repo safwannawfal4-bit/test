@@ -2,6 +2,120 @@ import { useState, useRef } from 'react';
 import { usePageContent } from '../../context/PageContentContext';
 import { uploadImage } from '../../utils/uploadImage';
 
+const EMOJI_CATEGORIES = [
+  { name: 'Sports', emojis: ['🎾','🏆','🥇','🥈','🥉','🏅','🎖️','⚽','🏀','🏈','⚾','🥎','🎳','🏓','🏸','🥊','🥋','🏒','🥅','⛳','🏹','🎣','🤿','🏄','🏊','🚴','🏃','🤸','⛹️','🏋️','🤺','🧗','🤾','🏇','⛷️','🏂','🛹','🪂'] },
+  { name: 'Stars & Sparkles', emojis: ['⭐','🌟','✨','💫','🔥','💥','❤️‍🔥','⚡','☀️','🌈','🎇','🎆','💎','👑','🔮','💡','🕯️','🪩','🎀','🎗️'] },
+  { name: 'Hearts & Love', emojis: ['❤️','🧡','💛','💚','💙','💜','🖤','🤍','🤎','💖','💝','💘','💕','💞','💓','💗','♥️','❣️','💟','😍'] },
+  { name: 'Nature', emojis: ['🌿','🍀','🌱','🌲','🌳','🌴','🌵','🌸','🌺','🌻','🌹','🌷','💐','🪻','🪷','🍁','🍂','🍃','☘️','🌾'] },
+  { name: 'Hands & People', emojis: ['👋','🤚','✋','🖐️','👌','🤌','🤏','✌️','🤞','🫰','🤟','🤘','🤙','👈','👉','👆','👇','☝️','👍','👎','✊','👊','🤛','🤜','👏','🙌','🫶','🤝','🙏','💪'] },
+  { name: 'Faces', emojis: ['😀','😃','😄','😁','😆','😅','🤣','😂','🙂','😉','😊','😇','🥰','😍','🤩','😘','😗','😚','😋','😛','😜','🤪','😎','🤓','🧐','🤗','🤭','😏','😌','🥳'] },
+  { name: 'Animals', emojis: ['🐶','🐱','🐭','🐹','🐰','🦊','🐻','🐼','🐨','🐯','🦁','🐮','🐷','🐸','🐵','🐔','🐧','🐦','🦅','🦆','🦋','🐝','🐞','🦎','🐍','🐢','🐙','🦈','🐬','🐳'] },
+  { name: 'Food', emojis: ['🍎','🍊','🍋','🍌','🍉','🍇','🍓','🫐','🍒','🍑','🥭','🍍','🥝','🍅','🥑','🌽','🥕','🍕','🍔','🍟','🌮','🍣','🍦','🎂','🍩','🍪','☕','🧃','🥤','🍷'] },
+  { name: 'Travel & Places', emojis: ['🏠','🏢','🏗️','🏟️','⛪','🕌','🛕','🏰','🗼','🗽','⛲','🌁','🌉','🏖️','🏝️','🏔️','⛰️','🌋','🗻','🏕️','🚗','🚕','🚌','✈️','🚀','🛸','⛵','🚢','🗺️','🧭'] },
+  { name: 'Objects', emojis: ['⌚','📱','💻','⌨️','🖥️','🖨️','📷','📹','🎥','📺','📻','🎙️','🎵','🎶','🎤','🎧','🎹','🥁','🎸','🎺','🎨','🧩','♟️','🎯','🎲','🎰','🧸','📚','📖','✏️'] },
+  { name: 'Symbols', emojis: ['❤️','🔴','🟠','🟡','🟢','🔵','🟣','⚫','⚪','🟤','🔶','🔷','🔸','🔹','▪️','▫️','◾','◽','⬛','⬜','♠️','♥️','♦️','♣️','🔔','🔕','📢','📣','💬','💭'] },
+  { name: 'Flags', emojis: ['🏁','🚩','🎌','🏴','🏳️','🇦🇪','🇸🇦','🇬🇧','🇺🇸','🇫🇷','🇩🇪','🇪🇸','🇮🇹','🇯🇵','🇨🇳','🇰🇷','🇧🇷','🇮🇳','🇹🇷','🇪🇬'] },
+];
+
+function EmojiPickerSection({ content, updateContent }) {
+  const [activeSlot, setActiveSlot] = useState(null); // 'emoji1' or 'emoji2'
+  const [searchFilter, setSearchFilter] = useState('');
+
+  const filteredCategories = searchFilter
+    ? EMOJI_CATEGORIES.map(cat => ({
+        ...cat,
+        emojis: cat.emojis.filter(() => cat.name.toLowerCase().includes(searchFilter.toLowerCase())),
+      })).filter(cat => cat.emojis.length > 0)
+    : EMOJI_CATEGORIES;
+
+  const handlePick = (emoji) => {
+    if (activeSlot === 'emoji1') updateContent('hero_float_emoji_1', emoji);
+    else if (activeSlot === 'emoji2') updateContent('hero_float_emoji_2', emoji);
+    setActiveSlot(null);
+  };
+
+  return (
+    <div className="space-y-3">
+      {/* Two emoji slots */}
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label className="block text-xs text-alma-charcoal/50 mb-1">Large emoji (top-right)</label>
+          <button
+            onClick={() => setActiveSlot(activeSlot === 'emoji1' ? null : 'emoji1')}
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl border-2 transition-all ${
+              activeSlot === 'emoji1' ? 'border-alma-lime bg-alma-lime/5' : 'border-gray-200 hover:border-gray-300'
+            }`}
+          >
+            <span className="text-3xl">{content.hero_float_emoji_1 || '🎾'}</span>
+            <span className="text-xs text-alma-charcoal/50">{activeSlot === 'emoji1' ? 'Pick below ↓' : 'Click to change'}</span>
+          </button>
+        </div>
+        <div>
+          <label className="block text-xs text-alma-charcoal/50 mb-1">Small emoji (bottom-left)</label>
+          <button
+            onClick={() => setActiveSlot(activeSlot === 'emoji2' ? null : 'emoji2')}
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl border-2 transition-all ${
+              activeSlot === 'emoji2' ? 'border-alma-lime bg-alma-lime/5' : 'border-gray-200 hover:border-gray-300'
+            }`}
+          >
+            <span className="text-3xl">{content.hero_float_emoji_2 || '🎾'}</span>
+            <span className="text-xs text-alma-charcoal/50">{activeSlot === 'emoji2' ? 'Pick below ↓' : 'Click to change'}</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Emoji picker grid */}
+      {activeSlot && (
+        <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-sm font-medium text-alma-green">
+              Pick emoji for {activeSlot === 'emoji1' ? 'large (top-right)' : 'small (bottom-left)'}
+            </p>
+            <button onClick={() => setActiveSlot(null)} className="text-xs text-alma-charcoal/40 hover:text-alma-charcoal/70">Close</button>
+          </div>
+
+          <input
+            type="text"
+            placeholder="Search category..."
+            value={searchFilter}
+            onChange={e => setSearchFilter(e.target.value)}
+            className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm mb-3 outline-none focus:border-alma-lime"
+          />
+
+          <div className="max-h-64 overflow-y-auto space-y-3">
+            {(searchFilter ? filteredCategories : EMOJI_CATEGORIES).map(cat => (
+              <div key={cat.name}>
+                <p className="text-[10px] font-semibold text-alma-charcoal/40 uppercase tracking-wide mb-1">{cat.name}</p>
+                <div className="flex flex-wrap gap-1">
+                  {cat.emojis.map((emoji, i) => (
+                    <button
+                      key={`${cat.name}-${i}`}
+                      onClick={() => handlePick(emoji)}
+                      className="w-9 h-9 text-xl flex items-center justify-center rounded-lg hover:bg-white hover:shadow-sm hover:scale-110 transition-all"
+                    >
+                      {emoji}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-3 pt-3 border-t border-gray-200">
+            <label className="block text-xs text-alma-charcoal/40 mb-1">Or type/paste any emoji:</label>
+            <input
+              type="text"
+              placeholder="Paste emoji here"
+              className="w-32 text-center text-2xl px-2 py-1 rounded-lg border border-gray-200 focus:border-alma-lime outline-none"
+              onChange={e => { if (e.target.value) handlePick(e.target.value); }}
+            />
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 const presets = [
   { name: 'Alma Green', primary: '#2D4A2D', primaryLight: '#3D6B3D', accent: '#A8D86E', accentLight: '#C4E8A0', cream: '#FDF6E3', creamDark: '#F5EDDA', charcoal: '#1A1A1A' },
   { name: 'Ocean Blue', primary: '#1E3A5F', primaryLight: '#2D5F8A', accent: '#5BC0EB', accentLight: '#8DD4F0', cream: '#F0F8FF', creamDark: '#DCE8F0', charcoal: '#1A1A2E' },
@@ -257,42 +371,7 @@ export default function AdminSettingsPage() {
             </div>
 
             {content.hero_show_emojis !== 'no' && (
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs text-alma-charcoal/50 mb-1">Large emoji (top-right)</label>
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      value={content.hero_float_emoji_1 || '🎾'}
-                      onChange={e => updateContent('hero_float_emoji_1', e.target.value)}
-                      className="w-16 text-center text-2xl px-2 py-1.5 rounded-lg border border-gray-200 focus:border-alma-lime outline-none"
-                    />
-                    <div className="flex flex-wrap gap-1">
-                      {['🎾', '🏆', '⭐', '🌟', '💚', '🎯', '🏅', '✨'].map(e => (
-                        <button key={e} onClick={() => updateContent('hero_float_emoji_1', e)}
-                          className="text-lg hover:scale-125 transition-transform">{e}</button>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-xs text-alma-charcoal/50 mb-1">Small emoji (bottom-left)</label>
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      value={content.hero_float_emoji_2 || '🎾'}
-                      onChange={e => updateContent('hero_float_emoji_2', e.target.value)}
-                      className="w-16 text-center text-2xl px-2 py-1.5 rounded-lg border border-gray-200 focus:border-alma-lime outline-none"
-                    />
-                    <div className="flex flex-wrap gap-1">
-                      {['🎾', '🏆', '⭐', '🌟', '💚', '🎯', '🏅', '✨'].map(e => (
-                        <button key={e} onClick={() => updateContent('hero_float_emoji_2', e)}
-                          className="text-lg hover:scale-125 transition-transform">{e}</button>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </div>
+              <EmojiPickerSection content={content} updateContent={updateContent} />
             )}
           </div>
         )}
