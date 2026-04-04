@@ -9,7 +9,7 @@ const defaultContentEN = {
   site_title: 'Alma Tennis Academy', favicon_emoji: '🎾',
   social_media_enabled: 'no', social_title: 'Follow Us',
   social_subtitle: "Stay connected and see what's happening at Alma Tennis Academy.",
-  social_post_1: '', social_post_2: '', social_post_3: '',
+  social_post_count: '0',
   hero_title_1: 'Elevate Your', hero_title_2: 'Tennis Game',
   hero_subtitle: "Professional coaching, premium equipment, and a passionate community. Whether you're picking up a racket for the first time or training for competition, Alma Tennis Academy is your home court.",
   hero_badge: 'Now Enrolling for Summer 2026', hero_cta_1: 'Explore Programs', hero_cta_2: 'Shop Equipment',

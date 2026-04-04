@@ -304,24 +304,26 @@ function SocialMediaAdmin({ content, updateContent, saved, setSaved }) {
   const [fetching, setFetching] = useState({});
   const [fetchingAll, setFetchingAll] = useState(false);
 
-  const postCount = (() => { let n = 0; while (content[`social_post_${n + 1}`]) n++; return n; })();
+  // Use an explicit counter stored in content
+  const postCount = parseInt(content.social_post_count) || 0;
 
   const addPost = () => {
-    updateContent(`social_post_${postCount + 1}`, ' ');
-    setTimeout(() => updateContent(`social_post_${postCount + 1}`, ''), 50);
+    const newCount = postCount + 1;
+    updateContent('social_post_count', newCount.toString());
   };
 
   const removePost = (index) => {
-    let i = index;
-    while (content[`social_post_${i + 1}`]) {
+    // Shift all posts after this one up
+    for (let i = index; i < postCount; i++) {
       ['post', 'handle', 'views', 'likes', 'comments', 'shares', 'title', 'thumbnail'].forEach(f => {
         updateContent(`social_${f}_${i}`, content[`social_${f}_${i + 1}`] || '');
       });
-      i++;
     }
+    // Clear the last slot
     ['post', 'handle', 'views', 'likes', 'comments', 'shares', 'title', 'thumbnail'].forEach(f => {
-      updateContent(`social_${f}_${i}`, '');
+      updateContent(`social_${f}_${postCount}`, '');
     });
+    updateContent('social_post_count', (postCount - 1).toString());
   };
 
   const fetchSinglePost = async (i) => {
@@ -354,7 +356,7 @@ function SocialMediaAdmin({ content, updateContent, saved, setSaved }) {
   };
 
   const posts = [];
-  for (let i = 1; i <= Math.max(postCount, 1); i++) posts.push(i);
+  for (let i = 1; i <= postCount; i++) posts.push(i);
 
   return (
     <div className="bg-white rounded-xl shadow-sm p-6 mb-6">

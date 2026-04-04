@@ -72,12 +72,12 @@ export default function SocialMediaSection() {
 
   if (content.social_media_enabled !== 'yes') return null;
 
-  // Parse all posts from content (unlimited)
+  // Parse all posts from content (unlimited, using counter)
+  const postCount = parseInt(content.social_post_count) || 0;
   const posts = [];
-  let i = 1;
-  while (true) {
+  for (let i = 1; i <= postCount; i++) {
     const url = content[`social_post_${i}`];
-    if (!url) break;
+    if (!url || !url.trim()) continue;
     const embed = parseEmbed(url);
     if (embed) {
       posts.push({
@@ -86,7 +86,6 @@ export default function SocialMediaSection() {
         embed,
       });
     }
-    i++;
   }
 
   if (posts.length === 0) return null;
