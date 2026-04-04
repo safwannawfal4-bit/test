@@ -348,75 +348,61 @@ async function fetchPostMetrics(url) {
     // ==================== INSTAGRAM ====================
     if (url.includes('instagram.com')) {
       const postCode = url.match(/instagram\.com\/(p|reel|tv)\/([^/?]+)/)?.[2];
-      const RAPID_API_KEY = '64e684dbf2mshe45e0b3add984b6p136f6ajsne89a41528e4f';
+      const RAPID_KEY = '64e684dbf2mshe45e0b3add984b6p136f6ajsne89a41528e4f';
+      const RAPID_HOST = 'instagram-scraper21.p.rapidapi.com';
 
-      // Method 1: RapidAPI Instagram Scraper (gets full metrics)
+      // RapidAPI: /api/v1/post-info?code=SHORTCODE
       if (postCode) {
         try {
-          const res = await fetch(`https://instagram-scraper-20251.p.rapidapi.com/mediainfobyshortcode/?short_code=${postCode}`, {
+          const res = await fetch(`https://${RAPID_HOST}/api/v1/post-info?code=${postCode}`, {
             headers: {
-              'x-rapidapi-host': 'instagram-scraper-20251.p.rapidapi.com',
-              'x-rapidapi-key': RAPID_API_KEY,
+              'Content-Type': 'application/json',
+              'x-rapidapi-host': RAPID_HOST,
+              'x-rapidapi-key': RAPID_KEY,
             },
             signal: AbortSignal.timeout(15000),
           });
           if (res.ok) {
-            const data = await res.json();
-            // Try different response shapes
-            const media = data?.data || data?.items?.[0] || data;
+            const raw = await res.json();
+            // Navigate response - could be nested in data, items, etc.
+            const media = raw?.data || raw?.items?.[0] || raw?.graphql?.shortcode_media || raw;
             if (media) {
-              result.likes = media.like_count || media.edge_media_preview_like?.count || 0;
-              result.comments = media.comment_count || media.edge_media_preview_comment?.count || 0;
-              result.views = media.play_count || media.video_view_count || media.view_count || 0;
+              // Likes
+              result.likes = media.like_count || media.likes?.count || media.edge_media_preview_like?.count || 0;
+              // Comments
+              result.comments = media.comment_count || media.comments?.count || media.edge_media_preview_comment?.count || media.edge_media_to_parent_comment?.count || 0;
+              // Views (for reels/videos)
+              result.views = media.play_count || media.video_play_count || media.video_view_count || media.view_count || 0;
+              // Shares
               result.shares = media.share_count || media.reshare_count || 0;
-              result.handle = '@' + (media.user?.username || media.owner?.username || '');
-              result.title = media.caption?.text || media.edge_media_to_caption?.edges?.[0]?.node?.text || '';
-              result.thumbnail = media.image_versions2?.candidates?.[0]?.url || media.thumbnail_src || media.display_url || '';
-              if (result.likes || result.views) result.fetched = true;
+              // Handle
+              const username = media.user?.username || media.owner?.username || media.caption?.user?.username || '';
+              if (username) result.handle = '@' + username;
+              // Caption/Title
+              result.title = media.caption?.text || media.caption?.edge_media_to_caption?.edges?.[0]?.node?.text || '';
+              if (result.title.length > 100) result.title = result.title.substring(0, 100) + '...';
+              // Thumbnail
+              result.thumbnail = media.thumbnail_url || media.image_versions2?.candidates?.[0]?.url || media.thumbnail_src || media.display_url || '';
+
+              if (result.likes || result.views || result.comments) result.fetched = true;
             }
+          } else {
+            console.warn('Instagram API returned:', res.status, res.statusText);
           }
         } catch (err) {
           console.warn('RapidAPI Instagram failed:', err.message);
         }
       }
 
-      // Method 2: Try alternative RapidAPI endpoint
-      if (!result.fetched && postCode) {
-        try {
-          const res = await fetch(`https://instagram-scraper-20251.p.rapidapi.com/media_info/?short_code=${postCode}`, {
-            headers: {
-              'x-rapidapi-host': 'instagram-scraper-20251.p.rapidapi.com',
-              'x-rapidapi-key': RAPID_API_KEY,
-            },
-            signal: AbortSignal.timeout(15000),
-          });
-          if (res.ok) {
-            const raw = await res.json();
-            const media = raw?.data || raw;
-            if (media) {
-              result.likes = media.like_count || result.likes;
-              result.comments = media.comment_count || result.comments;
-              result.views = media.play_count || media.video_view_count || result.views;
-              result.handle = media.user?.username ? '@' + media.user.username : result.handle;
-              result.title = media.caption?.text || result.title;
-              result.thumbnail = media.image_versions2?.candidates?.[0]?.url || media.thumbnail_src || result.thumbnail;
-              if (result.likes || result.views) result.fetched = true;
-            }
-          }
-        } catch (err) {
-          console.warn('RapidAPI Instagram alt endpoint failed:', err.message);
-        }
-      }
-
-      // Method 3: Fallback to noembed for basic info if API failed
+      // Fallback: noembed for basic info if API failed
       if (!result.handle) {
         try {
-          const oembedRes = await fetch(`https://noembed.com/embed?url=${encodeURIComponent(url)}`);
-          if (oembedRes.ok) {
-            const data = await oembedRes.json();
-            result.handle = data.author_name ? '@' + data.author_name : '';
-            result.title = result.title || data.title || '';
-            result.thumbnail = result.thumbnail || data.thumbnail_url || '';
+          const oRes = await fetch(`https://noembed.com/embed?url=${encodeURIComponent(url)}`);
+          if (oRes.ok) {
+            const d = await oRes.json();
+            result.handle = d.author_name ? '@' + d.author_name : '';
+            result.title = result.title || d.title || '';
+            result.thumbnail = result.thumbnail || d.thumbnail_url || '';
             result.fetched = true;
           }
         } catch {}
