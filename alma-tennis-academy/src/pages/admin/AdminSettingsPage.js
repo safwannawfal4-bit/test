@@ -227,6 +227,71 @@ const colorFields = [
   { key: 'charcoal', label: 'Text Color' },
 ];
 
+// Fetch public metrics from platforms
+async function fetchPostMetrics(url) {
+  const result = { views: 0, likes: 0, comments: 0, shares: 0, handle: '', title: '', thumbnail: '', fetched: false };
+
+  try {
+    // YouTube
+    if (url.includes('youtube.com') || url.includes('youtu.be')) {
+      let videoId = '';
+      if (url.includes('youtu.be/')) videoId = url.split('youtu.be/')[1]?.split(/[?&#]/)[0];
+      else if (url.includes('v=')) videoId = url.split('v=')[1]?.split(/[?&#]/)[0];
+      else if (url.includes('/shorts/')) videoId = url.split('/shorts/')[1]?.split(/[?&#]/)[0];
+
+      if (videoId) {
+        // Fetch metrics from Return YouTube Dislike API (free, no key needed)
+        const [metricsRes, oembedRes] = await Promise.allSettled([
+          fetch(`https://returnyoutubedislikeapi.com/votes?videoId=${videoId}`),
+          fetch(`https://noembed.com/embed?url=https://www.youtube.com/watch?v=${videoId}`),
+        ]);
+
+        if (metricsRes.status === 'fulfilled' && metricsRes.value.ok) {
+          const data = await metricsRes.value.json();
+          result.views = data.viewCount || 0;
+          result.likes = data.likes || 0;
+          result.fetched = true;
+        }
+
+        if (oembedRes.status === 'fulfilled' && oembedRes.value.ok) {
+          const data = await oembedRes.value.json();
+          result.handle = data.author_name || '';
+          result.title = data.title || '';
+          result.thumbnail = data.thumbnail_url || '';
+        }
+      }
+    }
+
+    // TikTok
+    if (url.includes('tiktok.com')) {
+      const res = await fetch(`https://www.tiktok.com/oembed?url=${encodeURIComponent(url)}`);
+      if (res.ok) {
+        const data = await res.json();
+        result.handle = data.author_name || '';
+        result.title = data.title || '';
+        result.thumbnail = data.thumbnail_url || '';
+        result.fetched = true;
+      }
+    }
+
+    // Instagram
+    if (url.includes('instagram.com')) {
+      const res = await fetch(`https://noembed.com/embed?url=${encodeURIComponent(url)}`);
+      if (res.ok) {
+        const data = await res.json();
+        result.handle = data.author_name || '';
+        result.title = data.title || '';
+        result.thumbnail = data.thumbnail_url || '';
+        result.fetched = true;
+      }
+    }
+  } catch (err) {
+    console.warn('Failed to fetch metrics:', err);
+  }
+
+  return result;
+}
+
 function detectPlatform(url) {
   if (!url) return null;
   if (url.includes('instagram')) return { icon: '📸', name: 'Instagram', color: 'bg-gradient-to-r from-purple-500 via-pink-500 to-yellow-500' };
@@ -236,86 +301,101 @@ function detectPlatform(url) {
 }
 
 function SocialMediaAdmin({ content, updateContent, saved, setSaved }) {
-  // Count existing posts
-  const postCount = (() => {
-    let n = 0;
-    while (content[`social_post_${n + 1}`]) n++;
-    return n;
-  })();
+  const [fetching, setFetching] = useState({});
+  const [fetchingAll, setFetchingAll] = useState(false);
+
+  const postCount = (() => { let n = 0; while (content[`social_post_${n + 1}`]) n++; return n; })();
 
   const addPost = () => {
-    updateContent(`social_post_${postCount + 1}`, ' '); // space placeholder to create slot
-    // immediately clear it so user can type
+    updateContent(`social_post_${postCount + 1}`, ' ');
     setTimeout(() => updateContent(`social_post_${postCount + 1}`, ''), 50);
   };
 
   const removePost = (index) => {
-    // Shift all posts after this one up by 1
     let i = index;
     while (content[`social_post_${i + 1}`]) {
-      updateContent(`social_post_${i}`, content[`social_post_${i + 1}`]);
-      updateContent(`social_handle_${i}`, content[`social_handle_${i + 1}`] || '');
-      updateContent(`social_views_${i}`, content[`social_views_${i + 1}`] || '');
-      updateContent(`social_likes_${i}`, content[`social_likes_${i + 1}`] || '');
-      updateContent(`social_comments_${i}`, content[`social_comments_${i + 1}`] || '');
-      updateContent(`social_shares_${i}`, content[`social_shares_${i + 1}`] || '');
+      ['post', 'handle', 'views', 'likes', 'comments', 'shares', 'title', 'thumbnail'].forEach(f => {
+        updateContent(`social_${f}_${i}`, content[`social_${f}_${i + 1}`] || '');
+      });
       i++;
     }
-    // Clear the last slot
-    updateContent(`social_post_${i}`, '');
-    updateContent(`social_handle_${i}`, '');
-    updateContent(`social_views_${i}`, '');
-    updateContent(`social_likes_${i}`, '');
-    updateContent(`social_comments_${i}`, '');
-    updateContent(`social_shares_${i}`, '');
+    ['post', 'handle', 'views', 'likes', 'comments', 'shares', 'title', 'thumbnail'].forEach(f => {
+      updateContent(`social_${f}_${i}`, '');
+    });
   };
 
-  // Build post list (including empty slots for adding)
+  const fetchSinglePost = async (i) => {
+    const url = content[`social_post_${i}`];
+    if (!url) return;
+    setFetching(prev => ({ ...prev, [i]: true }));
+    try {
+      const data = await fetchPostMetrics(url);
+      if (data.handle) updateContent(`social_handle_${i}`, data.handle);
+      if (data.views) updateContent(`social_views_${i}`, data.views.toString());
+      if (data.likes) updateContent(`social_likes_${i}`, data.likes.toString());
+      if (data.title) updateContent(`social_title_${i}`, data.title);
+      if (data.thumbnail) updateContent(`social_thumbnail_${i}`, data.thumbnail);
+      setSaved(data.fetched ? `Post ${i} metrics updated!` : `Post ${i}: partial data fetched`);
+      setTimeout(() => setSaved(''), 3000);
+    } catch (err) {
+      console.error('Fetch error:', err);
+    }
+    setFetching(prev => ({ ...prev, [i]: false }));
+  };
+
+  const fetchAllPosts = async () => {
+    setFetchingAll(true);
+    for (let i = 1; i <= postCount; i++) {
+      if (content[`social_post_${i}`]) await fetchSinglePost(i);
+    }
+    setFetchingAll(false);
+    setSaved('All posts updated!');
+    setTimeout(() => setSaved(''), 3000);
+  };
+
   const posts = [];
-  for (let i = 1; i <= Math.max(postCount, 1); i++) {
-    posts.push(i);
-  }
+  for (let i = 1; i <= Math.max(postCount, 1); i++) posts.push(i);
 
   return (
     <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-lg font-semibold text-alma-green">Social Media Posts ({postCount})</h2>
         <div className="flex items-center gap-3">
+          {postCount > 0 && (
+            <button onClick={fetchAllPosts} disabled={fetchingAll}
+              className="text-xs font-medium bg-blue-50 text-blue-600 px-3 py-1.5 rounded-lg hover:bg-blue-100 transition-all disabled:opacity-50 flex items-center gap-1.5">
+              {fetchingAll ? <><span className="w-3 h-3 border-2 border-blue-300 border-t-blue-600 rounded-full animate-spin" /> Fetching...</> : '🔄 Update All Results'}
+            </button>
+          )}
           <span className={`text-xs font-medium ${content.social_media_enabled === 'yes' ? 'text-green-600' : 'text-alma-charcoal/40'}`}>
-            {content.social_media_enabled === 'yes' ? 'Visible on site' : 'Hidden'}
+            {content.social_media_enabled === 'yes' ? 'Visible' : 'Hidden'}
           </span>
           <button
             onClick={() => {
-              const newVal = content.social_media_enabled === 'yes' ? 'no' : 'yes';
-              updateContent('social_media_enabled', newVal);
-              setSaved(newVal === 'yes' ? 'Social section enabled!' : 'Social section hidden');
-              setTimeout(() => setSaved(''), 3000);
+              const v = content.social_media_enabled === 'yes' ? 'no' : 'yes';
+              updateContent('social_media_enabled', v);
+              setSaved(v === 'yes' ? 'Enabled!' : 'Hidden'); setTimeout(() => setSaved(''), 3000);
             }}
-            className={`relative w-11 h-6 rounded-full transition-colors ${content.social_media_enabled === 'yes' ? 'bg-green-500' : 'bg-gray-300'}`}
-          >
+            className={`relative w-11 h-6 rounded-full transition-colors ${content.social_media_enabled === 'yes' ? 'bg-green-500' : 'bg-gray-300'}`}>
             <span className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${content.social_media_enabled === 'yes' ? 'left-[22px]' : 'left-0.5'}`} />
           </button>
         </div>
       </div>
-      <p className="text-sm text-alma-charcoal/50 mb-4">Add unlimited social media posts. They display in a swipeable carousel with iPhone frames on your homepage.</p>
+      <p className="text-sm text-alma-charcoal/50 mb-4">Add unlimited social media posts. Click "Update Results" to auto-fetch public data from each platform.</p>
 
-      {/* Section title/subtitle */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-5">
         <div>
           <label className="block text-xs font-medium text-alma-green mb-1">Section Title</label>
-          <input type="text" value={content.social_title || 'Follow Us'}
-            onChange={e => updateContent('social_title', e.target.value)}
-            className="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-alma-lime focus:ring-2 focus:ring-alma-lime/20 outline-none text-sm" />
+          <input type="text" value={content.social_title || 'Follow Us'} onChange={e => updateContent('social_title', e.target.value)}
+            className="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-alma-lime outline-none text-sm" />
         </div>
         <div>
           <label className="block text-xs font-medium text-alma-green mb-1">Section Subtitle</label>
-          <input type="text" value={content.social_subtitle || ''}
-            onChange={e => updateContent('social_subtitle', e.target.value)}
-            className="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-alma-lime focus:ring-2 focus:ring-alma-lime/20 outline-none text-sm" />
+          <input type="text" value={content.social_subtitle || ''} onChange={e => updateContent('social_subtitle', e.target.value)}
+            className="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-alma-lime outline-none text-sm" />
         </div>
       </div>
 
-      {/* Posts */}
       <div className="space-y-4">
         {posts.map(i => {
           const url = content[`social_post_${i}`] || '';
@@ -326,6 +406,7 @@ function SocialMediaAdmin({ content, updateContent, saved, setSaved }) {
           const shares = parseInt(content[`social_shares_${i}`]) || 0;
           const totalInteractions = likes + comments + shares;
           const engagementRate = views > 0 ? ((totalInteractions / views) * 100).toFixed(2) : '0.00';
+          const isFetching = fetching[i];
 
           return (
             <div key={i} className="border border-gray-200 rounded-xl p-4">
@@ -337,15 +418,36 @@ function SocialMediaAdmin({ content, updateContent, saved, setSaved }) {
                       {platform.icon} {platform.name}
                     </span>
                   )}
+                  {content[`social_title_${i}`] && (
+                    <span className="text-[10px] text-alma-charcoal/40 truncate max-w-[200px]" title={content[`social_title_${i}`]}>
+                      — {content[`social_title_${i}`]}
+                    </span>
+                  )}
                 </div>
-                {url && (
-                  <button onClick={() => removePost(i)} className="text-xs text-red-400 hover:text-red-600 transition-colors">
-                    Remove
-                  </button>
-                )}
+                <div className="flex items-center gap-2">
+                  {url && (
+                    <button onClick={() => fetchSinglePost(i)} disabled={isFetching}
+                      className="text-[10px] font-medium bg-blue-50 text-blue-600 px-2.5 py-1 rounded-lg hover:bg-blue-100 transition-all disabled:opacity-50 flex items-center gap-1">
+                      {isFetching ? <><span className="w-2.5 h-2.5 border border-blue-300 border-t-blue-600 rounded-full animate-spin" /> Fetching...</> : '🔄 Update Results'}
+                    </button>
+                  )}
+                  {url && (
+                    <button onClick={() => removePost(i)} className="text-xs text-red-400 hover:text-red-600 transition-colors">Remove</button>
+                  )}
+                </div>
               </div>
 
-              {/* URL + Handle */}
+              {/* Thumbnail preview */}
+              {content[`social_thumbnail_${i}`] && (
+                <div className="mb-3 flex items-center gap-3">
+                  <img src={content[`social_thumbnail_${i}`]} alt="" className="w-16 h-16 rounded-lg object-cover" />
+                  <div className="text-xs text-alma-charcoal/50">
+                    {content[`social_handle_${i}`] && <p className="font-semibold text-alma-green">{content[`social_handle_${i}`]}</p>}
+                    {content[`social_title_${i}`] && <p className="truncate max-w-xs">{content[`social_title_${i}`]}</p>}
+                  </div>
+                </div>
+              )}
+
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
                 <div className="md:col-span-2">
                   <label className="block text-[10px] font-medium text-alma-charcoal/50 mb-1 uppercase tracking-wide">Post URL</label>
@@ -354,57 +456,52 @@ function SocialMediaAdmin({ content, updateContent, saved, setSaved }) {
                     className="w-full px-3 py-2 rounded-lg border border-gray-200 focus:border-alma-lime outline-none text-sm" />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-medium text-alma-charcoal/50 mb-1 uppercase tracking-wide">Handle / Account Name</label>
-                  <input type="text" value={content[`social_handle_${i}`] || ''}
-                    onChange={e => updateContent(`social_handle_${i}`, e.target.value)}
+                  <label className="block text-[10px] font-medium text-alma-charcoal/50 mb-1 uppercase tracking-wide">Handle</label>
+                  <input type="text" value={content[`social_handle_${i}`] || ''} onChange={e => updateContent(`social_handle_${i}`, e.target.value)}
                     placeholder="@almatennisacademy"
                     className="w-full px-3 py-2 rounded-lg border border-gray-200 focus:border-alma-lime outline-none text-sm" />
                 </div>
               </div>
 
-              {/* Metrics */}
               {url && (
                 <div>
-                  <label className="block text-[10px] font-medium text-alma-charcoal/50 mb-2 uppercase tracking-wide">Post Metrics</label>
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="text-[10px] font-medium text-alma-charcoal/50 uppercase tracking-wide">Post Metrics</label>
+                    <span className="text-[9px] text-alma-charcoal/30">{views > 0 ? 'Last fetched data shown' : 'Click "Update Results" to fetch'}</span>
+                  </div>
                   <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
-                    <div>
-                      <label className="block text-[9px] text-alma-charcoal/40 mb-0.5">👁 Views</label>
-                      <input type="number" min="0" value={content[`social_views_${i}`] || ''}
-                        onChange={e => updateContent(`social_views_${i}`, e.target.value)}
-                        placeholder="0" className="w-full px-2 py-1.5 rounded border border-gray-200 text-xs outline-none focus:border-alma-lime" />
-                    </div>
-                    <div>
-                      <label className="block text-[9px] text-alma-charcoal/40 mb-0.5">❤️ Likes</label>
-                      <input type="number" min="0" value={content[`social_likes_${i}`] || ''}
-                        onChange={e => updateContent(`social_likes_${i}`, e.target.value)}
-                        placeholder="0" className="w-full px-2 py-1.5 rounded border border-gray-200 text-xs outline-none focus:border-alma-lime" />
-                    </div>
-                    <div>
-                      <label className="block text-[9px] text-alma-charcoal/40 mb-0.5">💬 Comments</label>
-                      <input type="number" min="0" value={content[`social_comments_${i}`] || ''}
-                        onChange={e => updateContent(`social_comments_${i}`, e.target.value)}
-                        placeholder="0" className="w-full px-2 py-1.5 rounded border border-gray-200 text-xs outline-none focus:border-alma-lime" />
-                    </div>
-                    <div>
-                      <label className="block text-[9px] text-alma-charcoal/40 mb-0.5">🔄 Shares</label>
-                      <input type="number" min="0" value={content[`social_shares_${i}`] || ''}
-                        onChange={e => updateContent(`social_shares_${i}`, e.target.value)}
-                        placeholder="0" className="w-full px-2 py-1.5 rounded border border-gray-200 text-xs outline-none focus:border-alma-lime" />
-                    </div>
+                    {[
+                      { key: 'views', icon: '👁', label: 'Views' },
+                      { key: 'likes', icon: '❤️', label: 'Likes' },
+                      { key: 'comments', icon: '💬', label: 'Comments' },
+                      { key: 'shares', icon: '🔄', label: 'Shares' },
+                    ].map(m => (
+                      <div key={m.key}>
+                        <label className="block text-[9px] text-alma-charcoal/40 mb-0.5">{m.icon} {m.label}</label>
+                        <input type="number" min="0" value={content[`social_${m.key}_${i}`] || ''}
+                          onChange={e => updateContent(`social_${m.key}_${i}`, e.target.value)}
+                          placeholder="0" className="w-full px-2 py-1.5 rounded border border-gray-200 text-xs outline-none focus:border-alma-lime" />
+                      </div>
+                    ))}
                     <div>
                       <label className="block text-[9px] text-alma-charcoal/40 mb-0.5">📊 Engagement</label>
-                      <div className="px-2 py-1.5 rounded bg-alma-lime/10 text-xs font-bold text-alma-green text-center">
+                      <div className={`px-2 py-1.5 rounded text-xs font-bold text-center ${
+                        parseFloat(engagementRate) > 5 ? 'bg-green-100 text-green-700' :
+                        parseFloat(engagementRate) > 2 ? 'bg-alma-lime/10 text-alma-green' :
+                        parseFloat(engagementRate) > 0 ? 'bg-yellow-100 text-yellow-700' : 'bg-gray-100 text-gray-400'
+                      }`}>
                         {engagementRate}%
                       </div>
                     </div>
                   </div>
-                  {/* Engagement bar */}
                   <div className="mt-2 flex items-center gap-2">
                     <div className="flex-grow bg-gray-100 rounded-full h-1.5">
-                      <div className="bg-alma-lime rounded-full h-1.5 transition-all" style={{ width: `${Math.min(parseFloat(engagementRate), 100)}%` }} />
+                      <div className={`rounded-full h-1.5 transition-all ${
+                        parseFloat(engagementRate) > 5 ? 'bg-green-500' : parseFloat(engagementRate) > 2 ? 'bg-alma-lime' : 'bg-yellow-400'
+                      }`} style={{ width: `${Math.min(parseFloat(engagementRate) * 5, 100)}%` }} />
                     </div>
                     <span className="text-[10px] text-alma-charcoal/40 whitespace-nowrap">
-                      {totalInteractions.toLocaleString()} interactions / {views.toLocaleString()} views
+                      {totalInteractions.toLocaleString()} / {views.toLocaleString()} views
                     </span>
                   </div>
                 </div>
@@ -414,18 +511,18 @@ function SocialMediaAdmin({ content, updateContent, saved, setSaved }) {
         })}
       </div>
 
-      {/* Add Post button */}
       <button onClick={addPost}
         className="mt-4 w-full py-3 border-2 border-dashed border-gray-300 rounded-xl text-sm font-medium text-alma-charcoal/50 hover:border-alma-lime hover:text-alma-green transition-all">
         + Add Another Post
       </button>
 
       <div className="mt-4 bg-gray-50 rounded-lg p-3 text-xs text-alma-charcoal/50 space-y-1">
-        <p className="font-semibold text-alma-charcoal/60">Supported links:</p>
-        <p>📸 <strong>Instagram</strong> — https://www.instagram.com/p/ABC123/ or /reel/ABC123/</p>
-        <p>▶️ <strong>YouTube</strong> — https://www.youtube.com/watch?v=ABC123 or /shorts/ABC123</p>
-        <p>🎵 <strong>TikTok</strong> — https://www.tiktok.com/@user/video/1234567890</p>
-        <p className="mt-2 text-alma-charcoal/40">Engagement Rate = (Likes + Comments + Shares) / Views × 100</p>
+        <p className="font-semibold text-alma-charcoal/60">Auto-fetch available data:</p>
+        <p>▶️ <strong>YouTube</strong> — Views, Likes, Title, Channel name, Thumbnail (fully automatic)</p>
+        <p>🎵 <strong>TikTok</strong> — Author name, Title, Thumbnail (metrics: enter manually)</p>
+        <p>📸 <strong>Instagram</strong> — Author name, Title (metrics: enter manually)</p>
+        <p className="mt-2 text-alma-charcoal/40">📊 Engagement Rate = (Likes + Comments + Shares) ÷ Views × 100</p>
+        <p className="text-alma-charcoal/40">🟢 &gt;5% Great | 🟡 2-5% Good | 🔴 &lt;2% Low</p>
       </div>
     </div>
   );
