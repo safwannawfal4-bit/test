@@ -129,11 +129,301 @@ function detectPlatform(url) {
   return null;
 }
 
+function SocialDashboard({ content, postCount }) {
+  // Gather all post data
+  const posts = [];
+  for (let i = 1; i <= postCount; i++) {
+    const url = content[`social_post_${i}`] || '';
+    if (!url) continue;
+    const views = parseInt(content[`social_views_${i}`]) || 0;
+    const likes = parseInt(content[`social_likes_${i}`]) || 0;
+    const comments = parseInt(content[`social_comments_${i}`]) || 0;
+    const shares = parseInt(content[`social_shares_${i}`]) || 0;
+    const platform = detectPlatform(url);
+    posts.push({
+      index: i, url, views, likes, comments, shares,
+      handle: content[`social_handle_${i}`] || '',
+      title: content[`social_title_${i}`] || `Post ${i}`,
+      thumbnail: content[`social_thumbnail_${i}`] || '',
+      platform: platform?.name || 'Unknown',
+      platformIcon: platform?.icon || '📱',
+      engagement: views > 0 ? ((likes + comments + shares) / views * 100) : 0,
+      likeability: views > 0 ? (likes / views * 100) : 0,
+      sharability: views > 0 ? (shares / views * 100) : 0,
+    });
+  }
+
+  const totalViews = posts.reduce((s, p) => s + p.views, 0);
+  const totalLikes = posts.reduce((s, p) => s + p.likes, 0);
+  const totalComments = posts.reduce((s, p) => s + p.comments, 0);
+  const totalShares = posts.reduce((s, p) => s + p.shares, 0);
+  const totalInteractions = totalLikes + totalComments + totalShares;
+  const avgEngagement = totalViews > 0 ? (totalInteractions / totalViews * 100).toFixed(2) : '0.00';
+  const avgLikeability = totalViews > 0 ? (totalLikes / totalViews * 100).toFixed(2) : '0.00';
+  const avgSharability = totalViews > 0 ? (totalShares / totalViews * 100).toFixed(2) : '0.00';
+
+  // Platform breakdown
+  const platforms = {};
+  posts.forEach(p => {
+    if (!platforms[p.platform]) platforms[p.platform] = { icon: p.platformIcon, views: 0, likes: 0, comments: 0, shares: 0, count: 0 };
+    platforms[p.platform].views += p.views;
+    platforms[p.platform].likes += p.likes;
+    platforms[p.platform].comments += p.comments;
+    platforms[p.platform].shares += p.shares;
+    platforms[p.platform].count += 1;
+  });
+
+  // Top post by views
+  const topByViews = [...posts].sort((a, b) => b.views - a.views);
+  const topByEngagement = [...posts].sort((a, b) => b.engagement - a.engagement);
+  const maxViews = Math.max(...posts.map(p => p.views), 1);
+
+  if (posts.length === 0) {
+    return (
+      <div className="bg-white rounded-xl shadow-sm p-12 text-center">
+        <div className="text-5xl mb-4">📊</div>
+        <p className="text-alma-charcoal/50">Add posts and fetch their metrics to see the dashboard.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Overview Stats */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {[
+          { icon: '👁', label: 'Total Views', value: totalViews.toLocaleString(), color: 'border-blue-200 bg-blue-50' },
+          { icon: '❤️', label: 'Total Likes', value: totalLikes.toLocaleString(), color: 'border-pink-200 bg-pink-50' },
+          { icon: '💬', label: 'Total Comments', value: totalComments.toLocaleString(), color: 'border-amber-200 bg-amber-50' },
+          { icon: '🔄', label: 'Total Shares', value: totalShares.toLocaleString(), color: 'border-purple-200 bg-purple-50' },
+        ].map(s => (
+          <div key={s.label} className={`rounded-xl border-2 p-4 ${s.color}`}>
+            <span className="text-xl">{s.icon}</span>
+            <p className="text-2xl font-bold text-alma-charcoal mt-1">{s.value}</p>
+            <p className="text-xs text-alma-charcoal/50">{s.label}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* Average Rates */}
+      <div className="grid grid-cols-3 gap-4">
+        {[
+          { label: 'Avg Engagement', rate: avgEngagement, icon: '📊', thresholds: [5, 2], desc: 'All interactions / views' },
+          { label: 'Avg Likeability', rate: avgLikeability, icon: '👍', thresholds: [4, 1.5], desc: 'Likes / views' },
+          { label: 'Avg Sharability', rate: avgSharability, icon: '📤', thresholds: [1, 0.3], desc: 'Shares / views' },
+        ].map(r => (
+          <div key={r.label} className="bg-white rounded-xl shadow-sm p-5 text-center">
+            <span className="text-2xl">{r.icon}</span>
+            <p className={`text-3xl font-bold mt-2 ${
+              parseFloat(r.rate) > r.thresholds[0] ? 'text-green-600' :
+              parseFloat(r.rate) > r.thresholds[1] ? 'text-alma-green' : 'text-yellow-600'
+            }`}>{r.rate}%</p>
+            <p className="text-sm font-medium text-alma-charcoal/70 mt-1">{r.label}</p>
+            <p className="text-[10px] text-alma-charcoal/40 mt-0.5">{r.desc}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* Views Bar Chart */}
+      <div className="bg-white rounded-xl shadow-sm p-5">
+        <h3 className="text-sm font-semibold text-alma-green mb-4">Views by Post</h3>
+        <div className="space-y-3">
+          {topByViews.map(p => (
+            <div key={p.index} className="flex items-center gap-3">
+              <div className="w-8 text-center text-xs font-bold text-alma-charcoal/40">#{p.index}</div>
+              {p.thumbnail && <img src={p.thumbnail} alt="" className="w-8 h-8 rounded object-cover flex-shrink-0" />}
+              <div className="flex-grow">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xs font-medium text-alma-charcoal/70 truncate max-w-[200px]">{p.title}</span>
+                  <span className="text-xs font-bold text-alma-charcoal">{p.views.toLocaleString()}</span>
+                </div>
+                <div className="w-full bg-gray-100 rounded-full h-3">
+                  <div className="bg-gradient-to-r from-blue-400 to-blue-600 rounded-full h-3 transition-all relative"
+                    style={{ width: `${(p.views / maxViews) * 100}%`, minWidth: p.views > 0 ? '8px' : '0' }}>
+                  </div>
+                </div>
+              </div>
+              <span className="text-sm flex-shrink-0">{p.platformIcon}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Platform Pie Chart */}
+        <div className="bg-white rounded-xl shadow-sm p-5">
+          <h3 className="text-sm font-semibold text-alma-green mb-4">Views by Platform</h3>
+          <div className="flex items-center gap-6">
+            {/* Donut chart */}
+            <div className="relative w-36 h-36 flex-shrink-0">
+              <svg viewBox="0 0 36 36" className="w-full h-full -rotate-90">
+                {(() => {
+                  const colors = ['#3B82F6', '#EF4444', '#111827', '#8B5CF6', '#F59E0B'];
+                  let offset = 0;
+                  return Object.entries(platforms).map(([name, data], idx) => {
+                    const pct = totalViews > 0 ? (data.views / totalViews) * 100 : 0;
+                    const el = (
+                      <circle key={name} cx="18" cy="18" r="14" fill="none"
+                        stroke={colors[idx % colors.length]} strokeWidth="5"
+                        strokeDasharray={`${pct} ${100 - pct}`}
+                        strokeDashoffset={-offset}
+                        className="transition-all duration-500" />
+                    );
+                    offset += pct;
+                    return el;
+                  });
+                })()}
+              </svg>
+              <div className="absolute inset-0 flex flex-col items-center justify-center">
+                <span className="text-lg font-bold text-alma-charcoal">{posts.length}</span>
+                <span className="text-[9px] text-alma-charcoal/40">posts</span>
+              </div>
+            </div>
+            {/* Legend */}
+            <div className="space-y-2 flex-grow">
+              {(() => {
+                const colors = ['bg-blue-500', 'bg-red-500', 'bg-gray-900', 'bg-purple-500', 'bg-amber-500'];
+                return Object.entries(platforms).map(([name, data], idx) => (
+                  <div key={name} className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className={`w-3 h-3 rounded-full ${colors[idx % colors.length]}`} />
+                      <span className="text-xs font-medium">{data.icon} {name}</span>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-xs font-bold">{data.views.toLocaleString()}</span>
+                      <span className="text-[10px] text-alma-charcoal/40 ml-1">({data.count})</span>
+                    </div>
+                  </div>
+                ));
+              })()}
+            </div>
+          </div>
+        </div>
+
+        {/* Top by Engagement Rate */}
+        <div className="bg-white rounded-xl shadow-sm p-5">
+          <h3 className="text-sm font-semibold text-alma-green mb-4">Engagement Rate Ranking</h3>
+          <div className="space-y-3">
+            {topByEngagement.slice(0, 5).map((p, idx) => (
+              <div key={p.index} className="flex items-center gap-3">
+                <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold ${
+                  idx === 0 ? 'bg-yellow-400 text-yellow-900' : idx === 1 ? 'bg-gray-300 text-gray-700' : idx === 2 ? 'bg-amber-600 text-white' : 'bg-gray-100 text-gray-500'
+                }`}>{idx + 1}</div>
+                <div className="flex-grow min-w-0">
+                  <p className="text-xs font-medium truncate">{p.handle || p.title}</p>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <div className="flex-grow bg-gray-100 rounded-full h-1.5">
+                      <div className={`rounded-full h-1.5 ${
+                        p.engagement > 5 ? 'bg-green-500' : p.engagement > 2 ? 'bg-alma-lime' : 'bg-yellow-400'
+                      }`} style={{ width: `${Math.min(p.engagement * 5, 100)}%` }} />
+                    </div>
+                    <span className="text-[10px] font-bold text-alma-charcoal">{p.engagement.toFixed(1)}%</span>
+                  </div>
+                </div>
+                <span className="text-sm">{p.platformIcon}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Engagement Heatmap */}
+      <div className="bg-white rounded-xl shadow-sm p-5">
+        <h3 className="text-sm font-semibold text-alma-green mb-4">Performance Heatmap</h3>
+        <div className="overflow-x-auto">
+          <table className="w-full text-xs">
+            <thead>
+              <tr className="text-alma-charcoal/40">
+                <th className="text-left py-2 px-2 font-medium">Post</th>
+                <th className="text-center py-2 px-2 font-medium">Platform</th>
+                <th className="text-center py-2 px-2 font-medium">Views</th>
+                <th className="text-center py-2 px-2 font-medium">Likes</th>
+                <th className="text-center py-2 px-2 font-medium">Comments</th>
+                <th className="text-center py-2 px-2 font-medium">Shares</th>
+                <th className="text-center py-2 px-2 font-medium">Engage %</th>
+                <th className="text-center py-2 px-2 font-medium">Like %</th>
+                <th className="text-center py-2 px-2 font-medium">Share %</th>
+              </tr>
+            </thead>
+            <tbody>
+              {posts.map(p => {
+                const heatColor = (val, thresholds) => {
+                  if (val > thresholds[0]) return 'bg-green-500 text-white';
+                  if (val > thresholds[1]) return 'bg-green-200 text-green-800';
+                  if (val > thresholds[2]) return 'bg-yellow-200 text-yellow-800';
+                  if (val > 0) return 'bg-orange-200 text-orange-800';
+                  return 'bg-gray-100 text-gray-400';
+                };
+                return (
+                  <tr key={p.index} className="border-t border-gray-100">
+                    <td className="py-2 px-2 font-medium text-alma-charcoal truncate max-w-[120px]">{p.handle || `#${p.index}`}</td>
+                    <td className="py-2 px-2 text-center">{p.platformIcon}</td>
+                    <td className={`py-2 px-2 text-center rounded font-bold ${heatColor(p.views, [100000, 10000, 1000])}`}>{p.views > 999 ? (p.views / 1000).toFixed(1) + 'K' : p.views}</td>
+                    <td className={`py-2 px-2 text-center rounded font-bold ${heatColor(p.likes, [10000, 1000, 100])}`}>{p.likes > 999 ? (p.likes / 1000).toFixed(1) + 'K' : p.likes}</td>
+                    <td className={`py-2 px-2 text-center rounded font-bold ${heatColor(p.comments, [1000, 100, 10])}`}>{p.comments > 999 ? (p.comments / 1000).toFixed(1) + 'K' : p.comments}</td>
+                    <td className={`py-2 px-2 text-center rounded font-bold ${heatColor(p.shares, [1000, 100, 10])}`}>{p.shares > 999 ? (p.shares / 1000).toFixed(1) + 'K' : p.shares}</td>
+                    <td className={`py-2 px-2 text-center rounded font-bold ${heatColor(p.engagement, [5, 2, 0.5])}`}>{p.engagement.toFixed(1)}%</td>
+                    <td className={`py-2 px-2 text-center rounded font-bold ${heatColor(p.likeability, [4, 1.5, 0.5])}`}>{p.likeability.toFixed(1)}%</td>
+                    <td className={`py-2 px-2 text-center rounded font-bold ${heatColor(p.sharability, [1, 0.3, 0.05])}`}>{p.sharability.toFixed(1)}%</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+        <div className="flex items-center gap-4 mt-3 text-[9px] text-alma-charcoal/40">
+          <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-green-500" /> Excellent</span>
+          <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-green-200" /> Good</span>
+          <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-yellow-200" /> Average</span>
+          <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-orange-200" /> Low</span>
+          <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-gray-100" /> None</span>
+        </div>
+      </div>
+
+      {/* Interaction Breakdown Bars */}
+      <div className="bg-white rounded-xl shadow-sm p-5">
+        <h3 className="text-sm font-semibold text-alma-green mb-4">Interaction Breakdown</h3>
+        <div className="space-y-4">
+          {posts.map(p => {
+            const total = p.likes + p.comments + p.shares;
+            if (total === 0) return null;
+            return (
+              <div key={p.index}>
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xs font-medium text-alma-charcoal/70">{p.platformIcon} {p.handle || `Post ${p.index}`}</span>
+                  <span className="text-[10px] text-alma-charcoal/40">{total.toLocaleString()} total</span>
+                </div>
+                <div className="flex h-5 rounded-full overflow-hidden bg-gray-100">
+                  {p.likes > 0 && <div className="bg-pink-400 transition-all flex items-center justify-center" style={{ width: `${(p.likes / total) * 100}%` }}>
+                    <span className="text-[8px] text-white font-bold">{Math.round((p.likes / total) * 100)}%</span>
+                  </div>}
+                  {p.comments > 0 && <div className="bg-amber-400 transition-all flex items-center justify-center" style={{ width: `${(p.comments / total) * 100}%` }}>
+                    <span className="text-[8px] text-white font-bold">{Math.round((p.comments / total) * 100)}%</span>
+                  </div>}
+                  {p.shares > 0 && <div className="bg-purple-500 transition-all flex items-center justify-center" style={{ width: `${(p.shares / total) * 100}%` }}>
+                    <span className="text-[8px] text-white font-bold">{Math.round((p.shares / total) * 100)}%</span>
+                  </div>}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+        <div className="flex items-center gap-4 mt-3 text-[10px] text-alma-charcoal/40">
+          <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-pink-400" /> Likes</span>
+          <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-amber-400" /> Comments</span>
+          <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-purple-500" /> Shares</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function AdminSocialPage() {
   const { content, updateContent } = usePageContent();
   const [fetching, setFetching] = useState({});
   const [fetchingAll, setFetchingAll] = useState(false);
   const [saved, setSaved] = useState('');
+  const [view, setView] = useState('posts'); // 'posts' or 'dashboard'
 
   const postCount = parseInt(content.social_post_count) || 0;
 
@@ -194,7 +484,7 @@ export default function AdminSocialPage() {
         </div>
         <div className="flex items-center gap-3">
           {saved && <span className="text-xs font-medium text-green-600 bg-green-50 px-3 py-1 rounded-full">{saved}</span>}
-          {postCount > 0 && (
+          {postCount > 0 && view === 'posts' && (
             <button onClick={fetchAllPosts} disabled={fetchingAll}
               className="text-xs font-medium bg-blue-50 text-blue-600 px-3 py-1.5 rounded-lg hover:bg-blue-100 transition-all disabled:opacity-50 flex items-center gap-1.5">
               {fetchingAll ? <><span className="w-3 h-3 border-2 border-blue-300 border-t-blue-600 rounded-full animate-spin" /> Fetching...</> : '🔄 Update All'}
@@ -202,6 +492,27 @@ export default function AdminSocialPage() {
           )}
         </div>
       </div>
+
+      {/* Tab Switch */}
+      <div className="flex gap-1 bg-gray-100 p-1 rounded-xl mb-6 w-fit">
+        <button onClick={() => setView('posts')}
+          className={`px-5 py-2 rounded-lg text-sm font-medium transition-all ${
+            view === 'posts' ? 'bg-white shadow-sm text-alma-green' : 'text-alma-charcoal/50 hover:text-alma-charcoal'
+          }`}>
+          📝 Manage Posts
+        </button>
+        <button onClick={() => setView('dashboard')}
+          className={`px-5 py-2 rounded-lg text-sm font-medium transition-all ${
+            view === 'dashboard' ? 'bg-white shadow-sm text-alma-green' : 'text-alma-charcoal/50 hover:text-alma-charcoal'
+          }`}>
+          📊 Dashboard
+        </button>
+      </div>
+
+      {view === 'dashboard' ? (
+        <SocialDashboard content={content} postCount={postCount} />
+      ) : (
+      <>
 
       {/* Toggle + Section Title/Subtitle */}
       <div className="bg-white rounded-xl shadow-sm p-5 mb-6">
@@ -352,6 +663,8 @@ export default function AdminSocialPage() {
         <p className="text-alma-charcoal/40">📊 Engagement = (L+C+S)/Views · 👍 Likeability = Likes/Views · 📤 Sharability = Shares/Views</p>
         <p className="text-alma-charcoal/40">🟢 Great | 🟡 Good | 🔴 Low</p>
       </div>
+      </>
+      )}
     </div>
   );
 }
