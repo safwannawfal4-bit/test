@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { usePageContent } from '../../context/PageContentContext';
 
 // CORS proxies
@@ -130,19 +130,69 @@ function detectPlatform(url) {
 }
 
 const DASHBOARD_PALETTES = [
-  { name: 'Default', stats: ['border-blue-200 bg-blue-50', 'border-pink-200 bg-pink-50', 'border-amber-200 bg-amber-50', 'border-purple-200 bg-purple-50'], bar: 'from-blue-400 to-blue-600', donut: ['#3B82F6', '#EF4444', '#111827', '#8B5CF6', '#F59E0B'], likes: 'bg-pink-400', comments: 'bg-amber-400', shares: 'bg-purple-500' },
-  { name: 'Ocean', stats: ['border-cyan-200 bg-cyan-50', 'border-sky-200 bg-sky-50', 'border-teal-200 bg-teal-50', 'border-indigo-200 bg-indigo-50'], bar: 'from-cyan-400 to-teal-600', donut: ['#06B6D4', '#0EA5E9', '#14B8A6', '#6366F1', '#0D9488'], likes: 'bg-sky-400', comments: 'bg-teal-400', shares: 'bg-indigo-500' },
-  { name: 'Sunset', stats: ['border-orange-200 bg-orange-50', 'border-rose-200 bg-rose-50', 'border-amber-200 bg-amber-50', 'border-red-200 bg-red-50'], bar: 'from-orange-400 to-rose-600', donut: ['#F97316', '#FB7185', '#F59E0B', '#EF4444', '#E11D48'], likes: 'bg-rose-400', comments: 'bg-orange-400', shares: 'bg-red-500' },
-  { name: 'Forest', stats: ['border-emerald-200 bg-emerald-50', 'border-green-200 bg-green-50', 'border-lime-200 bg-lime-50', 'border-teal-200 bg-teal-50'], bar: 'from-emerald-400 to-green-700', donut: ['#10B981', '#22C55E', '#84CC16', '#14B8A6', '#059669'], likes: 'bg-green-400', comments: 'bg-lime-500', shares: 'bg-teal-500' },
-  { name: 'Neon', stats: ['border-fuchsia-200 bg-fuchsia-50', 'border-violet-200 bg-violet-50', 'border-pink-200 bg-pink-50', 'border-cyan-200 bg-cyan-50'], bar: 'from-fuchsia-500 to-violet-600', donut: ['#D946EF', '#8B5CF6', '#EC4899', '#06B6D4', '#A855F7'], likes: 'bg-fuchsia-400', comments: 'bg-violet-400', shares: 'bg-cyan-500' },
-  { name: 'Mono', stats: ['border-gray-300 bg-gray-50', 'border-gray-300 bg-gray-100', 'border-gray-300 bg-gray-50', 'border-gray-300 bg-gray-100'], bar: 'from-gray-500 to-gray-800', donut: ['#374151', '#6B7280', '#9CA3AF', '#4B5563', '#D1D5DB'], likes: 'bg-gray-500', comments: 'bg-gray-400', shares: 'bg-gray-700' },
+  { name: 'Default', accent: '#3B82F6',
+    stats: ['border-blue-200 bg-blue-50', 'border-pink-200 bg-pink-50', 'border-amber-200 bg-amber-50', 'border-purple-200 bg-purple-50'],
+    bar: 'from-blue-400 to-blue-600', donut: ['#3B82F6', '#EF4444', '#111827', '#8B5CF6', '#F59E0B'],
+    likes: 'bg-pink-400', comments: 'bg-amber-400', shares: 'bg-purple-500',
+    heat: { excellent: '#2563EB', good: '#93C5FD', mid: '#BFDBFE', low: '#DBEAFE', none: '#F3F4F6' },
+    preview: ['#3B82F6', '#EC4899', '#F59E0B', '#8B5CF6'] },
+  { name: 'Ocean', accent: '#06B6D4',
+    stats: ['border-cyan-200 bg-cyan-50', 'border-sky-200 bg-sky-50', 'border-teal-200 bg-teal-50', 'border-indigo-200 bg-indigo-50'],
+    bar: 'from-cyan-400 to-teal-600', donut: ['#06B6D4', '#0EA5E9', '#14B8A6', '#6366F1', '#0D9488'],
+    likes: 'bg-sky-400', comments: 'bg-teal-400', shares: 'bg-indigo-500',
+    heat: { excellent: '#0891B2', good: '#67E8F9', mid: '#A5F3FC', low: '#CFFAFE', none: '#F3F4F6' },
+    preview: ['#06B6D4', '#0EA5E9', '#14B8A6', '#6366F1'] },
+  { name: 'Sunset', accent: '#F97316',
+    stats: ['border-orange-200 bg-orange-50', 'border-rose-200 bg-rose-50', 'border-amber-200 bg-amber-50', 'border-red-200 bg-red-50'],
+    bar: 'from-orange-400 to-rose-600', donut: ['#F97316', '#FB7185', '#F59E0B', '#EF4444', '#E11D48'],
+    likes: 'bg-rose-400', comments: 'bg-orange-400', shares: 'bg-red-500',
+    heat: { excellent: '#EA580C', good: '#FDBA74', mid: '#FED7AA', low: '#FFEDD5', none: '#F3F4F6' },
+    preview: ['#F97316', '#FB7185', '#F59E0B', '#EF4444'] },
+  { name: 'Forest', accent: '#10B981',
+    stats: ['border-emerald-200 bg-emerald-50', 'border-green-200 bg-green-50', 'border-lime-200 bg-lime-50', 'border-teal-200 bg-teal-50'],
+    bar: 'from-emerald-400 to-green-700', donut: ['#10B981', '#22C55E', '#84CC16', '#14B8A6', '#059669'],
+    likes: 'bg-green-400', comments: 'bg-lime-500', shares: 'bg-teal-500',
+    heat: { excellent: '#059669', good: '#6EE7B7', mid: '#A7F3D0', low: '#D1FAE5', none: '#F3F4F6' },
+    preview: ['#10B981', '#22C55E', '#84CC16', '#14B8A6'] },
+  { name: 'Neon', accent: '#D946EF',
+    stats: ['border-fuchsia-200 bg-fuchsia-50', 'border-violet-200 bg-violet-50', 'border-pink-200 bg-pink-50', 'border-cyan-200 bg-cyan-50'],
+    bar: 'from-fuchsia-500 to-violet-600', donut: ['#D946EF', '#8B5CF6', '#EC4899', '#06B6D4', '#A855F7'],
+    likes: 'bg-fuchsia-400', comments: 'bg-violet-400', shares: 'bg-cyan-500',
+    heat: { excellent: '#C026D3', good: '#E879F9', mid: '#F0ABFC', low: '#FAE8FF', none: '#F3F4F6' },
+    preview: ['#D946EF', '#8B5CF6', '#EC4899', '#06B6D4'] },
+  { name: 'Mono', accent: '#374151',
+    stats: ['border-gray-300 bg-gray-50', 'border-gray-300 bg-gray-100', 'border-gray-300 bg-gray-50', 'border-gray-300 bg-gray-100'],
+    bar: 'from-gray-500 to-gray-800', donut: ['#374151', '#6B7280', '#9CA3AF', '#4B5563', '#D1D5DB'],
+    likes: 'bg-gray-500', comments: 'bg-gray-400', shares: 'bg-gray-700',
+    heat: { excellent: '#1F2937', good: '#6B7280', mid: '#D1D5DB', low: '#E5E7EB', none: '#F3F4F6' },
+    preview: ['#374151', '#6B7280', '#9CA3AF', '#D1D5DB'] },
 ];
 
 function SocialDashboard({ content, postCount }) {
   const [paletteIdx, setPaletteIdx] = useState(parseInt(localStorage.getItem('alma_social_palette') || '0'));
+  const [exporting, setExporting] = useState(false);
   const palette = DASHBOARD_PALETTES[paletteIdx] || DASHBOARD_PALETTES[0];
+  const dashRef = useRef(null);
 
   const savePalette = (idx) => { setPaletteIdx(idx); localStorage.setItem('alma_social_palette', idx.toString()); };
+
+  const exportPDF = async () => {
+    if (!dashRef.current) return;
+    setExporting(true);
+    try {
+      const html2canvas = (await import('html2canvas')).default;
+      const { jsPDF } = await import('jspdf');
+      const canvas = await html2canvas(dashRef.current, { scale: 2, backgroundColor: '#F9FAFB', useCORS: true });
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF({ orientation: canvas.width > canvas.height ? 'landscape' : 'portrait', unit: 'px', format: [canvas.width, canvas.height] });
+      pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
+      pdf.save(`Social-Dashboard-${new Date().toISOString().split('T')[0]}.pdf`);
+    } catch (err) {
+      console.error('PDF export failed:', err);
+      alert('PDF export failed: ' + err.message);
+    }
+    setExporting(false);
+  };
 
   // Gather all post data
   const posts = [];
@@ -203,24 +253,33 @@ function SocialDashboard({ content, postCount }) {
 
   return (
     <div className="space-y-6">
-      {/* Palette Selector */}
+      {/* Palette Selector + Export */}
       <div className="bg-white rounded-xl shadow-sm p-4 flex items-center justify-between">
-        <span className="text-sm font-medium text-alma-green">Dashboard Theme</span>
-        <div className="flex gap-2">
-          {DASHBOARD_PALETTES.map((p, idx) => (
-            <button key={p.name} onClick={() => savePalette(idx)} title={p.name}
-              className={`w-8 h-8 rounded-lg overflow-hidden grid grid-cols-2 grid-rows-2 transition-all hover:scale-110 ${
-                idx === paletteIdx ? 'ring-2 ring-alma-green ring-offset-1 scale-110' : 'opacity-70'
-              }`}>
-              <div className={p.stats[0].split(' ').pop()} />
-              <div className={p.stats[1].split(' ').pop()} />
-              <div className={p.stats[2].split(' ').pop()} />
-              <div className={p.stats[3].split(' ').pop()} />
-            </button>
-          ))}
+        <div className="flex items-center gap-4">
+          <span className="text-sm font-semibold text-alma-green">Theme</span>
+          <div className="flex gap-2">
+            {DASHBOARD_PALETTES.map((p, idx) => (
+              <button key={p.name} onClick={() => savePalette(idx)} title={p.name}
+                className={`flex items-center gap-2 px-3 py-2 rounded-xl border-2 transition-all ${
+                  idx === paletteIdx ? 'border-alma-green bg-white shadow-md scale-105' : 'border-transparent hover:border-gray-200 hover:bg-gray-50'
+                }`}>
+                <div className="flex gap-0.5">
+                  {p.preview.map((c, ci) => (
+                    <div key={ci} className="w-3 h-3 rounded-full" style={{ background: c }} />
+                  ))}
+                </div>
+                <span className={`text-[11px] font-medium ${idx === paletteIdx ? 'text-alma-green' : 'text-alma-charcoal/50'}`}>{p.name}</span>
+              </button>
+            ))}
+          </div>
         </div>
+        <button onClick={exportPDF} disabled={exporting}
+          className="flex items-center gap-2 px-4 py-2 bg-alma-green text-white text-xs font-semibold rounded-xl hover:bg-alma-green-light transition-all disabled:opacity-50">
+          {exporting ? <><span className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Exporting...</> : '📄 Export PDF'}
+        </button>
       </div>
 
+      <div ref={dashRef}>
       {/* Overview Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
@@ -379,24 +438,25 @@ function SocialDashboard({ content, postCount }) {
             </thead>
             <tbody>
               {posts.map(p => {
-                const heatColor = (val, thresholds) => {
-                  if (val > thresholds[0]) return 'bg-green-500 text-white';
-                  if (val > thresholds[1]) return 'bg-green-200 text-green-800';
-                  if (val > thresholds[2]) return 'bg-yellow-200 text-yellow-800';
-                  if (val > 0) return 'bg-orange-200 text-orange-800';
-                  return 'bg-gray-100 text-gray-400';
+                const heatStyle = (val, thresholds) => {
+                  const h = palette.heat;
+                  if (val > thresholds[0]) return { background: h.excellent, color: '#fff' };
+                  if (val > thresholds[1]) return { background: h.good, color: '#1a1a1a' };
+                  if (val > thresholds[2]) return { background: h.mid, color: '#1a1a1a' };
+                  if (val > 0) return { background: h.low, color: '#666' };
+                  return { background: h.none, color: '#aaa' };
                 };
                 return (
                   <tr key={p.index} className="border-t border-gray-100">
                     <td className="py-2 px-2 font-medium text-alma-charcoal truncate max-w-[120px]">{p.handle || `#${p.index}`}</td>
                     <td className="py-2 px-2 text-center">{p.platformIcon}</td>
-                    <td className={`py-2 px-2 text-center rounded font-bold ${heatColor(p.views, [100000, 10000, 1000])}`}>{p.views > 999 ? (p.views / 1000).toFixed(1) + 'K' : p.views}</td>
-                    <td className={`py-2 px-2 text-center rounded font-bold ${heatColor(p.likes, [10000, 1000, 100])}`}>{p.likes > 999 ? (p.likes / 1000).toFixed(1) + 'K' : p.likes}</td>
-                    <td className={`py-2 px-2 text-center rounded font-bold ${heatColor(p.comments, [1000, 100, 10])}`}>{p.comments > 999 ? (p.comments / 1000).toFixed(1) + 'K' : p.comments}</td>
-                    <td className={`py-2 px-2 text-center rounded font-bold ${heatColor(p.shares, [1000, 100, 10])}`}>{p.shares > 999 ? (p.shares / 1000).toFixed(1) + 'K' : p.shares}</td>
-                    <td className={`py-2 px-2 text-center rounded font-bold ${heatColor(p.engagement, [5, 2, 0.5])}`}>{p.engagement.toFixed(1)}%</td>
-                    <td className={`py-2 px-2 text-center rounded font-bold ${heatColor(p.likeability, [4, 1.5, 0.5])}`}>{p.likeability.toFixed(1)}%</td>
-                    <td className={`py-2 px-2 text-center rounded font-bold ${heatColor(p.sharability, [1, 0.3, 0.05])}`}>{p.sharability.toFixed(1)}%</td>
+                    <td className="py-2 px-2 text-center rounded font-bold" style={heatStyle(p.views, [100000, 10000, 1000])}>{p.views > 999 ? (p.views / 1000).toFixed(1) + 'K' : p.views}</td>
+                    <td className="py-2 px-2 text-center rounded font-bold" style={heatStyle(p.likes, [10000, 1000, 100])}>{p.likes > 999 ? (p.likes / 1000).toFixed(1) + 'K' : p.likes}</td>
+                    <td className="py-2 px-2 text-center rounded font-bold" style={heatStyle(p.comments, [1000, 100, 10])}>{p.comments > 999 ? (p.comments / 1000).toFixed(1) + 'K' : p.comments}</td>
+                    <td className="py-2 px-2 text-center rounded font-bold" style={heatStyle(p.shares, [1000, 100, 10])}>{p.shares > 999 ? (p.shares / 1000).toFixed(1) + 'K' : p.shares}</td>
+                    <td className="py-2 px-2 text-center rounded font-bold" style={heatStyle(p.engagement, [5, 2, 0.5])}>{p.engagement.toFixed(1)}%</td>
+                    <td className="py-2 px-2 text-center rounded font-bold" style={heatStyle(p.likeability, [4, 1.5, 0.5])}>{p.likeability.toFixed(1)}%</td>
+                    <td className="py-2 px-2 text-center rounded font-bold" style={heatStyle(p.sharability, [1, 0.3, 0.05])}>{p.sharability.toFixed(1)}%</td>
                   </tr>
                 );
               })}
@@ -404,11 +464,11 @@ function SocialDashboard({ content, postCount }) {
           </table>
         </div>
         <div className="flex items-center gap-4 mt-3 text-[9px] text-alma-charcoal/40">
-          <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-green-500" /> Excellent</span>
-          <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-green-200" /> Good</span>
-          <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-yellow-200" /> Average</span>
-          <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-orange-200" /> Low</span>
-          <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-gray-100" /> None</span>
+          <span className="flex items-center gap-1"><span className="w-3 h-3 rounded" style={{ background: palette.heat.excellent }} /> Excellent</span>
+          <span className="flex items-center gap-1"><span className="w-3 h-3 rounded" style={{ background: palette.heat.good }} /> Good</span>
+          <span className="flex items-center gap-1"><span className="w-3 h-3 rounded" style={{ background: palette.heat.mid }} /> Average</span>
+          <span className="flex items-center gap-1"><span className="w-3 h-3 rounded" style={{ background: palette.heat.low }} /> Low</span>
+          <span className="flex items-center gap-1"><span className="w-3 h-3 rounded" style={{ background: palette.heat.none }} /> None</span>
         </div>
       </div>
 
@@ -446,6 +506,7 @@ function SocialDashboard({ content, postCount }) {
           <span className="flex items-center gap-1"><span className={`w-3 h-3 rounded ${palette.shares}`} /> Shares</span>
         </div>
       </div>
+      </div>{/* end dashRef */}
     </div>
   );
 }
