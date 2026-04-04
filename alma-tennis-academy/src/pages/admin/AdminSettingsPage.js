@@ -554,6 +554,8 @@ function SocialMediaAdmin({ content, updateContent, saved, setSaved }) {
           const shares = parseInt(content[`social_shares_${i}`]) || 0;
           const totalInteractions = likes + comments + shares;
           const engagementRate = views > 0 ? ((totalInteractions / views) * 100).toFixed(2) : '0.00';
+          const likeabilityRate = views > 0 ? ((likes / views) * 100).toFixed(2) : '0.00';
+          const sharabilityRate = views > 0 ? ((shares / views) * 100).toFixed(2) : '0.00';
           const isFetching = fetching[i];
 
           return (
@@ -617,7 +619,8 @@ function SocialMediaAdmin({ content, updateContent, saved, setSaved }) {
                     <label className="text-[10px] font-medium text-alma-charcoal/50 uppercase tracking-wide">Post Metrics</label>
                     <span className="text-[9px] text-alma-charcoal/30">{views > 0 ? 'Last fetched data shown' : 'Click "Update Results" to fetch'}</span>
                   </div>
-                  <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+                  {/* Raw metrics inputs */}
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-3">
                     {[
                       { key: 'views', icon: '👁', label: 'Views' },
                       { key: 'likes', icon: '❤️', label: 'Likes' },
@@ -631,26 +634,74 @@ function SocialMediaAdmin({ content, updateContent, saved, setSaved }) {
                           placeholder="0" className="w-full px-2 py-1.5 rounded border border-gray-200 text-xs outline-none focus:border-alma-lime" />
                       </div>
                     ))}
+                  </div>
+
+                  {/* Calculated rates */}
+                  <div className="grid grid-cols-3 gap-2 mb-3">
                     <div>
-                      <label className="block text-[9px] text-alma-charcoal/40 mb-0.5">📊 Engagement</label>
-                      <div className={`px-2 py-1.5 rounded text-xs font-bold text-center ${
+                      <label className="block text-[9px] text-alma-charcoal/40 mb-0.5">📊 Engagement Rate</label>
+                      <div className={`px-2 py-2 rounded text-xs font-bold text-center ${
                         parseFloat(engagementRate) > 5 ? 'bg-green-100 text-green-700' :
                         parseFloat(engagementRate) > 2 ? 'bg-alma-lime/10 text-alma-green' :
                         parseFloat(engagementRate) > 0 ? 'bg-yellow-100 text-yellow-700' : 'bg-gray-100 text-gray-400'
                       }`}>
                         {engagementRate}%
                       </div>
+                      <p className="text-[8px] text-alma-charcoal/30 mt-0.5 text-center">(L+C+S) / Views</p>
+                    </div>
+                    <div>
+                      <label className="block text-[9px] text-alma-charcoal/40 mb-0.5">👍 Likeability Rate</label>
+                      <div className={`px-2 py-2 rounded text-xs font-bold text-center ${
+                        parseFloat(likeabilityRate) > 4 ? 'bg-green-100 text-green-700' :
+                        parseFloat(likeabilityRate) > 1.5 ? 'bg-alma-lime/10 text-alma-green' :
+                        parseFloat(likeabilityRate) > 0 ? 'bg-yellow-100 text-yellow-700' : 'bg-gray-100 text-gray-400'
+                      }`}>
+                        {likeabilityRate}%
+                      </div>
+                      <p className="text-[8px] text-alma-charcoal/30 mt-0.5 text-center">Likes / Views</p>
+                    </div>
+                    <div>
+                      <label className="block text-[9px] text-alma-charcoal/40 mb-0.5">📤 Sharability Rate</label>
+                      <div className={`px-2 py-2 rounded text-xs font-bold text-center ${
+                        parseFloat(sharabilityRate) > 1 ? 'bg-green-100 text-green-700' :
+                        parseFloat(sharabilityRate) > 0.3 ? 'bg-alma-lime/10 text-alma-green' :
+                        parseFloat(sharabilityRate) > 0 ? 'bg-yellow-100 text-yellow-700' : 'bg-gray-100 text-gray-400'
+                      }`}>
+                        {sharabilityRate}%
+                      </div>
+                      <p className="text-[8px] text-alma-charcoal/30 mt-0.5 text-center">Shares / Views</p>
                     </div>
                   </div>
-                  <div className="mt-2 flex items-center gap-2">
-                    <div className="flex-grow bg-gray-100 rounded-full h-1.5">
-                      <div className={`rounded-full h-1.5 transition-all ${
-                        parseFloat(engagementRate) > 5 ? 'bg-green-500' : parseFloat(engagementRate) > 2 ? 'bg-alma-lime' : 'bg-yellow-400'
-                      }`} style={{ width: `${Math.min(parseFloat(engagementRate) * 5, 100)}%` }} />
+
+                  {/* Progress bars */}
+                  <div className="space-y-1.5">
+                    <div className="flex items-center gap-2">
+                      <span className="text-[9px] text-alma-charcoal/40 w-20">Engagement</span>
+                      <div className="flex-grow bg-gray-100 rounded-full h-1.5">
+                        <div className={`rounded-full h-1.5 transition-all ${
+                          parseFloat(engagementRate) > 5 ? 'bg-green-500' : parseFloat(engagementRate) > 2 ? 'bg-alma-lime' : 'bg-yellow-400'
+                        }`} style={{ width: `${Math.min(parseFloat(engagementRate) * 5, 100)}%` }} />
+                      </div>
+                      <span className="text-[9px] text-alma-charcoal/40 w-12 text-right">{engagementRate}%</span>
                     </div>
-                    <span className="text-[10px] text-alma-charcoal/40 whitespace-nowrap">
-                      {totalInteractions.toLocaleString()} / {views.toLocaleString()} views
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[9px] text-alma-charcoal/40 w-20">Likeability</span>
+                      <div className="flex-grow bg-gray-100 rounded-full h-1.5">
+                        <div className={`rounded-full h-1.5 transition-all ${
+                          parseFloat(likeabilityRate) > 4 ? 'bg-green-500' : parseFloat(likeabilityRate) > 1.5 ? 'bg-blue-400' : 'bg-yellow-400'
+                        }`} style={{ width: `${Math.min(parseFloat(likeabilityRate) * 10, 100)}%` }} />
+                      </div>
+                      <span className="text-[9px] text-alma-charcoal/40 w-12 text-right">{likeabilityRate}%</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[9px] text-alma-charcoal/40 w-20">Sharability</span>
+                      <div className="flex-grow bg-gray-100 rounded-full h-1.5">
+                        <div className={`rounded-full h-1.5 transition-all ${
+                          parseFloat(sharabilityRate) > 1 ? 'bg-green-500' : parseFloat(sharabilityRate) > 0.3 ? 'bg-purple-400' : 'bg-yellow-400'
+                        }`} style={{ width: `${Math.min(parseFloat(sharabilityRate) * 30, 100)}%` }} />
+                      </div>
+                      <span className="text-[9px] text-alma-charcoal/40 w-12 text-right">{sharabilityRate}%</span>
+                    </div>
                   </div>
                 </div>
               )}
@@ -669,8 +720,10 @@ function SocialMediaAdmin({ content, updateContent, saved, setSaved }) {
         <p>▶️ <strong>YouTube</strong> — Views, Likes, Channel, Title, Thumbnail ✅ full metrics</p>
         <p>🎵 <strong>TikTok</strong> — Views, Likes, Comments, Shares, Author, Title, Thumbnail ✅ full metrics</p>
         <p>📸 <strong>Instagram</strong> — Likes, Comments, Views (videos), Author, Title ✅ most metrics</p>
-        <p className="mt-2 text-alma-charcoal/40">📊 Engagement = (Likes + Comments + Shares) ÷ Views × 100</p>
-        <p className="text-alma-charcoal/40">🟢 &gt;5% Great | 🟡 2-5% Good | 🔴 &lt;2% Low</p>
+        <p className="mt-2 font-semibold text-alma-charcoal/60">Calculated Rates:</p>
+        <p className="text-alma-charcoal/40">📊 Engagement = (Likes + Comments + Shares) ÷ Views — 🟢 &gt;5% | 🟡 2-5% | 🔴 &lt;2%</p>
+        <p className="text-alma-charcoal/40">👍 Likeability = Likes ÷ Views — 🟢 &gt;4% | 🟡 1.5-4% | 🔴 &lt;1.5%</p>
+        <p className="text-alma-charcoal/40">📤 Sharability = Shares ÷ Views — 🟢 &gt;1% | 🟡 0.3-1% | 🔴 &lt;0.3%</p>
         <p className="text-alma-charcoal/30 mt-1">Data fetched via public APIs. Some metrics may require manual entry if the platform blocks access.</p>
       </div>
     </div>
