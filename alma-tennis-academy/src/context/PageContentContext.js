@@ -267,14 +267,21 @@ export function PageContentProvider({ children }) {
   // Apply favicon to DOM
   useEffect(() => {
     if (faviconUrl) {
-      let link = document.querySelector("link[rel~='icon']");
-      if (!link) {
-        link = document.createElement('link');
-        link.rel = 'icon';
-        document.head.appendChild(link);
-      }
-      link.href = faviconUrl;
-      link.type = 'image/png';
+      // Remove ALL existing favicon links to force browser to use the new one
+      document.querySelectorAll("link[rel='icon'], link[rel='shortcut icon'], link[rel='apple-touch-icon']").forEach(el => el.remove());
+
+      // Create fresh link elements
+      const link = document.createElement('link');
+      link.rel = 'icon';
+      // Add cache-busting query param so browser doesn't use cached version
+      link.href = faviconUrl + (faviconUrl.includes('?') ? '&' : '?') + 'v=' + Date.now();
+      document.head.appendChild(link);
+
+      // Also set shortcut icon for older browsers
+      const link2 = document.createElement('link');
+      link2.rel = 'shortcut icon';
+      link2.href = link.href;
+      document.head.appendChild(link2);
     }
   }, [faviconUrl]);
 
