@@ -189,7 +189,24 @@ export default function AdminSettingsPage() {
         )}
       </div>
 
+      {/* Quick Jump Navigation */}
+      <div className="flex flex-wrap gap-2 mb-6">
+        {[
+          { id: 'lang', label: '🌐 Language' },
+          { id: 'logo', label: '🖼️ Logo' },
+          { id: 'favicon', label: '🔖 Browser Icon' },
+          { id: 'hero', label: '🏔️ Hero Background' },
+          { id: 'colors', label: '🎨 Colors' },
+        ].map(s => (
+          <button key={s.id} onClick={() => document.getElementById(s.id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+            className="px-3 py-1.5 bg-white rounded-lg border border-gray-200 text-xs font-medium text-alma-charcoal/70 hover:border-alma-lime hover:text-alma-green transition-all">
+            {s.label}
+          </button>
+        ))}
+      </div>
+
       {/* Language Section */}
+      <div id="lang"></div>
       <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
         <h2 className="text-lg font-semibold text-alma-green mb-4">Website Language</h2>
         <p className="text-sm text-alma-charcoal/50 mb-4">Switch the entire website between English and Arabic. Arabic enables right-to-left (RTL) layout. All visitors see the change instantly.</p>
@@ -231,6 +248,7 @@ export default function AdminSettingsPage() {
       </div>
 
       {/* Logo Section */}
+      <div id="logo"></div>
       <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
         <h2 className="text-lg font-semibold text-alma-green mb-4">Logo</h2>
         <p className="text-sm text-alma-charcoal/50 mb-4">Upload your academy logo. It will appear in the navbar and footer for all visitors.</p>
@@ -271,6 +289,7 @@ export default function AdminSettingsPage() {
       </div>
 
       {/* Favicon / Browser Icon Section */}
+      <div id="favicon"></div>
       <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
         <h2 className="text-lg font-semibold text-alma-green mb-4">Browser Tab Icon (Favicon)</h2>
         <p className="text-sm text-alma-charcoal/50 mb-4">This is the small icon that appears in the browser tab next to your page title. Currently showing a tennis ball.</p>
@@ -339,6 +358,7 @@ export default function AdminSettingsPage() {
       </div>
 
       {/* Hero Background Section */}
+      <div id="hero"></div>
       <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
         <h2 className="text-lg font-semibold text-alma-green mb-4">Hero Background</h2>
         <p className="text-sm text-alma-charcoal/50 mb-4">Choose between a solid color (uses your primary color palette) or upload a custom background image for the main hero section.</p>
@@ -448,6 +468,7 @@ export default function AdminSettingsPage() {
       </div>
 
       {/* Color Palette Section */}
+      <div id="colors"></div>
       <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
         <h2 className="text-lg font-semibold text-alma-green mb-4">Color Palette</h2>
         <p className="text-sm text-alma-charcoal/50 mb-4">Choose a preset or customize individual colors. Changes apply instantly for all visitors.</p>
