@@ -258,12 +258,38 @@ export default function TennisGame({ emoji1 = '🎾', emoji2 = '🎾' }) {
           transform: `translate(-50%, -50%) rotate(${swinging ? racketAngle + 60 : racketAngle}deg)`,
           transition: swinging ? 'transform 0.15s cubic-bezier(0.22, 1, 0.36, 1)' : 'transform 0.08s ease-out',
           pointerEvents: 'none',
-          fontSize: '2.2rem',
-          filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))',
           zIndex: 10,
+          filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))',
         }}
       >
-        🏸
+        <svg width="48" height="48" viewBox="0 0 64 64">
+          {/* Handle */}
+          <rect x="28" y="38" width="8" height="22" rx="3" fill="#8B4513" />
+          <rect x="29" y="38" width="6" height="22" rx="2" fill="#A0522D" />
+          {/* Grip tape */}
+          <line x1="28" y1="42" x2="36" y2="40" stroke="#D2691E" strokeWidth="1.5" />
+          <line x1="28" y1="46" x2="36" y2="44" stroke="#D2691E" strokeWidth="1.5" />
+          <line x1="28" y1="50" x2="36" y2="48" stroke="#D2691E" strokeWidth="1.5" />
+          <line x1="28" y1="54" x2="36" y2="52" stroke="#D2691E" strokeWidth="1.5" />
+          {/* Racket head frame */}
+          <ellipse cx="32" cy="18" rx="18" ry="22" fill="none" stroke="#2D4A2D" strokeWidth="3.5" />
+          <ellipse cx="32" cy="18" rx="18" ry="22" fill="none" stroke="#3D6B3D" strokeWidth="2" />
+          {/* Strings vertical */}
+          <line x1="22" y1="4" x2="22" y2="34" stroke="#C4E8A0" strokeWidth="0.8" opacity="0.7" />
+          <line x1="27" y1="1" x2="27" y2="36" stroke="#C4E8A0" strokeWidth="0.8" opacity="0.7" />
+          <line x1="32" y1="0" x2="32" y2="37" stroke="#C4E8A0" strokeWidth="0.8" opacity="0.7" />
+          <line x1="37" y1="1" x2="37" y2="36" stroke="#C4E8A0" strokeWidth="0.8" opacity="0.7" />
+          <line x1="42" y1="4" x2="42" y2="34" stroke="#C4E8A0" strokeWidth="0.8" opacity="0.7" />
+          {/* Strings horizontal */}
+          <line x1="16" y1="8" x2="48" y2="8" stroke="#C4E8A0" strokeWidth="0.8" opacity="0.7" />
+          <line x1="15" y1="13" x2="49" y2="13" stroke="#C4E8A0" strokeWidth="0.8" opacity="0.7" />
+          <line x1="14" y1="18" x2="50" y2="18" stroke="#C4E8A0" strokeWidth="0.8" opacity="0.7" />
+          <line x1="15" y1="23" x2="49" y2="23" stroke="#C4E8A0" strokeWidth="0.8" opacity="0.7" />
+          <line x1="16" y1="28" x2="48" y2="28" stroke="#C4E8A0" strokeWidth="0.8" opacity="0.7" />
+          {/* Throat */}
+          <line x1="26" y1="35" x2="28" y2="40" stroke="#2D4A2D" strokeWidth="2.5" />
+          <line x1="38" y1="35" x2="36" y2="40" stroke="#2D4A2D" strokeWidth="2.5" />
+        </svg>
       </div>
 
       {/* Instruction hint */}
