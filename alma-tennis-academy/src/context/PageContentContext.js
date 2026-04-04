@@ -3,10 +3,7 @@ import { doc, setDoc, onSnapshot } from 'firebase/firestore';
 import { db } from '../firebase';
 
 const PageContentContext = createContext();
-
-export function usePageContent() {
-  return useContext(PageContentContext);
-}
+export function usePageContent() { return useContext(PageContentContext); }
 
 const defaultContentEN = {
   site_title: 'Alma Tennis Academy', favicon_emoji: '🎾',
@@ -17,320 +14,242 @@ const defaultContentEN = {
   hero_subtitle: "Professional coaching, premium equipment, and a passionate community. Whether you're picking up a racket for the first time or training for competition, Alma Tennis Academy is your home court.",
   hero_badge: 'Now Enrolling for Summer 2026', hero_cta_1: 'Explore Programs', hero_cta_2: 'Shop Equipment',
   hero_stat_1: '500+', hero_stat_1_label: 'Students', hero_stat_2: '15+', hero_stat_2_label: 'Coaches', hero_stat_3: '10+', hero_stat_3_label: 'Years',
-  featured_title: 'Featured Equipment', featured_subtitle: 'Premium tennis gear hand-picked by our coaches to help you perform your best.',
+  featured_title: 'Featured Equipment', featured_subtitle: 'Premium tennis gear hand-picked by our coaches.',
   why_title: 'Why Choose Alma', why_subtitle: "More than a tennis academy - we're a community dedicated to excellence.",
-  why_1_icon: '🏆', why_1_title: 'Expert Coaches', why_1_desc: 'Our team of certified professionals brings decades of competitive and coaching experience to every lesson.',
-  why_2_icon: '🎯', why_2_title: 'Personalized Training', why_2_desc: 'Every player is unique. We tailor our programs to your skill level, goals, and playing style.',
-  why_3_icon: '🌟', why_3_title: 'Premium Facilities', why_3_desc: 'Train on beautifully maintained courts with top-tier equipment in an inspiring environment.',
-  programs_title: 'Popular Programs', programs_subtitle: 'From beginners to advanced players, find the perfect program for your journey.',
-  testimonial_title: 'What Our Players Say', testimonial_subtitle: 'Hear from the Alma Tennis Academy community',
-  testimonial_1_name: 'Sarah M.', testimonial_1_role: 'Adult Beginner Student', testimonial_1_text: "I started with zero experience and now I'm playing competitive matches!",
-  testimonial_2_name: 'James R.', testimonial_2_role: 'Parent', testimonial_2_text: "My kids love the junior program. They've improved so much!",
+  why_1_icon: '🏆', why_1_title: 'Expert Coaches', why_1_desc: 'Our team of certified professionals brings decades of experience.',
+  why_2_icon: '🎯', why_2_title: 'Personalized Training', why_2_desc: 'Every player is unique. We tailor our programs to you.',
+  why_3_icon: '🌟', why_3_title: 'Premium Facilities', why_3_desc: 'Train on beautifully maintained courts.',
+  programs_title: 'Popular Programs', programs_subtitle: 'From beginners to advanced players.',
+  testimonial_title: 'What Our Players Say', testimonial_subtitle: 'Hear from our community',
+  testimonial_1_name: 'Sarah M.', testimonial_1_role: 'Adult Beginner', testimonial_1_text: "I started with zero experience and now I'm playing competitive matches!",
+  testimonial_2_name: 'James R.', testimonial_2_role: 'Parent', testimonial_2_text: "My kids love the junior program!",
   testimonial_3_name: 'Lisa T.', testimonial_3_role: 'Competitive Player', testimonial_3_text: "The tournament prep program transformed my game!",
-  cta_title: 'Ready to Start Your Tennis Journey?', cta_subtitle: 'Join hundreds of players who have found their home court at Alma Tennis Academy.',
-  about_title: 'About Alma Tennis Academy', about_subtitle: 'Founded with a passion for tennis and a commitment to excellence.',
+  cta_title: 'Ready to Start Your Tennis Journey?', cta_subtitle: 'Join hundreds of players at Alma Tennis Academy.',
+  about_title: 'About Alma Tennis Academy', about_subtitle: 'Founded with a passion for tennis.',
   about_story_title: 'Our Story',
-  about_story_p1: "Alma Tennis Academy was born from a simple belief: that everyone deserves access to quality tennis instruction.",
-  about_story_p2: '"Alma" means "soul" - and that\'s exactly what we put into everything we do.',
-  about_story_p3: 'Today, we serve over 500 students across all age groups and skill levels.',
-  about_value_1_icon: '❤️', about_value_1_title: 'Passion', about_value_1_desc: 'We love tennis and it shows in everything we do.',
-  about_value_2_icon: '🤝', about_value_2_title: 'Community', about_value_2_desc: 'We build lasting friendships and support each other.',
-  about_value_3_icon: '📈', about_value_3_title: 'Growth', about_value_3_desc: "There's always room to improve, no matter your level.",
-  about_value_4_icon: '🎯', about_value_4_title: 'Excellence', about_value_4_desc: 'We set high standards and help you reach them.',
-  about_coach_1_name: 'Coach Maria Santos', about_coach_1_role: 'Head Coach & Founder', about_coach_1_bio: 'Former WTA-ranked player with 20+ years of coaching experience.', about_coach_1_icon: '👩‍🏫',
-  about_coach_2_name: 'Coach David Chen', about_coach_2_role: 'Senior Coach', about_coach_2_bio: 'NCAA Division I champion and certified USPTA Elite Professional.', about_coach_2_icon: '👨‍🏫',
-  about_coach_3_name: 'Coach Ana Rodriguez', about_coach_3_role: 'Junior Development Director', about_coach_3_bio: 'Passionate about introducing young players to tennis.', about_coach_3_icon: '👩‍🏫',
-  about_coach_4_name: 'Coach James Wilson', about_coach_4_role: 'Fitness Coach', about_coach_4_bio: 'Certified strength and conditioning specialist.', about_coach_4_icon: '💪',
+  about_story_p1: "Alma Tennis Academy was born from a simple belief: everyone deserves quality tennis instruction.",
+  about_story_p2: '"Alma" means "soul" - and that\'s what we put into everything we do.',
+  about_story_p3: 'Today, we serve over 500 students across all levels.',
+  about_value_1_icon: '❤️', about_value_1_title: 'Passion', about_value_1_desc: 'We love tennis.',
+  about_value_2_icon: '🤝', about_value_2_title: 'Community', about_value_2_desc: 'We build lasting friendships.',
+  about_value_3_icon: '📈', about_value_3_title: 'Growth', about_value_3_desc: 'Always room to improve.',
+  about_value_4_icon: '🎯', about_value_4_title: 'Excellence', about_value_4_desc: 'We set high standards.',
+  about_coach_1_name: 'Coach Maria Santos', about_coach_1_role: 'Head Coach & Founder', about_coach_1_bio: 'Former WTA-ranked player.', about_coach_1_icon: '👩‍🏫',
+  about_coach_2_name: 'Coach David Chen', about_coach_2_role: 'Senior Coach', about_coach_2_bio: 'NCAA Division I champion.', about_coach_2_icon: '👨‍🏫',
+  about_coach_3_name: 'Coach Ana Rodriguez', about_coach_3_role: 'Junior Director', about_coach_3_bio: 'Passionate about young players.', about_coach_3_icon: '👩‍🏫',
+  about_coach_4_name: 'Coach James Wilson', about_coach_4_role: 'Fitness Coach', about_coach_4_bio: 'Strength & conditioning specialist.', about_coach_4_icon: '💪',
   about_stat_1: '500+', about_stat_1_label: 'Active Students', about_stat_2: '15+', about_stat_2_label: 'Certified Coaches',
   about_stat_3: '8', about_stat_3_label: 'Tennis Courts', about_stat_4: '10+', about_stat_4_label: 'Years of Excellence',
   contact_title: 'Contact Us', contact_subtitle: "Have a question? We'd love to hear from you.",
   contact_address: '123 Tennis Court Lane, Sport City, SC 12345', contact_phone: '(555) 123-ALMA (2562)',
   contact_email: 'info@almatennisacademy.com', contact_hours: 'Mon-Fri: 6AM-9PM | Sat-Sun: 7AM-7PM',
-  footer_desc: 'Elevating your tennis game through professional coaching, quality equipment, and a passionate community.',
-  footer_address: '123 Tennis Court Lane', footer_phone: '(555) 123-ALMA', footer_email: 'info@almatennisacademy.com',
+  footer_desc: 'Elevating your tennis game through professional coaching.', footer_address: '123 Tennis Court Lane',
+  footer_phone: '(555) 123-ALMA', footer_email: 'info@almatennisacademy.com',
   footer_copyright: 'Alma Tennis Academy. All rights reserved.',
   footer_program_1: 'Junior Development', footer_program_2: 'Adult Beginner', footer_program_3: 'Private Coaching', footer_program_4: 'Summer Camps',
-  shop_title: 'Shop Equipment', shop_subtitle: 'Quality tennis gear recommended by our professional coaches.',
-  programs_page_title: 'Programs & Lessons', programs_page_subtitle: 'Find the perfect program for your skill level and goals.',
+  shop_title: 'Shop Equipment', shop_subtitle: 'Quality tennis gear recommended by our coaches.',
+  programs_page_title: 'Programs & Lessons', programs_page_subtitle: 'Find the perfect program for you.',
   nav_home: 'Home', nav_shop: 'Shop', nav_programs: 'Programs', nav_about: 'About', nav_contact: 'Contact',
   nav_login: 'Login', nav_logout: 'Logout', nav_register: 'Register', nav_cart: 'Cart', nav_checkout: 'Checkout',
-  cart_empty_title: 'Your Cart is Empty', cart_empty_desc: "Looks like you haven't added any items yet.",
+  cart_empty_title: 'Your Cart is Empty', cart_empty_desc: "No items added yet.",
   cart_title: 'Shopping Cart', cart_summary: 'Order Summary', cart_subtotal: 'Subtotal',
   cart_discount: 'Member Discount', cart_shipping: 'Shipping', cart_free: 'Free', cart_total: 'Total',
-  cart_checkout_btn: 'Proceed to Checkout', cart_register_prompt: 'Register to save 20% on your order!',
-  cart_continue: 'Continue Shopping', cart_clear: 'Clear entire cart',
+  cart_checkout_btn: 'Proceed to Checkout', cart_register_prompt: 'Register to save 20%!',
+  cart_continue: 'Continue Shopping', cart_clear: 'Clear cart',
   checkout_title: 'Checkout', checkout_contact: 'Contact Information', checkout_shipping: 'Shipping Address', checkout_payment: 'Payment Method',
-  checkout_card: 'Credit / Debit Card', checkout_card_desc: 'Pay securely with your card',
-  checkout_cod: 'Cash on Delivery', checkout_cod_desc: 'Pay when your order arrives at your door',
-  checkout_place_order: 'Place Order', checkout_confirmed: 'Order Confirmed!', checkout_thank_you: 'Thank you for your order!',
+  checkout_card: 'Credit / Debit Card', checkout_card_desc: 'Pay with your card',
+  checkout_cod: 'Cash on Delivery', checkout_cod_desc: 'Pay when order arrives',
+  checkout_place_order: 'Place Order', checkout_confirmed: 'Order Confirmed!', checkout_thank_you: 'Thank you!',
   footer_quick_links: 'Quick Links', footer_programs_title: 'Programs', footer_contact_title: 'Contact Us',
 };
 
-const defaultContentAR = {
-  site_title: 'أكاديمية ألما للتنس', favicon_emoji: '🎾',
-  social_media_enabled: 'no', social_title: 'تابعونا', social_subtitle: 'ابقوا على اتصال.',
-  hero_title_1: 'ارتقِ بمستوى', hero_title_2: 'لعبة التنس',
-  hero_subtitle: 'تدريب احترافي، معدات عالية الجودة، ومجتمع شغوف.',
-  hero_badge: 'التسجيل مفتوح الآن لصيف 2026', hero_cta_1: 'استكشف البرامج', hero_cta_2: 'تسوق المعدات',
-  hero_stat_1: '+500', hero_stat_1_label: 'طالب', hero_stat_2: '+15', hero_stat_2_label: 'مدرب', hero_stat_3: '+10', hero_stat_3_label: 'سنوات',
+const defaultContentAR = { ...defaultContentEN,
+  site_title: 'أكاديمية ألما للتنس', hero_title_1: 'ارتقِ بمستوى', hero_title_2: 'لعبة التنس',
+  hero_subtitle: 'تدريب احترافي ومعدات عالية الجودة.', hero_badge: 'التسجيل مفتوح الآن',
+  hero_cta_1: 'استكشف البرامج', hero_cta_2: 'تسوق المعدات',
+  hero_stat_1_label: 'طالب', hero_stat_2_label: 'مدرب', hero_stat_3_label: 'سنوات',
   featured_title: 'معدات مميزة', featured_subtitle: 'معدات تنس عالية الجودة.',
   why_title: 'لماذا تختار ألما', why_subtitle: 'أكثر من مجرد أكاديمية تنس.',
-  why_1_icon: '🏆', why_1_title: 'مدربون خبراء', why_1_desc: 'فريقنا من المحترفين المعتمدين.',
-  why_2_icon: '🎯', why_2_title: 'تدريب شخصي', why_2_desc: 'كل لاعب فريد.',
-  why_3_icon: '🌟', why_3_title: 'مرافق متميزة', why_3_desc: 'تدرب على ملاعب محافظ عليها.',
-  programs_title: 'البرامج الشائعة', programs_subtitle: 'من المبتدئين إلى المتقدمين.',
-  testimonial_title: 'ماذا يقول لاعبونا', testimonial_subtitle: 'اسمع من مجتمع أكاديمية ألما',
-  testimonial_1_name: 'سارة م.', testimonial_1_role: 'طالبة مبتدئة', testimonial_1_text: 'بدأت بدون خبرة والآن ألعب مباريات تنافسية!',
-  testimonial_2_name: 'جيمس ر.', testimonial_2_role: 'ولي أمر', testimonial_2_text: 'أطفالي يحبون برنامج الناشئين.',
-  testimonial_3_name: 'ليزا ت.', testimonial_3_role: 'لاعبة تنافسية', testimonial_3_text: 'برنامج الإعداد غيّر لعبتي!',
-  cta_title: 'هل أنت مستعد لبدء رحلتك في التنس؟', cta_subtitle: 'انضم إلى مئات اللاعبين.',
-  about_title: 'عن أكاديمية ألما للتنس', about_subtitle: 'تأسست بشغف للتنس.',
-  about_story_title: 'قصتنا', about_story_p1: 'وُلدت أكاديمية ألما من إيمان بسيط.',
-  about_story_p2: '"ألما" تعني "الروح".', about_story_p3: 'نخدم أكثر من 500 طالب.',
-  about_value_1_icon: '❤️', about_value_1_title: 'الشغف', about_value_1_desc: 'نحب التنس.',
-  about_value_2_icon: '🤝', about_value_2_title: 'المجتمع', about_value_2_desc: 'نبني صداقات دائمة.',
-  about_value_3_icon: '📈', about_value_3_title: 'النمو', about_value_3_desc: 'هناك دائمًا مجال للتحسن.',
-  about_value_4_icon: '🎯', about_value_4_title: 'التميز', about_value_4_desc: 'نضع معايير عالية.',
-  about_coach_1_name: 'المدربة ماريا', about_coach_1_role: 'المدربة الرئيسية', about_coach_1_bio: 'لاعبة سابقة.', about_coach_1_icon: '👩‍🏫',
-  about_coach_2_name: 'المدرب ديفيد', about_coach_2_role: 'مدرب أول', about_coach_2_bio: 'بطل القسم الأول.', about_coach_2_icon: '👨‍🏫',
-  about_coach_3_name: 'المدربة آنا', about_coach_3_role: 'مديرة تطوير الناشئين', about_coach_3_bio: 'شغوفة بالتنس.', about_coach_3_icon: '👩‍🏫',
-  about_coach_4_name: 'المدرب جيمس', about_coach_4_role: 'مدرب لياقة', about_coach_4_bio: 'أخصائي معتمد.', about_coach_4_icon: '💪',
-  about_stat_1: '+500', about_stat_1_label: 'طالب', about_stat_2: '+15', about_stat_2_label: 'مدرب',
-  about_stat_3: '8', about_stat_3_label: 'ملاعب', about_stat_4: '+10', about_stat_4_label: 'سنوات',
-  contact_title: 'اتصل بنا', contact_subtitle: 'هل لديك سؤال؟',
-  contact_address: '123 شارع ملعب التنس', contact_phone: '(555) 123-ALMA', contact_email: 'info@almatennisacademy.com',
-  contact_hours: 'الإثنين-الجمعة: 6ص-9م | السبت-الأحد: 7ص-7م',
-  footer_desc: 'ارتقِ بلعبة التنس.', footer_address: '123 شارع ملعب التنس', footer_phone: '(555) 123-ALMA', footer_email: 'info@almatennisacademy.com',
-  footer_copyright: 'أكاديمية ألما للتنس. جميع الحقوق محفوظة.',
-  footer_program_1: 'تطوير الناشئين', footer_program_2: 'المبتدئون', footer_program_3: 'تدريب خاص', footer_program_4: 'معسكرات صيفية',
-  shop_title: 'تسوق المعدات', shop_subtitle: 'معدات عالية الجودة.',
-  programs_page_title: 'البرامج والدروس', programs_page_subtitle: 'اعثر على البرنامج المثالي.',
   nav_home: 'الرئيسية', nav_shop: 'المتجر', nav_programs: 'البرامج', nav_about: 'عن الأكاديمية', nav_contact: 'اتصل بنا',
-  nav_login: 'تسجيل الدخول', nav_logout: 'خروج', nav_register: 'إنشاء حساب', nav_cart: 'السلة', nav_checkout: 'الدفع',
-  cart_empty_title: 'سلة التسوق فارغة', cart_empty_desc: 'لم تضف أي عناصر بعد.',
-  cart_title: 'سلة التسوق', cart_summary: 'ملخص الطلب', cart_subtotal: 'المجموع الفرعي',
-  cart_discount: 'خصم الأعضاء', cart_shipping: 'الشحن', cart_free: 'مجاني', cart_total: 'المجموع',
-  cart_checkout_btn: 'المتابعة للدفع', cart_register_prompt: 'سجّل لتوفير 20%!',
-  cart_continue: 'متابعة التسوق', cart_clear: 'إفراغ السلة',
-  checkout_title: 'الدفع', checkout_contact: 'معلومات الاتصال', checkout_shipping: 'عنوان الشحن', checkout_payment: 'طريقة الدفع',
-  checkout_card: 'بطاقة ائتمان', checkout_card_desc: 'ادفع ببطاقتك', checkout_cod: 'الدفع عند الاستلام', checkout_cod_desc: 'ادفع عند وصول طلبك',
-  checkout_place_order: 'تأكيد الطلب', checkout_confirmed: 'تم تأكيد الطلب!', checkout_thank_you: 'شكرًا لطلبك!',
-  footer_quick_links: 'روابط سريعة', footer_programs_title: 'البرامج', footer_contact_title: 'اتصل بنا',
+  contact_title: 'اتصل بنا', footer_copyright: 'أكاديمية ألما للتنس. جميع الحقوق محفوظة.',
 };
 
-const defaultTheme = {
-  primary: '#2D4A2D', primaryLight: '#3D6B3D',
-  accent: '#A8D86E', accentLight: '#C4E8A0',
-  cream: '#FDF6E3', creamDark: '#F5EDDA', charcoal: '#1A1A1A',
-};
+const defaultTheme = { primary: '#2D4A2D', primaryLight: '#3D6B3D', accent: '#A8D86E', accentLight: '#C4E8A0', cream: '#FDF6E3', creamDark: '#F5EDDA', charcoal: '#1A1A1A' };
 
 function applyThemeToDOM(t) {
-  const root = document.documentElement;
-  root.style.setProperty('--color-primary', t.primary);
-  root.style.setProperty('--color-primary-light', t.primaryLight);
-  root.style.setProperty('--color-accent', t.accent);
-  root.style.setProperty('--color-accent-light', t.accentLight);
-  root.style.setProperty('--color-cream', t.cream);
-  root.style.setProperty('--color-cream-dark', t.creamDark);
-  root.style.setProperty('--color-charcoal', t.charcoal);
+  const r = document.documentElement;
+  r.style.setProperty('--color-primary', t.primary);
+  r.style.setProperty('--color-primary-light', t.primaryLight);
+  r.style.setProperty('--color-accent', t.accent);
+  r.style.setProperty('--color-accent-light', t.accentLight);
+  r.style.setProperty('--color-cream', t.cream);
+  r.style.setProperty('--color-cream-dark', t.creamDark);
+  r.style.setProperty('--color-charcoal', t.charcoal);
+}
+
+// ---- localStorage helpers (ALWAYS works) ----
+function lsGet(key, fallback) {
+  try { const v = localStorage.getItem('alma_' + key); return v ? JSON.parse(v) : fallback; }
+  catch { return fallback; }
+}
+function lsSet(key, value) {
+  try { localStorage.setItem('alma_' + key, JSON.stringify(value)); } catch {}
+}
+
+// ---- Firestore write (MIGHT fail, that's OK) ----
+async function firestoreWrite(path, data) {
+  try { await setDoc(doc(db, 'settings', path), data); return true; }
+  catch (err) { console.warn('Firestore write failed:', path, err.message); return false; }
 }
 
 export function PageContentProvider({ children }) {
-  const [language, setLanguageState] = useState('en');
-  const [publishedEN, setPublishedEN] = useState(defaultContentEN);
-  const [publishedAR, setPublishedAR] = useState(defaultContentAR);
-  const [publishedTheme, setPublishedTheme] = useState(defaultTheme);
-  const [publishedBranding, setPublishedBranding] = useState({});
+  // Load from localStorage first (instant), then Firestore overrides if available
+  const [contentEN, setContentEN] = useState(() => lsGet('contentEN', defaultContentEN));
+  const [contentAR, setContentAR] = useState(() => lsGet('contentAR', defaultContentAR));
+  const [theme, setTheme] = useState(() => lsGet('theme', defaultTheme));
+  const [branding, setBranding] = useState(() => lsGet('branding', {}));
+  const [loading, setLoading] = useState(true);
+  const [firestoreOK, setFirestoreOK] = useState(false);
 
-  // Draft state - what admin sees while editing (before publish)
+  // Draft state
   const [draftEN, setDraftEN] = useState(null);
   const [draftAR, setDraftAR] = useState(null);
   const [draftTheme, setDraftTheme] = useState(null);
   const [draftBranding, setDraftBranding] = useState(null);
-
-  const [loading, setLoading] = useState(true);
   const [publishing, setPublishing] = useState(false);
   const [publishError, setPublishError] = useState('');
 
   const hasChanges = !!(draftEN || draftAR || draftTheme || draftBranding);
+  const language = branding.language || (draftBranding?.language) || 'en';
 
-  // Active values: draft if exists, else published
-  const contentEN = draftEN || publishedEN;
-  const contentAR = draftAR || publishedAR;
-  const theme = draftTheme || publishedTheme;
-  const branding = draftBranding ? { ...publishedBranding, ...draftBranding } : publishedBranding;
+  // Active values
+  const activeEN = draftEN || contentEN;
+  const activeAR = draftAR || contentAR;
+  const activeTheme = draftTheme || theme;
+  const activeBranding = draftBranding ? { ...branding, ...draftBranding } : branding;
+  const content = language === 'ar' ? activeAR : activeEN;
+  const logoUrl = activeBranding.logoUrl || '';
+  const faviconUrl = activeBranding.faviconUrl || '';
+  const heroBg = activeBranding.heroBg || { type: 'color', imageUrl: '' };
 
-  const content = language === 'ar' ? contentAR : contentEN;
-  const logoUrl = branding.logoUrl || '';
-  const faviconUrl = branding.faviconUrl || '';
-  const heroBg = branding.heroBg || { type: 'color', imageUrl: '' };
-
-  // Firestore real-time listeners
+  // Try Firestore listeners (might fail if rules block reads too)
   useEffect(() => {
-    const unsub1 = onSnapshot(doc(db, 'settings', 'pageContent'), (snap) => {
-      if (snap.exists()) setPublishedEN({ ...defaultContentEN, ...snap.data() });
-      setLoading(false);
-    }, () => setLoading(false));
+    const unsubs = [];
+    try {
+      unsubs.push(onSnapshot(doc(db, 'settings', 'pageContent'), (snap) => {
+        if (snap.exists()) {
+          const data = { ...defaultContentEN, ...snap.data() };
+          setContentEN(data);
+          lsSet('contentEN', data);
+          setFirestoreOK(true);
+        }
+        setLoading(false);
+      }, () => setLoading(false)));
 
-    const unsub1ar = onSnapshot(doc(db, 'settings', 'pageContentAR'), (snap) => {
-      if (snap.exists()) setPublishedAR({ ...defaultContentAR, ...snap.data() });
-    });
+      unsubs.push(onSnapshot(doc(db, 'settings', 'pageContentAR'), (snap) => {
+        if (snap.exists()) { const d = { ...defaultContentAR, ...snap.data() }; setContentAR(d); lsSet('contentAR', d); }
+      }, () => {}));
 
-    const unsub2 = onSnapshot(doc(db, 'settings', 'theme'), (snap) => {
-      if (snap.exists()) {
-        const t = { ...defaultTheme, ...snap.data() };
-        setPublishedTheme(t);
-      }
-    });
+      unsubs.push(onSnapshot(doc(db, 'settings', 'theme'), (snap) => {
+        if (snap.exists()) { const t = { ...defaultTheme, ...snap.data() }; setTheme(t); lsSet('theme', t); applyThemeToDOM(t); }
+      }, () => {}));
 
-    const unsub3 = onSnapshot(doc(db, 'settings', 'branding'), (snap) => {
-      if (snap.exists()) {
-        setPublishedBranding(snap.data());
-        if (snap.data().language) setLanguageState(snap.data().language);
-      }
-    });
+      unsubs.push(onSnapshot(doc(db, 'settings', 'branding'), (snap) => {
+        if (snap.exists()) { setBranding(snap.data()); lsSet('branding', snap.data()); }
+      }, () => {}));
+    } catch {}
 
-    applyThemeToDOM(defaultTheme);
-    return () => { unsub1(); unsub1ar(); unsub2(); unsub3(); };
+    applyThemeToDOM(lsGet('theme', defaultTheme));
+    setLoading(false);
+    return () => unsubs.forEach(u => { try { u(); } catch {} });
   }, []);
 
-  // Apply theme to DOM whenever it changes
-  useEffect(() => { applyThemeToDOM(theme); }, [theme]);
+  useEffect(() => { applyThemeToDOM(activeTheme); }, [activeTheme]);
 
-  // Apply language direction
   useEffect(() => {
     document.documentElement.dir = language === 'ar' ? 'rtl' : 'ltr';
     document.documentElement.lang = language;
-    document.documentElement.style.fontFamily = language === 'ar'
-      ? "'Noto Sans Arabic', 'Inter', system-ui, sans-serif"
-      : "'Inter', system-ui, sans-serif";
+    document.documentElement.style.fontFamily = language === 'ar' ? "'Noto Sans Arabic', 'Inter', sans-serif" : "'Inter', sans-serif";
   }, [language]);
 
-  // Favicon
   useEffect(() => {
     document.querySelectorAll("link[rel='icon'], link[rel='shortcut icon']").forEach(el => el.remove());
     if (faviconUrl) {
-      const link = document.createElement('link');
-      link.rel = 'icon';
-      link.href = faviconUrl + (faviconUrl.includes('?') ? '&' : '?') + 'v=' + Date.now();
-      document.head.appendChild(link);
+      const link = document.createElement('link'); link.rel = 'icon';
+      link.href = faviconUrl + '?v=' + Date.now(); document.head.appendChild(link);
     } else {
       const emoji = content.favicon_emoji || '🎾';
-      const canvas = document.createElement('canvas');
-      canvas.width = 64; canvas.height = 64;
-      const ctx = canvas.getContext('2d');
-      ctx.font = '52px serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      const c = document.createElement('canvas'); c.width = 64; c.height = 64;
+      const ctx = c.getContext('2d'); ctx.font = '52px serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
       ctx.fillText(emoji, 32, 36);
-      const link = document.createElement('link');
-      link.rel = 'icon'; link.href = canvas.toDataURL();
-      document.head.appendChild(link);
+      const link = document.createElement('link'); link.rel = 'icon'; link.href = c.toDataURL(); document.head.appendChild(link);
     }
   }, [faviconUrl, content.favicon_emoji]);
 
-  // Tab title
-  useEffect(() => {
-    document.title = content.site_title || 'Alma Tennis Academy';
-  }, [content.site_title]);
+  useEffect(() => { document.title = content.site_title || 'Alma Tennis Academy'; }, [content.site_title]);
 
-  // ---- DRAFT UPDATES (local only, admin preview) ----
-
+  // ---- DRAFT UPDATES (local preview only) ----
   const updateContent = (key, value) => {
-    if (language === 'ar') {
-      setDraftAR(prev => ({ ...(prev || publishedAR), [key]: value }));
-    } else {
-      setDraftEN(prev => ({ ...(prev || publishedEN), [key]: value }));
-    }
+    if (language === 'ar') setDraftAR(prev => ({ ...(prev || contentAR), [key]: value }));
+    else setDraftEN(prev => ({ ...(prev || contentEN), [key]: value }));
   };
+  const updateTheme = (t) => { setDraftTheme(t); applyThemeToDOM(t); };
+  const updateLogo = (url) => { setDraftBranding(prev => ({ ...(prev || branding), logoUrl: url })); };
+  const updateFavicon = (url) => { setDraftBranding(prev => ({ ...(prev || branding), faviconUrl: url })); };
+  const updateHeroBg = (bg) => { setDraftBranding(prev => ({ ...(prev || branding), heroBg: bg })); };
+  const setLanguage = (lang) => { setDraftBranding(prev => ({ ...(prev || branding), language: lang })); };
 
-  const updateTheme = (newTheme) => {
-    setDraftTheme(newTheme);
-    applyThemeToDOM(newTheme);
-  };
-
-  const updateLogo = (url) => {
-    setDraftBranding(prev => ({ ...(prev || publishedBranding), logoUrl: url }));
-  };
-
-  const updateFavicon = (url) => {
-    setDraftBranding(prev => ({ ...(prev || publishedBranding), faviconUrl: url }));
-  };
-
-  const updateHeroBg = (bg) => {
-    setDraftBranding(prev => ({ ...(prev || publishedBranding), heroBg: bg }));
-  };
-
-  const setLanguage = (lang) => {
-    setLanguageState(lang);
-    setDraftBranding(prev => ({ ...(prev || publishedBranding), language: lang }));
-  };
-
-  // ---- PUBLISH TO FIRESTORE ----
-
+  // ---- PUBLISH: Save to localStorage (always works) + try Firestore ----
   const publishAll = async () => {
     setPublishing(true);
     setPublishError('');
+    let firestoreSuccess = true;
 
-    const errors = [];
-
-    // Write each changed section individually so partial saves work
     if (draftEN) {
-      try {
-        await setDoc(doc(db, 'settings', 'pageContent'), draftEN);
-        setPublishedEN(draftEN);
-        setDraftEN(null);
-      } catch (err) { errors.push('Content (EN): ' + err.message); }
+      lsSet('contentEN', draftEN);
+      setContentEN(draftEN);
+      if (!await firestoreWrite('pageContent', draftEN)) firestoreSuccess = false;
+      setDraftEN(null);
     }
-
     if (draftAR) {
-      try {
-        await setDoc(doc(db, 'settings', 'pageContentAR'), draftAR);
-        setPublishedAR(draftAR);
-        setDraftAR(null);
-      } catch (err) { errors.push('Content (AR): ' + err.message); }
+      lsSet('contentAR', draftAR);
+      setContentAR(draftAR);
+      if (!await firestoreWrite('pageContentAR', draftAR)) firestoreSuccess = false;
+      setDraftAR(null);
     }
-
     if (draftTheme) {
-      try {
-        await setDoc(doc(db, 'settings', 'theme'), draftTheme);
-        setPublishedTheme(draftTheme);
-        setDraftTheme(null);
-      } catch (err) { errors.push('Theme: ' + err.message); }
+      lsSet('theme', draftTheme);
+      setTheme(draftTheme);
+      if (!await firestoreWrite('theme', draftTheme)) firestoreSuccess = false;
+      setDraftTheme(null);
     }
-
     if (draftBranding) {
-      try {
-        const merged = { ...publishedBranding, ...draftBranding };
-        await setDoc(doc(db, 'settings', 'branding'), merged);
-        setPublishedBranding(merged);
-        setDraftBranding(null);
-      } catch (err) { errors.push('Branding: ' + err.message); }
+      const merged = { ...branding, ...draftBranding };
+      lsSet('branding', merged);
+      setBranding(merged);
+      if (!await firestoreWrite('branding', merged)) firestoreSuccess = false;
+      setDraftBranding(null);
     }
 
     setPublishing(false);
 
-    if (errors.length > 0) {
-      const msg = errors.join('\n');
-      setPublishError(msg);
-      return { success: false, error: msg };
+    if (!firestoreSuccess) {
+      setPublishError('Changes saved locally but could not sync to database. Other visitors may not see changes until Firestore rules are fixed.');
+      return { success: true, partial: true };
     }
 
     return { success: true };
   };
 
-  // ---- DISCARD ----
-
   const discardChanges = () => {
-    setDraftEN(null);
-    setDraftAR(null);
-    setDraftTheme(null);
-    setDraftBranding(null);
-    applyThemeToDOM(publishedTheme);
+    setDraftEN(null); setDraftAR(null); setDraftTheme(null); setDraftBranding(null);
+    applyThemeToDOM(theme);
   };
 
   return (
     <PageContentContext.Provider value={{
-      content, theme, logoUrl, faviconUrl, heroBg, language, loading,
-      hasChanges, publishing, publishError, setPublishError,
+      content, theme: activeTheme, logoUrl, faviconUrl, heroBg, language, loading,
+      hasChanges, publishing, publishError, setPublishError, firestoreOK,
       updateContent, updateTheme, updateLogo, updateFavicon, updateHeroBg, setLanguage,
       publishAll, discardChanges, defaultTheme,
     }}>
