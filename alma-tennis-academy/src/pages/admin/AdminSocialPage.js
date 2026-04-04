@@ -129,9 +129,63 @@ function detectPlatform(url) {
   return null;
 }
 
+const EXEC_PALETTES = [
+  { name: 'Midnight', bg: 'from-slate-900 via-slate-800 to-slate-900', card: 'bg-white/5 border-white/5', text: 'text-white',
+    accents: ['text-cyan-400', 'text-emerald-400', 'text-amber-400', 'text-violet-400'],
+    rings: ['#06B6D4', '#10B981', '#8B5CF6'], gauge: 'rgba(255,255,255,0.05)',
+    badge: ['bg-emerald-500/20 text-emerald-400', 'bg-cyan-500/20 text-cyan-400', 'bg-amber-500/20 text-amber-400'],
+    bars: ['bg-pink-500', 'bg-amber-500', 'bg-violet-500'],
+    top: ['from-amber-500/20 to-amber-600/5 border-amber-500/20', 'from-cyan-500/20 to-cyan-600/5 border-cyan-500/20', 'from-violet-500/20 to-violet-600/5 border-violet-500/20'],
+    tblAccents: ['text-pink-400', 'text-amber-400', 'text-violet-400'],
+    preview: ['#0F172A', '#06B6D4', '#10B981', '#8B5CF6'] },
+  { name: 'Charcoal', bg: 'from-gray-950 via-gray-900 to-gray-950', card: 'bg-white/5 border-white/5', text: 'text-white',
+    accents: ['text-blue-400', 'text-green-400', 'text-yellow-400', 'text-red-400'],
+    rings: ['#3B82F6', '#22C55E', '#EF4444'], gauge: 'rgba(255,255,255,0.05)',
+    badge: ['bg-green-500/20 text-green-400', 'bg-blue-500/20 text-blue-400', 'bg-yellow-500/20 text-yellow-400'],
+    bars: ['bg-blue-500', 'bg-yellow-500', 'bg-red-500'],
+    top: ['from-blue-500/20 to-blue-600/5 border-blue-500/20', 'from-green-500/20 to-green-600/5 border-green-500/20', 'from-red-500/20 to-red-600/5 border-red-500/20'],
+    tblAccents: ['text-blue-400', 'text-yellow-400', 'text-red-400'],
+    preview: ['#030712', '#3B82F6', '#22C55E', '#EF4444'] },
+  { name: 'Navy', bg: 'from-blue-950 via-indigo-950 to-blue-950', card: 'bg-white/5 border-white/5', text: 'text-white',
+    accents: ['text-sky-300', 'text-teal-300', 'text-orange-300', 'text-pink-300'],
+    rings: ['#7DD3FC', '#5EEAD4', '#FDBA74'], gauge: 'rgba(255,255,255,0.05)',
+    badge: ['bg-teal-500/20 text-teal-300', 'bg-sky-500/20 text-sky-300', 'bg-orange-500/20 text-orange-300'],
+    bars: ['bg-sky-400', 'bg-orange-400', 'bg-pink-400'],
+    top: ['from-sky-500/20 to-sky-600/5 border-sky-500/20', 'from-teal-500/20 to-teal-600/5 border-teal-500/20', 'from-orange-500/20 to-orange-600/5 border-orange-500/20'],
+    tblAccents: ['text-sky-300', 'text-orange-300', 'text-pink-300'],
+    preview: ['#172554', '#7DD3FC', '#5EEAD4', '#FDBA74'] },
+  { name: 'Wine', bg: 'from-rose-950 via-red-950 to-rose-950', card: 'bg-white/5 border-white/5', text: 'text-white',
+    accents: ['text-rose-300', 'text-amber-300', 'text-fuchsia-300', 'text-orange-300'],
+    rings: ['#FDA4AF', '#FCD34D', '#F0ABFC'], gauge: 'rgba(255,255,255,0.05)',
+    badge: ['bg-rose-500/20 text-rose-300', 'bg-amber-500/20 text-amber-300', 'bg-fuchsia-500/20 text-fuchsia-300'],
+    bars: ['bg-rose-400', 'bg-amber-400', 'bg-fuchsia-400'],
+    top: ['from-rose-500/20 to-rose-600/5 border-rose-500/20', 'from-amber-500/20 to-amber-600/5 border-amber-500/20', 'from-fuchsia-500/20 to-fuchsia-600/5 border-fuchsia-500/20'],
+    tblAccents: ['text-rose-300', 'text-amber-300', 'text-fuchsia-300'],
+    preview: ['#4C0519', '#FDA4AF', '#FCD34D', '#F0ABFC'] },
+  { name: 'Emerald', bg: 'from-emerald-950 via-green-950 to-emerald-950', card: 'bg-white/5 border-white/5', text: 'text-white',
+    accents: ['text-emerald-300', 'text-lime-300', 'text-cyan-300', 'text-yellow-300'],
+    rings: ['#6EE7B7', '#BEF264', '#67E8F9'], gauge: 'rgba(255,255,255,0.05)',
+    badge: ['bg-emerald-500/20 text-emerald-300', 'bg-lime-500/20 text-lime-300', 'bg-cyan-500/20 text-cyan-300'],
+    bars: ['bg-emerald-400', 'bg-lime-400', 'bg-cyan-400'],
+    top: ['from-emerald-500/20 to-emerald-600/5 border-emerald-500/20', 'from-lime-500/20 to-lime-600/5 border-lime-500/20', 'from-cyan-500/20 to-cyan-600/5 border-cyan-500/20'],
+    tblAccents: ['text-emerald-300', 'text-lime-300', 'text-cyan-300'],
+    preview: ['#022C22', '#6EE7B7', '#BEF264', '#67E8F9'] },
+  { name: 'Light', bg: 'from-gray-50 via-white to-gray-50', card: 'bg-gray-100 border-gray-200', text: 'text-gray-900',
+    accents: ['text-blue-600', 'text-emerald-600', 'text-amber-600', 'text-purple-600'],
+    rings: ['#2563EB', '#059669', '#7C3AED'], gauge: 'rgba(0,0,0,0.05)',
+    badge: ['bg-emerald-100 text-emerald-700', 'bg-blue-100 text-blue-700', 'bg-amber-100 text-amber-700'],
+    bars: ['bg-blue-500', 'bg-amber-500', 'bg-purple-500'],
+    top: ['from-amber-100 to-amber-50 border-amber-200', 'from-blue-100 to-blue-50 border-blue-200', 'from-purple-100 to-purple-50 border-purple-200'],
+    tblAccents: ['text-blue-600', 'text-amber-600', 'text-purple-600'],
+    preview: ['#FFFFFF', '#2563EB', '#059669', '#7C3AED'] },
+];
+
 function ExecutiveDashboard({ content, postCount }) {
   const execRef = useRef(null);
   const [exporting, setExporting] = useState(false);
+  const [epIdx, setEpIdx] = useState(parseInt(localStorage.getItem('alma_exec_palette') || '0'));
+  const ep = EXEC_PALETTES[epIdx] || EXEC_PALETTES[0];
+  const saveEp = (i) => { setEpIdx(i); localStorage.setItem('alma_exec_palette', i.toString()); };
 
   // Gather data
   const posts = [];
@@ -203,72 +257,95 @@ function ExecutiveDashboard({ content, postCount }) {
 
   const fmt = (n) => n >= 1000000 ? (n/1000000).toFixed(1) + 'M' : n >= 1000 ? (n/1000).toFixed(1) + 'K' : n.toString();
 
+  const isLight = ep.name === 'Light';
+  const subText = isLight ? 'text-gray-500' : 'text-white/40';
+  const dimText = isLight ? 'text-gray-400' : 'text-white/30';
+  const border = isLight ? 'border-gray-200' : 'border-white/5';
+  const hoverRow = isLight ? 'hover:bg-gray-50' : 'hover:bg-white/5';
+
   return (
     <div>
-      <div className="flex justify-end mb-4">
+      {/* Palette + Export */}
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-3">
+          <span className="text-sm font-semibold text-alma-green">Theme</span>
+          <div className="flex gap-1.5">
+            {EXEC_PALETTES.map((p, idx) => (
+              <button key={p.name} onClick={() => saveEp(idx)} title={p.name}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border transition-all ${
+                  idx === epIdx ? 'border-alma-green bg-white shadow-md scale-105' : 'border-gray-200 hover:border-gray-300 bg-white/80'
+                }`}>
+                <div className="flex gap-0.5">
+                  {p.preview.map((c, ci) => <div key={ci} className="w-2.5 h-2.5 rounded-full" style={{ background: c }} />)}
+                </div>
+                <span className={`text-[10px] font-medium ${idx === epIdx ? 'text-alma-green' : 'text-gray-400'}`}>{p.name}</span>
+              </button>
+            ))}
+          </div>
+        </div>
         <button onClick={exportPDF} disabled={exporting}
-          className="flex items-center gap-2 px-5 py-2.5 bg-white text-slate-800 text-sm font-semibold rounded-xl hover:bg-gray-100 transition-all disabled:opacity-50 shadow-lg">
-          {exporting ? <><span className="w-3 h-3 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin" /> Exporting...</> : '📄 Export Executive PDF'}
+          className="flex items-center gap-2 px-4 py-2 bg-alma-green text-white text-xs font-semibold rounded-xl hover:bg-alma-green-light transition-all disabled:opacity-50">
+          {exporting ? <><span className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Exporting...</> : '📄 Export PDF'}
         </button>
       </div>
 
-      <div ref={execRef} className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-2xl overflow-hidden">
+      <div ref={execRef} className={`bg-gradient-to-br ${ep.bg} rounded-2xl overflow-hidden`}>
         {/* Header */}
-        <div className="px-10 pt-10 pb-6 border-b border-white/5">
+        <div className={`px-10 pt-10 pb-6 border-b ${border}`}>
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs font-semibold text-cyan-400 uppercase tracking-[0.3em]">Executive Summary</p>
-              <h2 className="text-3xl font-bold text-white mt-2">Social Media Performance</h2>
-              <p className="text-white/40 text-sm mt-1">Alma Tennis Academy · {new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</p>
+              <p className={`text-xs font-semibold ${ep.accents[0]} uppercase tracking-[0.3em]`}>Executive Summary</p>
+              <h2 className={`text-3xl font-bold ${ep.text} mt-2`}>Social Media Performance</h2>
+              <p className={`${subText} text-sm mt-1`}>Alma Tennis Academy · {new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</p>
             </div>
             <div className="text-right">
-              <p className="text-5xl font-black text-white">{posts.length}</p>
-              <p className="text-xs text-white/40 uppercase tracking-wider">Active Posts</p>
+              <p className={`text-5xl font-black ${ep.text}`}>{posts.length}</p>
+              <p className={`text-xs ${subText} uppercase tracking-wider`}>Active Posts</p>
             </div>
           </div>
         </div>
 
         {/* Big Numbers Row */}
-        <div className="grid grid-cols-4 divide-x divide-white/5">
+        <div className={`grid grid-cols-4 divide-x ${isLight ? 'divide-gray-200' : 'divide-white/5'}`}>
           {[
-            { label: 'Total Reach', value: fmt(tv), sub: 'impressions', icon: '👁', color: 'text-cyan-400' },
-            { label: 'Engagements', value: fmt(ti), sub: 'interactions', icon: '🤝', color: 'text-emerald-400' },
-            { label: 'Engagement Rate', value: engRate + '%', sub: 'avg across posts', icon: '📈', color: 'text-amber-400' },
-            { label: 'Content Pieces', value: posts.length.toString(), sub: Object.keys(platforms).join(' · '), icon: '📱', color: 'text-violet-400' },
+            { label: 'Total Reach', value: fmt(tv), sub: 'impressions', color: ep.accents[0] },
+            { label: 'Engagements', value: fmt(ti), sub: 'interactions', color: ep.accents[1] },
+            { label: 'Engagement Rate', value: engRate + '%', sub: 'avg across posts', color: ep.accents[2] },
+            { label: 'Content Pieces', value: posts.length.toString(), sub: Object.keys(platforms).join(' · '), color: ep.accents[3] },
           ].map(s => (
             <div key={s.label} className="p-8 text-center">
               <p className={`text-4xl font-black ${s.color}`}>{s.value}</p>
-              <p className="text-sm text-white/70 font-medium mt-2">{s.label}</p>
-              <p className="text-xs text-white/30 mt-1">{s.sub}</p>
+              <p className={`text-sm ${isLight ? 'text-gray-600' : 'text-white/70'} font-medium mt-2`}>{s.label}</p>
+              <p className={`text-xs ${dimText} mt-1`}>{s.sub}</p>
             </div>
           ))}
         </div>
 
         {/* Rates Gauges */}
-        <div className="px-10 py-8 border-t border-white/5">
-          <p className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-6">Performance Indicators</p>
+        <div className={`px-10 py-8 border-t ${border}`}>
+          <p className={`text-xs font-semibold ${subText} uppercase tracking-wider mb-6`}>Performance Indicators</p>
           <div className="grid grid-cols-3 gap-8">
             {[
-              { label: 'Engagement', rate: parseFloat(engRate), color: '#06B6D4', target: 5 },
-              { label: 'Likeability', rate: parseFloat(likeRate), color: '#10B981', target: 4 },
-              { label: 'Sharability', rate: parseFloat(shareRate), color: '#8B5CF6', target: 1 },
+              { label: 'Engagement', rate: parseFloat(engRate), color: ep.rings[0], target: 5 },
+              { label: 'Likeability', rate: parseFloat(likeRate), color: ep.rings[1], target: 4 },
+              { label: 'Sharability', rate: parseFloat(shareRate), color: ep.rings[2], target: 1 },
             ].map(g => {
               const pct = Math.min((g.rate / (g.target * 2)) * 100, 100);
               return (
                 <div key={g.label} className="text-center">
                   <div className="relative w-32 h-32 mx-auto">
                     <svg viewBox="0 0 36 36" className="w-full h-full -rotate-90">
-                      <circle cx="18" cy="18" r="15.9" fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="3" />
+                      <circle cx="18" cy="18" r="15.9" fill="none" stroke={ep.gauge} strokeWidth="3" />
                       <circle cx="18" cy="18" r="15.9" fill="none" stroke={g.color} strokeWidth="3"
                         strokeDasharray={`${pct} ${100 - pct}`} strokeLinecap="round"
                         className="transition-all duration-1000" />
                     </svg>
                     <div className="absolute inset-0 flex flex-col items-center justify-center">
-                      <span className="text-2xl font-black text-white">{g.rate.toFixed(1)}%</span>
+                      <span className={`text-2xl font-black ${ep.text}`}>{g.rate.toFixed(1)}%</span>
                     </div>
                   </div>
-                  <p className="text-sm text-white/70 font-medium mt-3">{g.label}</p>
-                  <p className="text-[10px] text-white/30 mt-0.5">Target: {g.target}%</p>
+                  <p className={`text-sm ${isLight ? 'text-gray-600' : 'text-white/70'} font-medium mt-3`}>{g.label}</p>
+                  <p className={`text-[10px] ${dimText} mt-0.5`}>Target: {g.target}%</p>
                 </div>
               );
             })}
@@ -276,35 +353,35 @@ function ExecutiveDashboard({ content, postCount }) {
         </div>
 
         {/* Platform Breakdown */}
-        <div className="px-10 py-8 border-t border-white/5">
-          <p className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-6">Platform Breakdown</p>
+        <div className={`px-10 py-8 border-t ${border}`}>
+          <p className={`text-xs font-semibold ${subText} uppercase tracking-wider mb-6`}>Platform Breakdown</p>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {Object.entries(platforms).map(([name, data]) => {
               const pctOfViews = tv > 0 ? (data.views / tv * 100).toFixed(0) : 0;
               const eng = data.views > 0 ? ((data.likes + data.comments + data.shares) / data.views * 100).toFixed(1) : '0.0';
               return (
-                <div key={name} className="bg-white/5 rounded-xl p-5 border border-white/5">
+                <div key={name} className={`${ep.card} rounded-xl p-5 border`}>
                   <div className="flex items-center justify-between mb-4">
-                    <span className="text-lg">{data.icon} <span className="text-white font-semibold text-sm">{name}</span></span>
-                    <span className="text-xs bg-white/10 text-white/60 px-2 py-1 rounded-full">{data.count} posts</span>
+                    <span className="text-lg">{data.icon} <span className={`${ep.text} font-semibold text-sm`}>{name}</span></span>
+                    <span className={`text-xs ${isLight ? 'bg-gray-200 text-gray-600' : 'bg-white/10 text-white/60'} px-2 py-1 rounded-full`}>{data.count} posts</span>
                   </div>
                   <div className="grid grid-cols-2 gap-3 text-center">
                     <div>
-                      <p className="text-xl font-bold text-white">{fmt(data.views)}</p>
-                      <p className="text-[10px] text-white/40">Views ({pctOfViews}%)</p>
+                      <p className={`text-xl font-bold ${ep.text}`}>{fmt(data.views)}</p>
+                      <p className={`text-[10px] ${subText}`}>Views ({pctOfViews}%)</p>
                     </div>
                     <div>
-                      <p className="text-xl font-bold text-white">{eng}%</p>
-                      <p className="text-[10px] text-white/40">Engagement</p>
+                      <p className={`text-xl font-bold ${ep.text}`}>{eng}%</p>
+                      <p className={`text-[10px] ${subText}`}>Engagement</p>
                     </div>
                   </div>
                   {/* Mini bar */}
-                  <div className="mt-3 flex gap-1 h-2 rounded-full overflow-hidden bg-white/5">
-                    {data.likes > 0 && <div className="bg-pink-500 rounded-full" style={{ width: `${data.likes / (data.likes + data.comments + data.shares) * 100}%` }} />}
-                    {data.comments > 0 && <div className="bg-amber-500 rounded-full" style={{ width: `${data.comments / (data.likes + data.comments + data.shares) * 100}%` }} />}
-                    {data.shares > 0 && <div className="bg-violet-500 rounded-full" style={{ width: `${data.shares / (data.likes + data.comments + data.shares) * 100}%` }} />}
+                  <div className={`mt-3 flex gap-1 h-2 rounded-full overflow-hidden ${isLight ? 'bg-gray-200' : 'bg-white/5'}`}>
+                    {data.likes > 0 && <div className={`${ep.bars[0]} rounded-full`} style={{ width: `${data.likes / (data.likes + data.comments + data.shares) * 100}%` }} />}
+                    {data.comments > 0 && <div className={`${ep.bars[1]} rounded-full`} style={{ width: `${data.comments / (data.likes + data.comments + data.shares) * 100}%` }} />}
+                    {data.shares > 0 && <div className={`${ep.bars[2]} rounded-full`} style={{ width: `${data.shares / (data.likes + data.comments + data.shares) * 100}%` }} />}
                   </div>
-                  <div className="flex justify-between mt-1 text-[9px] text-white/30">
+                  <div className={`flex justify-between mt-1 text-[9px] ${dimText}`}>
                     <span>❤️ {fmt(data.likes)}</span>
                     <span>💬 {fmt(data.comments)}</span>
                     <span>🔄 {fmt(data.shares)}</span>
@@ -316,39 +393,39 @@ function ExecutiveDashboard({ content, postCount }) {
         </div>
 
         {/* Top Performers */}
-        <div className="px-10 py-8 border-t border-white/5">
-          <p className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-6">Top Performers</p>
+        <div className={`px-10 py-8 border-t ${border}`}>
+          <p className={`text-xs font-semibold ${subText} uppercase tracking-wider mb-6`}>Top Performers</p>
           <div className="grid grid-cols-3 gap-4">
             {[
-              { label: 'Highest Engagement', post: bestPost, metric: bestPost?.engagement.toFixed(1) + '%', icon: '🏆', color: 'from-amber-500/20 to-amber-600/5', border: 'border-amber-500/20' },
-              { label: 'Most Viewed', post: mostViewed, metric: fmt(mostViewed?.views || 0) + ' views', icon: '👁', color: 'from-cyan-500/20 to-cyan-600/5', border: 'border-cyan-500/20' },
-              { label: 'Most Shared', post: mostShared, metric: fmt(mostShared?.shares || 0) + ' shares', icon: '🔄', color: 'from-violet-500/20 to-violet-600/5', border: 'border-violet-500/20' },
-            ].map(t => t.post && (
-              <div key={t.label} className={`bg-gradient-to-br ${t.color} rounded-xl p-5 border ${t.border}`}>
+              { label: 'Highest Engagement', post: bestPost, metric: bestPost?.engagement.toFixed(1) + '%', icon: '🏆' },
+              { label: 'Most Viewed', post: mostViewed, metric: fmt(mostViewed?.views || 0) + ' views', icon: '👁' },
+              { label: 'Most Shared', post: mostShared, metric: fmt(mostShared?.shares || 0) + ' shares', icon: '🔄' },
+            ].map((t, tIdx) => t.post && (
+              <div key={t.label} className={`bg-gradient-to-br ${ep.top[tIdx]} rounded-xl p-5 border`}>
                 <div className="flex items-center gap-2 mb-3">
                   <span className="text-2xl">{t.icon}</span>
-                  <p className="text-xs text-white/50 uppercase tracking-wider">{t.label}</p>
+                  <p className={`text-xs ${subText} uppercase tracking-wider`}>{t.label}</p>
                 </div>
                 <div className="flex items-center gap-3">
                   {t.post.thumbnail && <img src={t.post.thumbnail} alt="" className="w-12 h-12 rounded-lg object-cover" />}
                   <div>
-                    <p className="text-white font-semibold text-sm">{t.post.handle}</p>
-                    <p className="text-white/40 text-xs">{t.post.platformIcon} {t.post.platform}</p>
+                    <p className={`${ep.text} font-semibold text-sm`}>{t.post.handle}</p>
+                    <p className={`${subText} text-xs`}>{t.post.platformIcon} {t.post.platform}</p>
                   </div>
                 </div>
-                <p className="text-2xl font-black text-white mt-3">{t.metric}</p>
+                <p className={`text-2xl font-black ${ep.text} mt-3`}>{t.metric}</p>
               </div>
             ))}
           </div>
         </div>
 
         {/* Content Performance Table */}
-        <div className="px-10 py-8 border-t border-white/5">
-          <p className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-6">Content Performance</p>
+        <div className={`px-10 py-8 border-t ${border}`}>
+          <p className={`text-xs font-semibold ${subText} uppercase tracking-wider mb-6`}>Content Performance</p>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="text-white/30 text-xs">
+                <tr className={`${dimText} text-xs`}>
                   <th className="text-left pb-3 font-medium">#</th>
                   <th className="text-left pb-3 font-medium">Post</th>
                   <th className="text-left pb-3 font-medium">Platform</th>
@@ -363,27 +440,26 @@ function ExecutiveDashboard({ content, postCount }) {
               </thead>
               <tbody>
                 {[...posts].sort((a, b) => b.views - a.views).map((p, idx) => (
-                  <tr key={p.index} className="border-t border-white/5 hover:bg-white/5 transition-colors">
-                    <td className="py-3 text-white/30 font-mono text-xs">{idx + 1}</td>
+                  <tr key={p.index} className={`border-t ${border} ${hoverRow} transition-colors`}>
+                    <td className={`py-3 ${dimText} font-mono text-xs`}>{idx + 1}</td>
                     <td className="py-3">
                       <div className="flex items-center gap-2">
                         {p.thumbnail && <img src={p.thumbnail} alt="" className="w-8 h-8 rounded object-cover" />}
-                        <span className="text-white font-medium text-xs truncate max-w-[140px]">{p.handle}</span>
+                        <span className={`${ep.text} font-medium text-xs truncate max-w-[140px]`}>{p.handle}</span>
                       </div>
                     </td>
-                    <td className="py-3 text-white/50 text-xs">{p.platformIcon} {p.platform}</td>
-                    <td className="py-3 text-right text-white font-semibold">{fmt(p.views)}</td>
-                    <td className="py-3 text-right text-pink-400">{fmt(p.likes)}</td>
-                    <td className="py-3 text-right text-amber-400">{fmt(p.comments)}</td>
-                    <td className="py-3 text-right text-violet-400">{fmt(p.shares)}</td>
+                    <td className={`py-3 ${subText} text-xs`}>{p.platformIcon} {p.platform}</td>
+                    <td className={`py-3 text-right ${ep.text} font-semibold`}>{fmt(p.views)}</td>
+                    <td className={`py-3 text-right ${ep.tblAccents[0]}`}>{fmt(p.likes)}</td>
+                    <td className={`py-3 text-right ${ep.tblAccents[1]}`}>{fmt(p.comments)}</td>
+                    <td className={`py-3 text-right ${ep.tblAccents[2]}`}>{fmt(p.shares)}</td>
                     <td className="py-3 text-right">
                       <span className={`px-2 py-0.5 rounded text-xs font-bold ${
-                        p.engagement > 5 ? 'bg-emerald-500/20 text-emerald-400' :
-                        p.engagement > 2 ? 'bg-cyan-500/20 text-cyan-400' : 'bg-amber-500/20 text-amber-400'
+                        p.engagement > 5 ? ep.badge[0] : p.engagement > 2 ? ep.badge[1] : ep.badge[2]
                       }`}>{p.engagement.toFixed(1)}%</span>
                     </td>
-                    <td className="py-3 text-right text-white/50 text-xs">{p.likeability.toFixed(1)}%</td>
-                    <td className="py-3 text-right text-white/50 text-xs">{p.sharability.toFixed(1)}%</td>
+                    <td className={`py-3 text-right ${subText} text-xs`}>{p.likeability.toFixed(1)}%</td>
+                    <td className={`py-3 text-right ${subText} text-xs`}>{p.sharability.toFixed(1)}%</td>
                   </tr>
                 ))}
               </tbody>
@@ -392,9 +468,9 @@ function ExecutiveDashboard({ content, postCount }) {
         </div>
 
         {/* Footer */}
-        <div className="px-10 py-6 border-t border-white/5 flex items-center justify-between">
-          <p className="text-[10px] text-white/20">Generated by Alma Tennis Academy Admin Panel</p>
-          <p className="text-[10px] text-white/20">{new Date().toLocaleDateString()} · {posts.length} posts analyzed</p>
+        <div className={`px-10 py-6 border-t ${border} flex items-center justify-between`}>
+          <p className={`text-[10px] ${isLight ? 'text-gray-300' : 'text-white/20'}`}>Generated by Alma Tennis Academy Admin Panel</p>
+          <p className={`text-[10px] ${isLight ? 'text-gray-300' : 'text-white/20'}`}>{new Date().toLocaleDateString()} · {posts.length} posts analyzed</p>
         </div>
       </div>
     </div>
