@@ -1,6 +1,6 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
-import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager } from 'firebase/firestore';
+import { initializeFirestore, memoryLocalCache } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 
 const firebaseConfig = {
@@ -16,6 +16,10 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 
 export const auth = getAuth(app);
-// Use default Firestore (no offline persistence override)
-export const db = initializeFirestore(app, {});
+// Force memory-only cache: no IndexedDB persistence
+// This ensures writes FAIL immediately if server rejects them
+// instead of silently caching locally
+export const db = initializeFirestore(app, {
+  localCache: memoryLocalCache()
+});
 export const storage = getStorage(app);

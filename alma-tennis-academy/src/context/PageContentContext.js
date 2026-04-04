@@ -69,7 +69,6 @@ const defaultContentEN = {
 const defaultContentAR = {
   site_title: 'أكاديمية ألما للتنس', favicon_emoji: '🎾',
   social_media_enabled: 'no', social_title: 'تابعونا', social_subtitle: 'ابقوا على اتصال.',
-  social_post_1: '', social_post_2: '', social_post_3: '',
   hero_title_1: 'ارتقِ بمستوى', hero_title_2: 'لعبة التنس',
   hero_subtitle: 'تدريب احترافي، معدات عالية الجودة، ومجتمع شغوف.',
   hero_badge: 'التسجيل مفتوح الآن لصيف 2026', hero_cta_1: 'استكشف البرامج', hero_cta_2: 'تسوق المعدات',
@@ -138,37 +137,56 @@ function applyThemeToDOM(t) {
 
 export function PageContentProvider({ children }) {
   const [language, setLanguageState] = useState('en');
-  const [contentEN, setContentEN] = useState(defaultContentEN);
-  const [contentAR, setContentAR] = useState(defaultContentAR);
-  const [theme, setTheme] = useState(defaultTheme);
-  const [logoUrl, setLogoUrl] = useState('');
-  const [faviconUrl, setFaviconUrl] = useState('');
-  const [heroBg, setHeroBg] = useState({ type: 'color', imageUrl: '' });
+  const [publishedEN, setPublishedEN] = useState(defaultContentEN);
+  const [publishedAR, setPublishedAR] = useState(defaultContentAR);
+  const [publishedTheme, setPublishedTheme] = useState(defaultTheme);
+  const [publishedBranding, setPublishedBranding] = useState({});
+
+  // Draft state - what admin sees while editing (before publish)
+  const [draftEN, setDraftEN] = useState(null);
+  const [draftAR, setDraftAR] = useState(null);
+  const [draftTheme, setDraftTheme] = useState(null);
+  const [draftBranding, setDraftBranding] = useState(null);
+
   const [loading, setLoading] = useState(true);
+  const [publishing, setPublishing] = useState(false);
+  const [publishError, setPublishError] = useState('');
+
+  const hasChanges = !!(draftEN || draftAR || draftTheme || draftBranding);
+
+  // Active values: draft if exists, else published
+  const contentEN = draftEN || publishedEN;
+  const contentAR = draftAR || publishedAR;
+  const theme = draftTheme || publishedTheme;
+  const branding = draftBranding ? { ...publishedBranding, ...draftBranding } : publishedBranding;
 
   const content = language === 'ar' ? contentAR : contentEN;
+  const logoUrl = branding.logoUrl || '';
+  const faviconUrl = branding.faviconUrl || '';
+  const heroBg = branding.heroBg || { type: 'color', imageUrl: '' };
 
-  // Real-time listeners from Firestore
+  // Firestore real-time listeners
   useEffect(() => {
     const unsub1 = onSnapshot(doc(db, 'settings', 'pageContent'), (snap) => {
-      if (snap.exists()) setContentEN({ ...defaultContentEN, ...snap.data() });
+      if (snap.exists()) setPublishedEN({ ...defaultContentEN, ...snap.data() });
       setLoading(false);
     }, () => setLoading(false));
 
     const unsub1ar = onSnapshot(doc(db, 'settings', 'pageContentAR'), (snap) => {
-      if (snap.exists()) setContentAR({ ...defaultContentAR, ...snap.data() });
+      if (snap.exists()) setPublishedAR({ ...defaultContentAR, ...snap.data() });
     });
 
     const unsub2 = onSnapshot(doc(db, 'settings', 'theme'), (snap) => {
-      if (snap.exists()) { const t = { ...defaultTheme, ...snap.data() }; setTheme(t); applyThemeToDOM(t); }
+      if (snap.exists()) {
+        const t = { ...defaultTheme, ...snap.data() };
+        setPublishedTheme(t);
+      }
     });
 
     const unsub3 = onSnapshot(doc(db, 'settings', 'branding'), (snap) => {
       if (snap.exists()) {
-        setLogoUrl(snap.data().logoUrl || '');
-        if (snap.data().faviconUrl !== undefined) setFaviconUrl(snap.data().faviconUrl);
+        setPublishedBranding(snap.data());
         if (snap.data().language) setLanguageState(snap.data().language);
-        if (snap.data().heroBg) setHeroBg(snap.data().heroBg);
       }
     });
 
@@ -176,6 +194,10 @@ export function PageContentProvider({ children }) {
     return () => { unsub1(); unsub1ar(); unsub2(); unsub3(); };
   }, []);
 
+  // Apply theme to DOM whenever it changes
+  useEffect(() => { applyThemeToDOM(theme); }, [theme]);
+
+  // Apply language direction
   useEffect(() => {
     document.documentElement.dir = language === 'ar' ? 'rtl' : 'ltr';
     document.documentElement.lang = language;
@@ -183,8 +205,6 @@ export function PageContentProvider({ children }) {
       ? "'Noto Sans Arabic', 'Inter', system-ui, sans-serif"
       : "'Inter', system-ui, sans-serif";
   }, [language]);
-
-  useEffect(() => { applyThemeToDOM(theme); }, [theme]);
 
   // Favicon
   useEffect(() => {
@@ -207,63 +227,112 @@ export function PageContentProvider({ children }) {
     }
   }, [faviconUrl, content.favicon_emoji]);
 
+  // Tab title
   useEffect(() => {
     document.title = content.site_title || 'Alma Tennis Academy';
   }, [content.site_title]);
 
-  // ---- IMMEDIATE SAVE FUNCTIONS ----
-  // Every change updates local state AND writes to Firestore instantly
+  // ---- DRAFT UPDATES (local only, admin preview) ----
 
-  const updateContent = async (key, value) => {
+  const updateContent = (key, value) => {
     if (language === 'ar') {
-      const updated = { ...contentAR, [key]: value };
-      setContentAR(updated);
-      try { await setDoc(doc(db, 'settings', 'pageContentAR'), updated); }
-      catch (err) { console.error('Save failed:', err); }
+      setDraftAR(prev => ({ ...(prev || publishedAR), [key]: value }));
     } else {
-      const updated = { ...contentEN, [key]: value };
-      setContentEN(updated);
-      try { await setDoc(doc(db, 'settings', 'pageContent'), updated); }
-      catch (err) { console.error('Save failed:', err); }
+      setDraftEN(prev => ({ ...(prev || publishedEN), [key]: value }));
     }
   };
 
-  const updateTheme = async (newTheme) => {
-    setTheme(newTheme);
+  const updateTheme = (newTheme) => {
+    setDraftTheme(newTheme);
     applyThemeToDOM(newTheme);
-    try { await setDoc(doc(db, 'settings', 'theme'), newTheme); }
-    catch (err) { console.error('Save failed:', err); }
   };
 
-  const updateLogo = async (url) => {
-    setLogoUrl(url);
-    try { await setDoc(doc(db, 'settings', 'branding'), { logoUrl: url }, { merge: true }); }
-    catch (err) { console.error('Save failed:', err); }
+  const updateLogo = (url) => {
+    setDraftBranding(prev => ({ ...(prev || publishedBranding), logoUrl: url }));
   };
 
-  const updateFavicon = async (url) => {
-    setFaviconUrl(url);
-    try { await setDoc(doc(db, 'settings', 'branding'), { faviconUrl: url }, { merge: true }); }
-    catch (err) { console.error('Save failed:', err); }
+  const updateFavicon = (url) => {
+    setDraftBranding(prev => ({ ...(prev || publishedBranding), faviconUrl: url }));
   };
 
-  const updateHeroBg = async (bg) => {
-    setHeroBg(bg);
-    try { await setDoc(doc(db, 'settings', 'branding'), { heroBg: bg }, { merge: true }); }
-    catch (err) { console.error('Save failed:', err); }
+  const updateHeroBg = (bg) => {
+    setDraftBranding(prev => ({ ...(prev || publishedBranding), heroBg: bg }));
   };
 
-  const setLanguage = async (lang) => {
+  const setLanguage = (lang) => {
     setLanguageState(lang);
-    try { await setDoc(doc(db, 'settings', 'branding'), { language: lang }, { merge: true }); }
-    catch (err) { console.error('Save failed:', err); }
+    setDraftBranding(prev => ({ ...(prev || publishedBranding), language: lang }));
+  };
+
+  // ---- PUBLISH TO FIRESTORE ----
+
+  const publishAll = async () => {
+    setPublishing(true);
+    setPublishError('');
+
+    const errors = [];
+
+    // Write each changed section individually so partial saves work
+    if (draftEN) {
+      try {
+        await setDoc(doc(db, 'settings', 'pageContent'), draftEN);
+        setPublishedEN(draftEN);
+        setDraftEN(null);
+      } catch (err) { errors.push('Content (EN): ' + err.message); }
+    }
+
+    if (draftAR) {
+      try {
+        await setDoc(doc(db, 'settings', 'pageContentAR'), draftAR);
+        setPublishedAR(draftAR);
+        setDraftAR(null);
+      } catch (err) { errors.push('Content (AR): ' + err.message); }
+    }
+
+    if (draftTheme) {
+      try {
+        await setDoc(doc(db, 'settings', 'theme'), draftTheme);
+        setPublishedTheme(draftTheme);
+        setDraftTheme(null);
+      } catch (err) { errors.push('Theme: ' + err.message); }
+    }
+
+    if (draftBranding) {
+      try {
+        const merged = { ...publishedBranding, ...draftBranding };
+        await setDoc(doc(db, 'settings', 'branding'), merged);
+        setPublishedBranding(merged);
+        setDraftBranding(null);
+      } catch (err) { errors.push('Branding: ' + err.message); }
+    }
+
+    setPublishing(false);
+
+    if (errors.length > 0) {
+      const msg = errors.join('\n');
+      setPublishError(msg);
+      return { success: false, error: msg };
+    }
+
+    return { success: true };
+  };
+
+  // ---- DISCARD ----
+
+  const discardChanges = () => {
+    setDraftEN(null);
+    setDraftAR(null);
+    setDraftTheme(null);
+    setDraftBranding(null);
+    applyThemeToDOM(publishedTheme);
   };
 
   return (
     <PageContentContext.Provider value={{
       content, theme, logoUrl, faviconUrl, heroBg, language, loading,
+      hasChanges, publishing, publishError, setPublishError,
       updateContent, updateTheme, updateLogo, updateFavicon, updateHeroBg, setLanguage,
-      defaultTheme,
+      publishAll, discardChanges, defaultTheme,
     }}>
       {children}
     </PageContentContext.Provider>
