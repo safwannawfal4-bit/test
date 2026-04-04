@@ -792,7 +792,6 @@ export default function AdminSettingsPage() {
           { id: 'logo', label: '🖼️ Logo' },
           { id: 'favicon', label: '🔖 Browser Icon' },
           { id: 'hero', label: '🏔️ Hero Background' },
-          { id: 'social', label: '📱 Social Media' },
           { id: 'colors', label: '🎨 Colors' },
         ].map(s => (
           <button key={s.id} onClick={() => document.getElementById(s.id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
@@ -1108,10 +1107,6 @@ export default function AdminSettingsPage() {
           </div>
         )}
       </div>
-
-      {/* Social Media Posts Section */}
-      <div id="social"></div>
-      <SocialMediaAdmin content={content} updateContent={updateContent} saved={saved} setSaved={setSaved} />
 
       {/* Color Palette Section */}
       <div id="colors"></div>
