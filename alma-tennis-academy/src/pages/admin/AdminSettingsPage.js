@@ -357,52 +357,48 @@ async function fetchPostMetrics(url) {
     if (url.includes('instagram.com')) {
       const postCode = url.match(/instagram\.com\/(p|reel|tv)\/([^/?]+)/)?.[2];
       const RAPID_KEY = '64e684dbf2mshe45e0b3add984b6p136f6ajsne89a41528e4f';
-      const RAPID_HOST = 'instagram-scraper21.p.rapidapi.com';
 
-      // RapidAPI: /api/v1/post-info?code=SHORTCODE
       if (postCode) {
-        try {
-          const res = await fetch(`https://${RAPID_HOST}/api/v1/post-info?code=${postCode}`, {
-            headers: {
-              'Content-Type': 'application/json',
-              'x-rapidapi-host': RAPID_HOST,
-              'x-rapidapi-key': RAPID_KEY,
-            },
-            signal: AbortSignal.timeout(15000),
-          });
-          if (res.ok) {
-            const raw = await res.json();
-            // Navigate response - could be nested in data, items, etc.
-            const media = raw?.data || raw?.items?.[0] || raw?.graphql?.shortcode_media || raw;
-            if (media) {
-              // Likes
-              result.likes = media.like_count || media.likes?.count || media.edge_media_preview_like?.count || 0;
-              // Comments
-              result.comments = media.comment_count || media.comments?.count || media.edge_media_preview_comment?.count || media.edge_media_to_parent_comment?.count || 0;
-              // Views (for reels/videos)
-              result.views = media.play_count || media.video_play_count || media.video_view_count || media.view_count || 0;
-              // Shares
-              result.shares = media.share_count || media.reshare_count || 0;
-              // Handle
-              const username = media.user?.username || media.owner?.username || media.caption?.user?.username || '';
-              if (username) result.handle = '@' + username;
-              // Caption/Title
-              result.title = media.caption?.text || media.caption?.edge_media_to_caption?.edges?.[0]?.node?.text || '';
-              if (result.title.length > 100) result.title = result.title.substring(0, 100) + '...';
-              // Thumbnail
-              result.thumbnail = media.thumbnail_url || media.image_versions2?.candidates?.[0]?.url || media.thumbnail_src || media.display_url || '';
+        // Try multiple RapidAPI Instagram scrapers (different providers)
+        const apisToTry = [
+          { host: 'instagram-scraper-api3.p.rapidapi.com', path: `/post_info?code=${postCode}` },
+          { host: 'instagram-scraper-api2.p.rapidapi.com', path: `/v1/post_info?code_or_id_or_url=${postCode}` },
+          { host: 'instagram-bulk-scraper-latest.p.rapidapi.com', path: `/media_info_v2/${postCode}` },
+          { host: 'instagram-scraper21.p.rapidapi.com', path: `/api/v1/post-info?code=${postCode}` },
+        ];
 
-              if (result.likes || result.views || result.comments) result.fetched = true;
+        for (const api of apisToTry) {
+          if (result.fetched) break;
+          try {
+            const res = await fetch(`https://${api.host}${api.path}`, {
+              headers: { 'x-rapidapi-host': api.host, 'x-rapidapi-key': RAPID_KEY },
+              signal: AbortSignal.timeout(10000),
+            });
+            if (res.ok) {
+              const raw = await res.json();
+              // Deep-search for the media object in various response shapes
+              const media = raw?.data?.post || raw?.data || raw?.items?.[0] || raw?.graphql?.shortcode_media || raw;
+              const likes = media?.like_count || media?.likes?.count || media?.edge_media_preview_like?.count;
+              const comments = media?.comment_count || media?.comments?.count || media?.edge_media_preview_comment?.count;
+              const views = media?.play_count || media?.video_play_count || media?.video_view_count || media?.view_count;
+              const username = media?.user?.username || media?.owner?.username || media?.caption?.user?.username;
+
+              if (likes || comments || views) {
+                result.likes = likes || 0;
+                result.comments = comments || 0;
+                result.views = views || 0;
+                result.shares = media?.share_count || media?.reshare_count || 0;
+                if (username) result.handle = '@' + username;
+                result.title = (media?.caption?.text || '').substring(0, 100);
+                result.thumbnail = media?.thumbnail_url || media?.image_versions2?.candidates?.[0]?.url || media?.thumbnail_src || media?.display_url || '';
+                result.fetched = true;
+              }
             }
-          } else {
-            console.warn('Instagram API returned:', res.status, res.statusText);
-          }
-        } catch (err) {
-          console.warn('RapidAPI Instagram failed:', err.message);
+          } catch {}
         }
       }
 
-      // Fallback: noembed for basic info if API failed
+      // Fallback: noembed for basic info
       if (!result.handle) {
         try {
           const oRes = await fetch(`https://noembed.com/embed?url=${encodeURIComponent(url)}`);
@@ -411,7 +407,7 @@ async function fetchPostMetrics(url) {
             result.handle = d.author_name ? '@' + d.author_name : '';
             result.title = result.title || d.title || '';
             result.thumbnail = result.thumbnail || d.thumbnail_url || '';
-            result.fetched = true;
+            if (!result.fetched) result.fetched = true;
           }
         } catch {}
       }
