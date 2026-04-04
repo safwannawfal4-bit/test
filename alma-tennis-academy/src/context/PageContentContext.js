@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
-import { doc, setDoc, onSnapshot } from 'firebase/firestore';
+import { doc, setDoc, getDoc, onSnapshot } from 'firebase/firestore';
 import { db } from '../firebase';
 
 const PageContentContext = createContext();
@@ -291,8 +291,18 @@ export function PageContentProvider({ children }) {
 
       await Promise.all(promises);
 
+      // VERIFY the write actually reached the server by reading it back
+      const verifyDoc = await getDoc(doc(db, 'settings', 'pageContent'));
+      if (draftEN && verifyDoc.exists()) {
+        const serverData = verifyDoc.data();
+        // Check if at least one changed field actually persisted
+        const testKey = Object.keys(draftEN).find(k => draftEN[k] !== defaultContentEN[k]);
+        if (testKey && serverData[testKey] !== draftEN[testKey]) {
+          throw new Error('Write appeared to succeed but data did not persist on server. Your Firestore security rules are blocking writes. Go to Firebase Console → Firestore Database → Rules and allow read/write.');
+        }
+      }
+
       // Update published state with draft values BEFORE clearing drafts
-      // This prevents the flash-back-to-old-data race condition
       if (draftEN) setPublishedEN(draftEN);
       if (draftAR) setPublishedAR(draftAR);
       if (draftTheme) setPublishedTheme(draftTheme);

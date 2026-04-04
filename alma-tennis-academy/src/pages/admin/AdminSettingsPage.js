@@ -1,6 +1,96 @@
 import { useState, useRef } from 'react';
 import { usePageContent } from '../../context/PageContentContext';
 import { uploadImage } from '../../utils/uploadImage';
+import { doc, setDoc, getDoc, deleteDoc } from 'firebase/firestore';
+import { db } from '../../firebase';
+
+function DatabaseTest() {
+  const [status, setStatus] = useState(null); // null | 'testing' | 'success' | 'fail'
+  const [error, setError] = useState('');
+
+  const runTest = async () => {
+    setStatus('testing');
+    setError('');
+    try {
+      // Step 1: Write a test document
+      const testData = { test: true, timestamp: Date.now() };
+      await setDoc(doc(db, 'settings', '_connection_test'), testData);
+
+      // Step 2: Read it back
+      const snap = await getDoc(doc(db, 'settings', '_connection_test'));
+      if (!snap.exists() || snap.data().timestamp !== testData.timestamp) {
+        throw new Error('Write succeeded but data did not persist. Firestore rules are blocking writes.');
+      }
+
+      // Step 3: Clean up
+      await deleteDoc(doc(db, 'settings', '_connection_test'));
+
+      setStatus('success');
+    } catch (err) {
+      setStatus('fail');
+      setError(err.message);
+    }
+  };
+
+  return (
+    <div className={`rounded-xl p-4 mb-6 ${
+      status === 'success' ? 'bg-green-50 border border-green-200' :
+      status === 'fail' ? 'bg-red-50 border border-red-200' :
+      'bg-gray-50 border border-gray-200'
+    }`}>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <span className="text-xl">
+            {status === 'success' ? '✅' : status === 'fail' ? '❌' : status === 'testing' ? '⏳' : '🔌'}
+          </span>
+          <div>
+            <p className="text-sm font-semibold text-alma-green">
+              {status === 'success' ? 'Database connected! Saves will work.' :
+               status === 'fail' ? 'Database write FAILED!' :
+               status === 'testing' ? 'Testing connection...' :
+               'Database Connection'}
+            </p>
+            <p className="text-xs text-alma-charcoal/50">
+              {status === 'success' ? 'Your Firestore rules are correctly configured.' :
+               status === 'fail' ? '' :
+               'Test if your changes can be saved to the database.'}
+            </p>
+          </div>
+        </div>
+        <button onClick={runTest} disabled={status === 'testing'}
+          className="btn-primary text-xs py-2 px-4 disabled:opacity-50">
+          {status === 'testing' ? 'Testing...' : 'Test Connection'}
+        </button>
+      </div>
+
+      {status === 'fail' && (
+        <div className="mt-3 bg-red-100 rounded-lg p-3 text-xs text-red-700 space-y-2">
+          <p className="font-bold">Error: {error}</p>
+          <p className="font-bold text-red-800">To fix this, you MUST update your Firestore rules:</p>
+          <ol className="list-decimal list-inside space-y-1">
+            <li>Open <a href="https://console.firebase.google.com/project/alma-tennis-academy/firestore/rules" target="_blank" rel="noopener noreferrer" className="underline font-bold text-blue-600">this direct link to your Firestore Rules</a></li>
+            <li>Delete everything in the editor</li>
+            <li>Paste this exactly:</li>
+          </ol>
+          <pre className="bg-red-200 rounded p-2 font-mono text-[11px] whitespace-pre select-all">
+{`rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if true;
+    }
+  }
+}`}
+          </pre>
+          <ol start={4} className="list-decimal list-inside space-y-1">
+            <li>Click <strong>Publish</strong></li>
+            <li>Come back here and click <strong>Test Connection</strong> again</li>
+          </ol>
+        </div>
+      )}
+    </div>
+  );
+}
 
 const EMOJI_CATEGORIES = [
   { name: 'Sports', emojis: ['🎾','🏆','🥇','🥈','🥉','🏅','🎖️','⚽','🏀','🏈','⚾','🥎','🎳','🏓','🏸','🥊','🥋','🏒','🥅','⛳','🏹','🎣','🤿','🏄','🏊','🚴','🏃','🤸','⛹️','🏋️','🤺','🧗','🤾','🏇','⛷️','🏂','🛹','🪂'] },
@@ -188,6 +278,9 @@ export default function AdminSettingsPage() {
           <span className="text-sm font-medium text-green-600 bg-green-50 px-3 py-1 rounded-full">{saved}</span>
         )}
       </div>
+
+      {/* Database Connection Test */}
+      <DatabaseTest />
 
       {/* Quick Jump Navigation */}
       <div className="flex flex-wrap gap-2 mb-6">
