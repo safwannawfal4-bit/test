@@ -1,6 +1,28 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import EditableText from './EditableText';
 import { usePageContent } from '../context/PageContentContext';
+
+function BouncyEmoji({ emoji, className, style }) {
+  const [bouncing, setBouncing] = useState(false);
+
+  const handleClick = () => {
+    setBouncing(true);
+    setTimeout(() => setBouncing(false), 800);
+  };
+
+  return (
+    <div
+      onClick={handleClick}
+      className={`${className} cursor-pointer select-none transition-all ${
+        bouncing ? 'animate-[clickBounce_0.8s_ease]' : ''
+      }`}
+      style={style}
+    >
+      {emoji}
+    </div>
+  );
+}
 
 export default function HeroSection() {
   const { heroBg, content } = usePageContent();
@@ -28,8 +50,8 @@ export default function HeroSection() {
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] border border-white/5 rounded-full" />
             {showEmojis && (
               <>
-                <div className="absolute top-32 right-[15%] text-6xl opacity-20 animate-bounce-gentle">{emoji1}</div>
-                <div className="absolute bottom-32 left-[10%] text-4xl opacity-15 animate-bounce-gentle" style={{ animationDelay: '0.5s' }}>{emoji2}</div>
+                <BouncyEmoji emoji={emoji1} className="absolute top-32 right-[15%] text-6xl opacity-20 animate-bounce-gentle" />
+                <BouncyEmoji emoji={emoji2} className="absolute bottom-32 left-[10%] text-4xl opacity-15 animate-bounce-gentle" style={{ animationDelay: '0.5s' }} />
               </>
             )}
           </div>
