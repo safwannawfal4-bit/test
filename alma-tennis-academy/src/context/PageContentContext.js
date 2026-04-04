@@ -189,6 +189,7 @@ export function PageContentProvider({ children }) {
   const [contentAR, setContentAR] = useState(defaultContentAR);
   const [theme, setTheme] = useState(defaultTheme);
   const [logoUrl, setLogoUrl] = useState('');
+  const [faviconUrl, setFaviconUrl] = useState('');
   const [heroBg, setHeroBg] = useState({ type: 'color', imageUrl: '' });
   const [loading, setLoading] = useState(true);
 
@@ -213,6 +214,7 @@ export function PageContentProvider({ children }) {
     const unsub3 = onSnapshot(doc(db, 'settings', 'branding'), (snap) => {
       if (snap.exists()) {
         setLogoUrl(snap.data().logoUrl || '');
+        if (snap.data().faviconUrl !== undefined) setFaviconUrl(snap.data().faviconUrl);
         if (snap.data().language) setLanguageState(snap.data().language);
         if (snap.data().heroBg) setHeroBg(snap.data().heroBg);
       }
@@ -262,13 +264,32 @@ export function PageContentProvider({ children }) {
     try { await setDoc(doc(db, 'settings', 'branding'), { language: lang }, { merge: true }); } catch (err) { alert('Failed to save language: ' + err.message); }
   };
 
+  // Apply favicon to DOM
+  useEffect(() => {
+    if (faviconUrl) {
+      let link = document.querySelector("link[rel~='icon']");
+      if (!link) {
+        link = document.createElement('link');
+        link.rel = 'icon';
+        document.head.appendChild(link);
+      }
+      link.href = faviconUrl;
+      link.type = 'image/png';
+    }
+  }, [faviconUrl]);
+
+  const updateFavicon = async (url) => {
+    setFaviconUrl(url);
+    try { await setDoc(doc(db, 'settings', 'branding'), { faviconUrl: url }, { merge: true }); } catch (err) { alert('Failed to save favicon: ' + err.message); }
+  };
+
   const updateHeroBg = async (bg) => {
     setHeroBg(bg);
     try { await setDoc(doc(db, 'settings', 'branding'), { heroBg: bg }, { merge: true }); } catch (err) { alert('Failed to save: ' + err.message); }
   };
 
   return (
-    <PageContentContext.Provider value={{ content, theme, logoUrl, heroBg, language, loading, updateContent, updateTheme, updateLogo, updateHeroBg, setLanguage, defaultTheme }}>
+    <PageContentContext.Provider value={{ content, theme, logoUrl, faviconUrl, heroBg, language, loading, updateContent, updateTheme, updateLogo, updateFavicon, updateHeroBg, setLanguage, defaultTheme }}>
       {children}
     </PageContentContext.Provider>
   );

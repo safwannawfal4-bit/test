@@ -138,12 +138,14 @@ const colorFields = [
 ];
 
 export default function AdminSettingsPage() {
-  const { theme, updateTheme, defaultTheme, logoUrl, updateLogo, heroBg, updateHeroBg, language, setLanguage, content, updateContent } = usePageContent();
+  const { theme, updateTheme, defaultTheme, logoUrl, updateLogo, faviconUrl, updateFavicon, heroBg, updateHeroBg, language, setLanguage, content, updateContent } = usePageContent();
   const [uploading, setUploading] = useState(false);
   const [uploadingHero, setUploadingHero] = useState(false);
+  const [uploadingFavicon, setUploadingFavicon] = useState(false);
   const [saved, setSaved] = useState('');
   const fileRef = useRef();
   const heroFileRef = useRef();
+  const faviconRef = useRef();
 
   const handleLogoUpload = async (file) => {
     if (!file) return;
@@ -264,6 +266,74 @@ export default function AdminSettingsPage() {
                 onChange={e => e.target.files[0] && handleLogoUpload(e.target.files[0])} />
             </div>
             <p className="text-xs text-alma-charcoal/40">Recommended: PNG or SVG with transparent background. Max height displayed: 40-80px.</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Favicon / Browser Icon Section */}
+      <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
+        <h2 className="text-lg font-semibold text-alma-green mb-4">Browser Tab Icon (Favicon)</h2>
+        <p className="text-sm text-alma-charcoal/50 mb-4">This is the small icon that appears in the browser tab next to your page title. Currently showing a tennis ball.</p>
+
+        <div className="flex items-start gap-6">
+          <div className="w-20 h-20 bg-gray-50 rounded-xl border-2 border-dashed border-gray-200 flex items-center justify-center overflow-hidden flex-shrink-0">
+            {faviconUrl ? (
+              <img src={faviconUrl} alt="Current favicon" className="w-12 h-12 object-contain" />
+            ) : (
+              <span className="text-3xl">🎾</span>
+            )}
+          </div>
+
+          <div className="flex-grow space-y-3">
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => faviconRef.current?.click()}
+                disabled={uploadingFavicon}
+                className="btn-primary text-sm disabled:opacity-50"
+              >
+                {uploadingFavicon ? 'Uploading...' : faviconUrl ? 'Change Icon' : 'Upload Icon'}
+              </button>
+              {faviconUrl && (
+                <button
+                  onClick={async () => {
+                    await updateFavicon('');
+                    setSaved('Favicon reset to default');
+                    setTimeout(() => setSaved(''), 3000);
+                  }}
+                  className="text-sm text-red-400 hover:text-red-600 transition-colors"
+                >
+                  Reset to Default
+                </button>
+              )}
+              <input ref={faviconRef} type="file" accept="image/*" className="hidden"
+                onChange={async (e) => {
+                  const file = e.target.files[0];
+                  if (!file) return;
+                  setUploadingFavicon(true);
+                  try {
+                    const url = await uploadImage(file, 'branding');
+                    await updateFavicon(url);
+                    setSaved('Favicon updated! Refresh the page to see it.');
+                    setTimeout(() => setSaved(''), 5000);
+                  } catch (err) { alert('Failed: ' + err.message); }
+                  setUploadingFavicon(false);
+                }} />
+            </div>
+            <p className="text-xs text-alma-charcoal/40">Recommended: Square image, 32x32 or 64x64 px. PNG, SVG, or ICO format. The image will show as a tiny icon in the browser tab.</p>
+            <div className="bg-gray-50 rounded-lg p-3 flex items-center gap-3">
+              <div className="flex items-center gap-2 bg-white rounded px-3 py-1.5 shadow-sm border border-gray-200">
+                <div className="w-4 h-4 flex items-center justify-center overflow-hidden">
+                  {faviconUrl ? (
+                    <img src={faviconUrl} alt="" className="w-full h-full object-contain" />
+                  ) : (
+                    <span className="text-[10px]">🎾</span>
+                  )}
+                </div>
+                <span className="text-xs text-alma-charcoal/70">Alma Tennis Academy</span>
+                <span className="text-xs text-alma-charcoal/30 ml-2">✕</span>
+              </div>
+              <span className="text-[10px] text-alma-charcoal/30">← Preview of browser tab</span>
+            </div>
           </div>
         </div>
       </div>
