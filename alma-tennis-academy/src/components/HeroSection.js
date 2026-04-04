@@ -1,25 +1,65 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import EditableText from './EditableText';
 import { usePageContent } from '../context/PageContentContext';
 
-function BouncyEmoji({ emoji, className, style }) {
-  const [bouncing, setBouncing] = useState(false);
+function BouncyEmoji({ emoji, size = '4rem', baseOpacity = 0.3, top, bottom, left, right, delay = '0s' }) {
+  const [clicks, setClicks] = useState(0);
+  const [pos, setPos] = useState({ x: 0, y: 0, rotate: 0, scale: 1 });
+  const [isAnimating, setIsAnimating] = useState(false);
 
-  const handleClick = () => {
-    setBouncing(true);
-    setTimeout(() => setBouncing(false), 800);
+  const handleClick = useCallback(() => {
+    setClicks(c => c + 1);
+    setIsAnimating(true);
+
+    // Random bounce direction
+    const randX = (Math.random() - 0.5) * 60;
+    const randY = -30 - Math.random() * 40;
+    const randRotate = (Math.random() - 0.5) * 40;
+
+    setPos({ x: randX, y: randY, rotate: randRotate, scale: 1.6 });
+
+    setTimeout(() => {
+      setPos({ x: randX * 0.3, y: 10, rotate: -randRotate * 0.5, scale: 0.8 });
+    }, 200);
+
+    setTimeout(() => {
+      setPos({ x: 0, y: -8, rotate: randRotate * 0.2, scale: 1.2 });
+    }, 400);
+
+    setTimeout(() => {
+      setPos({ x: 0, y: 0, rotate: 0, scale: 1 });
+      setIsAnimating(false);
+    }, 600);
+  }, []);
+
+  const posStyle = {
+    position: 'absolute',
+    top, bottom, left, right,
+    fontSize: size,
+    opacity: isAnimating ? 0.9 : baseOpacity,
+    cursor: 'pointer',
+    userSelect: 'none',
+    zIndex: 5,
+    transform: `translate(${pos.x}px, ${pos.y}px) rotate(${pos.rotate}deg) scale(${pos.scale})`,
+    transition: isAnimating ? 'all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1)' : 'all 0.3s ease-out, opacity 0.5s ease',
+    filter: isAnimating ? 'drop-shadow(0 4px 12px rgba(0,0,0,0.3))' : 'none',
+    animation: isAnimating ? 'none' : `floatEmoji 3s ease-in-out infinite`,
+    animationDelay: delay,
   };
 
   return (
-    <div
-      onClick={handleClick}
-      className={`${className} cursor-pointer select-none transition-all ${
-        bouncing ? 'animate-[clickBounce_0.8s_ease]' : ''
-      }`}
-      style={style}
-    >
+    <div style={posStyle} onClick={handleClick} role="button" tabIndex={0}>
       {emoji}
+      {clicks > 0 && isAnimating && (
+        <span style={{
+          position: 'absolute', top: '-10px', right: '-10px',
+          fontSize: '0.8rem', opacity: 0.8,
+          animation: 'fadeUp 0.5s ease-out forwards',
+        }}>
+          +{clicks}
+        </span>
+      )}
     </div>
   );
 }
@@ -50,8 +90,8 @@ export default function HeroSection() {
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] border border-white/5 rounded-full" />
             {showEmojis && (
               <>
-                <BouncyEmoji emoji={emoji1} className="absolute top-32 right-[15%] text-6xl opacity-20 animate-bounce-gentle" />
-                <BouncyEmoji emoji={emoji2} className="absolute bottom-32 left-[10%] text-4xl opacity-15 animate-bounce-gentle" style={{ animationDelay: '0.5s' }} />
+                <BouncyEmoji emoji={emoji1} size="4rem" baseOpacity={0.35} top="15%" right="15%" />
+                <BouncyEmoji emoji={emoji2} size="2.8rem" baseOpacity={0.25} bottom="18%" left="10%" delay="1.5s" />
               </>
             )}
           </div>
