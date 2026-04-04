@@ -69,6 +69,17 @@
   100% { opacity: 0; transform: translateY(-30px); }
 }
 
+@keyframes hitBurst {
+  0% { transform: scale(0.5); opacity: 1; }
+  50% { transform: scale(2); opacity: 0.6; }
+  100% { transform: scale(3); opacity: 0; }
+}
+
+@keyframes fadeInOut {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+
 @layer utilities {
   .text-gradient {
     -webkit-background-clip: text;

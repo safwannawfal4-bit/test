@@ -1,68 +1,7 @@
-import { useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import EditableText from './EditableText';
 import { usePageContent } from '../context/PageContentContext';
-
-function BouncyEmoji({ emoji, size = '4rem', baseOpacity = 0.3, top, bottom, left, right, delay = '0s' }) {
-  const [clicks, setClicks] = useState(0);
-  const [pos, setPos] = useState({ x: 0, y: 0, rotate: 0, scale: 1 });
-  const [isAnimating, setIsAnimating] = useState(false);
-
-  const handleClick = useCallback(() => {
-    setClicks(c => c + 1);
-    setIsAnimating(true);
-
-    // Random bounce direction
-    const randX = (Math.random() - 0.5) * 60;
-    const randY = -30 - Math.random() * 40;
-    const randRotate = (Math.random() - 0.5) * 40;
-
-    setPos({ x: randX, y: randY, rotate: randRotate, scale: 1.6 });
-
-    setTimeout(() => {
-      setPos({ x: randX * 0.3, y: 10, rotate: -randRotate * 0.5, scale: 0.8 });
-    }, 200);
-
-    setTimeout(() => {
-      setPos({ x: 0, y: -8, rotate: randRotate * 0.2, scale: 1.2 });
-    }, 400);
-
-    setTimeout(() => {
-      setPos({ x: 0, y: 0, rotate: 0, scale: 1 });
-      setIsAnimating(false);
-    }, 600);
-  }, []);
-
-  const posStyle = {
-    position: 'absolute',
-    top, bottom, left, right,
-    fontSize: size,
-    opacity: isAnimating ? 0.9 : baseOpacity,
-    cursor: 'pointer',
-    userSelect: 'none',
-    zIndex: 5,
-    transform: `translate(${pos.x}px, ${pos.y}px) rotate(${pos.rotate}deg) scale(${pos.scale})`,
-    transition: isAnimating ? 'all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1)' : 'all 0.3s ease-out, opacity 0.5s ease',
-    filter: isAnimating ? 'drop-shadow(0 4px 12px rgba(0,0,0,0.3))' : 'none',
-    animation: isAnimating ? 'none' : `floatEmoji 3s ease-in-out infinite`,
-    animationDelay: delay,
-  };
-
-  return (
-    <div style={posStyle} onClick={handleClick} role="button" tabIndex={0}>
-      {emoji}
-      {clicks > 0 && isAnimating && (
-        <span style={{
-          position: 'absolute', top: '-10px', right: '-10px',
-          fontSize: '0.8rem', opacity: 0.8,
-          animation: 'fadeUp 0.5s ease-out forwards',
-        }}>
-          +{clicks}
-        </span>
-      )}
-    </div>
-  );
-}
+import TennisGame from './TennisGame';
 
 export default function HeroSection() {
   const { heroBg, content } = usePageContent();
@@ -88,17 +27,16 @@ export default function HeroSection() {
             <div className="absolute top-20 right-20 w-72 h-72 bg-alma-lime/20 rounded-full blur-3xl" />
             <div className="absolute bottom-20 left-20 w-96 h-96 bg-alma-lime/10 rounded-full blur-3xl" />
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] border border-white/5 rounded-full" />
-            {showEmojis && (
-              <>
-                <BouncyEmoji emoji={emoji1} size="4rem" baseOpacity={0.35} top="15%" right="15%" />
-                <BouncyEmoji emoji={emoji2} size="2.8rem" baseOpacity={0.25} bottom="18%" left="10%" delay="1.5s" />
-              </>
-            )}
           </div>
         </>
       )}
 
-      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+      {/* Tennis Game Layer */}
+      {showEmojis && !hasImage && (
+        <TennisGame emoji1={emoji1} emoji2={emoji2} />
+      )}
+
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20" style={{ zIndex: 6 }}>
         <div className="max-w-3xl">
           <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full text-alma-lime text-sm font-medium mb-8">
             <span className="w-2 h-2 bg-alma-lime rounded-full animate-pulse" />
@@ -117,10 +55,10 @@ export default function HeroSection() {
           </p>
 
           <div className="mt-10 flex flex-wrap gap-4">
-            <Link to="/programs" className="btn-secondary text-lg px-8 py-4">
+            <Link to="/programs" className="btn-secondary text-lg px-8 py-4" style={{ zIndex: 7, position: 'relative' }}>
               <EditableText contentKey="hero_cta_1" className="text-alma-green" />
             </Link>
-            <Link to="/shop" className="border-2 border-white text-white px-8 py-4 rounded-lg font-semibold text-lg hover:bg-white hover:text-alma-green transition-all duration-300">
+            <Link to="/shop" className="border-2 border-white text-white px-8 py-4 rounded-lg font-semibold text-lg hover:bg-white hover:text-alma-green transition-all duration-300" style={{ zIndex: 7, position: 'relative' }}>
               <EditableText contentKey="hero_cta_2" className="text-inherit" />
             </Link>
           </div>
