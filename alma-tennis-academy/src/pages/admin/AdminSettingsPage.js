@@ -227,12 +227,28 @@ const colorFields = [
   { key: 'charcoal', label: 'Text Color' },
 ];
 
+// CORS proxies to try (fallback chain)
+const PROXIES = [
+  (u) => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
+  (u) => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`,
+];
+
+async function fetchViaProxy(url) {
+  for (const proxy of PROXIES) {
+    try {
+      const res = await fetch(proxy(url), { signal: AbortSignal.timeout(10000) });
+      if (res.ok) return await res.text();
+    } catch {}
+  }
+  return null;
+}
+
 // Fetch public metrics from platforms
 async function fetchPostMetrics(url) {
   const result = { views: 0, likes: 0, comments: 0, shares: 0, handle: '', title: '', thumbnail: '', fetched: false };
 
   try {
-    // YouTube
+    // ==================== YOUTUBE ====================
     if (url.includes('youtube.com') || url.includes('youtu.be')) {
       let videoId = '';
       if (url.includes('youtu.be/')) videoId = url.split('youtu.be/')[1]?.split(/[?&#]/)[0];
@@ -240,7 +256,6 @@ async function fetchPostMetrics(url) {
       else if (url.includes('/shorts/')) videoId = url.split('/shorts/')[1]?.split(/[?&#]/)[0];
 
       if (videoId) {
-        // Fetch metrics from Return YouTube Dislike API (free, no key needed)
         const [metricsRes, oembedRes] = await Promise.allSettled([
           fetch(`https://returnyoutubedislikeapi.com/votes?videoId=${videoId}`),
           fetch(`https://noembed.com/embed?url=https://www.youtube.com/watch?v=${videoId}`),
@@ -262,27 +277,101 @@ async function fetchPostMetrics(url) {
       }
     }
 
-    // TikTok
+    // ==================== TIKTOK ====================
     if (url.includes('tiktok.com')) {
-      const res = await fetch(`https://www.tiktok.com/oembed?url=${encodeURIComponent(url)}`);
-      if (res.ok) {
-        const data = await res.json();
-        result.handle = data.author_name || '';
-        result.title = data.title || '';
-        result.thumbnail = data.thumbnail_url || '';
-        result.fetched = true;
+      // First get basic info from oEmbed
+      try {
+        const oembedRes = await fetch(`https://www.tiktok.com/oembed?url=${encodeURIComponent(url)}`);
+        if (oembedRes.ok) {
+          const data = await oembedRes.json();
+          result.handle = data.author_name || '';
+          result.title = data.title || '';
+          result.thumbnail = data.thumbnail_url || '';
+          result.fetched = true;
+        }
+      } catch {}
+
+      // Then try to get metrics by fetching the page via proxy
+      try {
+        const html = await fetchViaProxy(url);
+        if (html) {
+          // TikTok embeds JSON data in <script id="__UNIVERSAL_DATA_FOR_REHYDRATION__">
+          const jsonMatch = html.match(/<script\s+id="__UNIVERSAL_DATA_FOR_REHYDRATION__"[^>]*>([\s\S]*?)<\/script>/);
+          if (jsonMatch) {
+            const jsonData = JSON.parse(jsonMatch[1]);
+            const videoData = jsonData?.['__DEFAULT_SCOPE__']?.['webapp.video-detail']?.itemInfo?.itemStruct;
+            if (videoData?.stats) {
+              result.views = videoData.stats.playCount || 0;
+              result.likes = videoData.stats.diggCount || 0;
+              result.comments = videoData.stats.commentCount || 0;
+              result.shares = videoData.stats.shareCount || 0;
+              result.handle = '@' + (videoData.author?.uniqueId || result.handle);
+              result.fetched = true;
+            }
+          }
+
+          // Fallback: try meta tags
+          if (!result.views) {
+            const viewMatch = html.match(/"playCount":\s*(\d+)/);
+            const likeMatch = html.match(/"diggCount":\s*(\d+)/);
+            const commentMatch = html.match(/"commentCount":\s*(\d+)/);
+            const shareMatch = html.match(/"shareCount":\s*(\d+)/);
+            if (viewMatch) result.views = parseInt(viewMatch[1]);
+            if (likeMatch) result.likes = parseInt(likeMatch[1]);
+            if (commentMatch) result.comments = parseInt(commentMatch[1]);
+            if (shareMatch) result.shares = parseInt(shareMatch[1]);
+            if (viewMatch) result.fetched = true;
+          }
+        }
+      } catch (err) {
+        console.warn('TikTok proxy fetch failed:', err);
       }
     }
 
-    // Instagram
+    // ==================== INSTAGRAM ====================
     if (url.includes('instagram.com')) {
-      const res = await fetch(`https://noembed.com/embed?url=${encodeURIComponent(url)}`);
-      if (res.ok) {
-        const data = await res.json();
-        result.handle = data.author_name || '';
-        result.title = data.title || '';
-        result.thumbnail = data.thumbnail_url || '';
-        result.fetched = true;
+      // Get basic info from noembed
+      try {
+        const oembedRes = await fetch(`https://noembed.com/embed?url=${encodeURIComponent(url)}`);
+        if (oembedRes.ok) {
+          const data = await oembedRes.json();
+          result.handle = data.author_name || '';
+          result.title = data.title || '';
+          result.thumbnail = data.thumbnail_url || '';
+          result.fetched = true;
+        }
+      } catch {}
+
+      // Try to get metrics by fetching the page via proxy
+      try {
+        const html = await fetchViaProxy(url);
+        if (html) {
+          // Instagram sometimes has metrics in meta tags or JSON
+          const likeMatch = html.match(/"edge_media_preview_like":\s*\{"count":\s*(\d+)/);
+          const commentMatch = html.match(/"edge_media_preview_comment":\s*\{"count":\s*(\d+)/) ||
+                               html.match(/"edge_media_to_parent_comment":\s*\{"count":\s*(\d+)/);
+          const viewMatch = html.match(/"video_view_count":\s*(\d+)/);
+
+          if (likeMatch) { result.likes = parseInt(likeMatch[1]); result.fetched = true; }
+          if (commentMatch) { result.comments = parseInt(commentMatch[1]); result.fetched = true; }
+          if (viewMatch) { result.views = parseInt(viewMatch[1]); result.fetched = true; }
+
+          // Try og:description which sometimes has "X likes, Y comments"
+          const ogMatch = html.match(/content="([\d,]+)\s+likes?,\s*([\d,]+)\s+comments?/i);
+          if (ogMatch && !result.likes) {
+            result.likes = parseInt(ogMatch[1].replace(/,/g, ''));
+            result.comments = parseInt(ogMatch[2].replace(/,/g, ''));
+            result.fetched = true;
+          }
+
+          // Extract handle from page
+          if (!result.handle) {
+            const handleMatch = html.match(/"username":\s*"([^"]+)"/);
+            if (handleMatch) result.handle = '@' + handleMatch[1];
+          }
+        }
+      } catch (err) {
+        console.warn('Instagram proxy fetch failed:', err);
       }
     }
   } catch (err) {
@@ -519,12 +608,13 @@ function SocialMediaAdmin({ content, updateContent, saved, setSaved }) {
       </button>
 
       <div className="mt-4 bg-gray-50 rounded-lg p-3 text-xs text-alma-charcoal/50 space-y-1">
-        <p className="font-semibold text-alma-charcoal/60">Auto-fetch available data:</p>
-        <p>▶️ <strong>YouTube</strong> — Views, Likes, Title, Channel name, Thumbnail (fully automatic)</p>
-        <p>🎵 <strong>TikTok</strong> — Author name, Title, Thumbnail (metrics: enter manually)</p>
-        <p>📸 <strong>Instagram</strong> — Author name, Title (metrics: enter manually)</p>
-        <p className="mt-2 text-alma-charcoal/40">📊 Engagement Rate = (Likes + Comments + Shares) ÷ Views × 100</p>
+        <p className="font-semibold text-alma-charcoal/60">Auto-fetch capabilities:</p>
+        <p>▶️ <strong>YouTube</strong> — Views, Likes, Channel, Title, Thumbnail ✅ full metrics</p>
+        <p>🎵 <strong>TikTok</strong> — Views, Likes, Comments, Shares, Author, Title, Thumbnail ✅ full metrics</p>
+        <p>📸 <strong>Instagram</strong> — Likes, Comments, Views (videos), Author, Title ✅ most metrics</p>
+        <p className="mt-2 text-alma-charcoal/40">📊 Engagement = (Likes + Comments + Shares) ÷ Views × 100</p>
         <p className="text-alma-charcoal/40">🟢 &gt;5% Great | 🟡 2-5% Good | 🔴 &lt;2% Low</p>
+        <p className="text-alma-charcoal/30 mt-1">Data fetched via public APIs. Some metrics may require manual entry if the platform blocks access.</p>
       </div>
     </div>
   );
