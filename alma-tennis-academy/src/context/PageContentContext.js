@@ -291,7 +291,14 @@ export function PageContentProvider({ children }) {
 
       await Promise.all(promises);
 
-      // Clear drafts (published data will update via onSnapshot)
+      // Update published state with draft values BEFORE clearing drafts
+      // This prevents the flash-back-to-old-data race condition
+      if (draftEN) setPublishedEN(draftEN);
+      if (draftAR) setPublishedAR(draftAR);
+      if (draftTheme) setPublishedTheme(draftTheme);
+      if (draftBranding) setPublishedBranding(prev => ({ ...prev, ...draftBranding }));
+
+      // Now clear drafts
       setDraftEN(null);
       setDraftAR(null);
       setDraftTheme(null);
@@ -300,6 +307,7 @@ export function PageContentProvider({ children }) {
       setPublishing(false);
       return { success: true };
     } catch (err) {
+      console.error('PUBLISH FAILED:', err);
       setPublishing(false);
       return { success: false, error: err.message };
     }
