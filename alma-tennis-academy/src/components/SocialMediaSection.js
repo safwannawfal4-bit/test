@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState } from 'react';
 import { usePageContent } from '../context/PageContentContext';
 import EditableText from './EditableText';
 import useScrollReveal from '../hooks/useScrollReveal';
@@ -29,35 +29,54 @@ const platformStyles = {
   tiktok: { gradient: 'from-gray-900 to-gray-800', icon: '🎵', name: 'TikTok' },
 };
 
-function IPhoneFrame({ children, post, isCenter }) {
+function IPhoneFrame({ post, isActive }) {
   const platform = platformStyles[post.embed.type] || {};
 
   return (
-    <div className={`flex flex-col items-center transition-all duration-500 ${isCenter ? 'scale-100 opacity-100' : 'scale-90 opacity-60'}`}
-      style={{ minWidth: 300 }}>
+    <div className={`flex flex-col items-center transition-all duration-500 ease-out ${
+      isActive ? 'scale-100 opacity-100' : 'scale-[0.85] opacity-40 blur-[1px]'
+    }`}>
       <div className="relative mx-auto" style={{ width: 280 }}>
-        <div className="bg-gray-900 rounded-[2.5rem] p-3 shadow-2xl">
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-28 h-6 bg-gray-900 rounded-b-2xl z-10 flex items-center justify-center">
-            <div className="w-16 h-3 bg-gray-800 rounded-full" />
+        {/* Phone shell */}
+        <div className="bg-gradient-to-b from-gray-800 to-gray-900 rounded-[2.5rem] p-[10px] shadow-2xl">
+          {/* Dynamic Island */}
+          <div className="absolute top-2 left-1/2 -translate-x-1/2 w-24 h-[22px] bg-black rounded-full z-10" />
+          {/* Screen */}
+          <div className="bg-black rounded-[2rem] overflow-hidden" style={{ height: 490 }}>
+            <iframe
+              src={post.embed.embedUrl}
+              title={post.handle || 'Social post'}
+              width="100%"
+              height="100%"
+              frameBorder="0"
+              allow="encrypted-media"
+              allowFullScreen
+              loading="lazy"
+              style={{ border: 0, background: '#000' }}
+            />
           </div>
-          <div className="bg-white rounded-[2rem] overflow-hidden" style={{ height: 480 }}>
-            {children}
-          </div>
-          <div className="flex justify-center mt-2">
-            <div className="w-28 h-1 bg-gray-600 rounded-full" />
+          {/* Home bar */}
+          <div className="flex justify-center py-2">
+            <div className="w-28 h-1 bg-gray-500 rounded-full" />
           </div>
         </div>
+
+        {/* Reflection effect */}
+        <div className="absolute inset-0 rounded-[2.5rem] pointer-events-none"
+          style={{ background: 'linear-gradient(135deg, rgba(255,255,255,0.1) 0%, transparent 50%)' }} />
       </div>
 
-      {/* Handle + platform */}
+      {/* Handle + link to post */}
       <a href={post.url} target="_blank" rel="noopener noreferrer"
-        className="mt-4 flex items-center gap-2 group hover:scale-105 transition-transform">
-        <span className={`px-3 py-1.5 rounded-full text-xs font-semibold text-white bg-gradient-to-r ${platform.gradient}`}>
+        className="mt-5 flex items-center gap-2 group hover:scale-105 transition-transform">
+        <span className={`px-4 py-2 rounded-full text-xs font-bold text-white bg-gradient-to-r ${platform.gradient} shadow-lg`}>
           {platform.icon} {post.handle || platform.name}
         </span>
-        <svg className="w-3.5 h-3.5 text-alma-charcoal/30 group-hover:text-alma-green transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-        </svg>
+        <span className="w-6 h-6 bg-white rounded-full shadow flex items-center justify-center group-hover:shadow-md transition-shadow">
+          <svg className="w-3 h-3 text-alma-charcoal/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+          </svg>
+        </span>
       </a>
     </div>
   );
@@ -66,115 +85,100 @@ function IPhoneFrame({ children, post, isCenter }) {
 export default function SocialMediaSection() {
   const { content } = usePageContent();
   const [ref, isVisible] = useScrollReveal(0.1);
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [touchStart, setTouchStart] = useState(null);
-  const carouselRef = useRef(null);
+  const [current, setCurrent] = useState(0);
+  const [touchStartX, setTouchStartX] = useState(null);
 
   if (content.social_media_enabled !== 'yes') return null;
 
-  // Parse all posts from content (unlimited, using counter)
   const postCount = parseInt(content.social_post_count) || 0;
   const posts = [];
   for (let i = 1; i <= postCount; i++) {
     const url = content[`social_post_${i}`];
     if (!url || !url.trim()) continue;
     const embed = parseEmbed(url);
-    if (embed) {
-      posts.push({
-        url,
-        handle: content[`social_handle_${i}`] || '',
-        embed,
-      });
-    }
+    if (embed) posts.push({ url, handle: content[`social_handle_${i}`] || '', embed });
   }
 
   if (posts.length === 0) return null;
 
-  const goTo = (idx) => {
-    setCurrentIndex(Math.max(0, Math.min(idx, posts.length - 1)));
-  };
-
-  const handleTouchStart = (e) => setTouchStart(e.touches[0].clientX);
-  const handleTouchEnd = (e) => {
-    if (touchStart === null) return;
-    const diff = touchStart - e.changedTouches[0].clientX;
-    if (diff > 50) goTo(currentIndex + 1);
-    else if (diff < -50) goTo(currentIndex - 1);
-    setTouchStart(null);
-  };
+  const prev = () => setCurrent(c => Math.max(0, c - 1));
+  const next = () => setCurrent(c => Math.min(posts.length - 1, c + 1));
 
   return (
     <section className="py-20 bg-white overflow-hidden">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div ref={ref} className={`transition-all duration-700 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
-          <div className="text-center mb-12">
+          <div className="text-center mb-14">
             <h2 className="section-title"><EditableText contentKey="social_title" /></h2>
             <p className="section-subtitle mx-auto"><EditableText contentKey="social_subtitle" /></p>
           </div>
 
-          {/* Carousel */}
-          <div className="relative">
-            {/* Arrow buttons */}
-            {posts.length > 1 && (
-              <>
-                <button onClick={() => goTo(currentIndex - 1)} disabled={currentIndex === 0}
-                  className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-12 h-12 bg-white rounded-full shadow-lg flex items-center justify-center text-alma-green hover:bg-alma-cream transition-all disabled:opacity-30 disabled:cursor-not-allowed">
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                  </svg>
-                </button>
-                <button onClick={() => goTo(currentIndex + 1)} disabled={currentIndex === posts.length - 1}
-                  className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-12 h-12 bg-white rounded-full shadow-lg flex items-center justify-center text-alma-green hover:bg-alma-cream transition-all disabled:opacity-30 disabled:cursor-not-allowed">
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                  </svg>
-                </button>
-              </>
-            )}
-
-            {/* Carousel track */}
-            <div className="overflow-hidden mx-12" ref={carouselRef}
-              onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
-              <div className="flex transition-transform duration-500 ease-out"
-                style={{ transform: `translateX(calc(-${currentIndex * 100}% / ${Math.min(posts.length, 3)} + ${posts.length <= 3 ? 0 : (currentIndex > 0 ? 33 : 0)}%))` }}>
-
-                {/* Show 1 at a time on mobile, up to 3 on desktop */}
-                {posts.length <= 3 ? (
-                  // Grid for 3 or fewer
-                  <div className={`w-full flex justify-center gap-8 flex-wrap md:flex-nowrap`}>
-                    {posts.map((post, idx) => (
-                      <IPhoneFrame key={idx} post={post} isCenter={true}>
-                        <iframe src={post.embed.embedUrl} title={`Post ${idx + 1}`}
-                          width="100%" height="100%" frameBorder="0" allow="encrypted-media" allowFullScreen loading="lazy" style={{ border: 0 }} />
-                      </IPhoneFrame>
-                    ))}
-                  </div>
-                ) : (
-                  // Slider for more than 3
-                  posts.map((post, idx) => (
-                    <div key={idx} className="flex-shrink-0 px-4" style={{ width: '33.333%' }}>
-                      <IPhoneFrame post={post} isCenter={idx === currentIndex + 1 || (posts.length <= 3)}>
-                        <iframe src={post.embed.embedUrl} title={`Post ${idx + 1}`}
-                          width="100%" height="100%" frameBorder="0" allow="encrypted-media" allowFullScreen loading="lazy" style={{ border: 0 }} />
-                      </IPhoneFrame>
-                    </div>
-                  ))
-                )}
-              </div>
+          {posts.length <= 3 ? (
+            /* Grid for 1-3 posts */
+            <div className={`flex justify-center gap-8 flex-wrap`}>
+              {posts.map((post, idx) => (
+                <IPhoneFrame key={idx} post={post} isActive={true} />
+              ))}
             </div>
+          ) : (
+            /* Carousel for 4+ posts */
+            <div className="relative">
+              {/* Left arrow */}
+              <button onClick={prev} disabled={current === 0}
+                className="absolute -left-2 md:left-4 top-1/2 -translate-y-1/2 z-20 w-12 h-12 bg-white/90 backdrop-blur rounded-full shadow-xl flex items-center justify-center text-alma-green hover:bg-white hover:scale-110 transition-all disabled:opacity-0 disabled:pointer-events-none">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
 
-            {/* Dots */}
-            {posts.length > 3 && (
-              <div className="flex justify-center gap-2 mt-8">
+              {/* Right arrow */}
+              <button onClick={next} disabled={current === posts.length - 1}
+                className="absolute -right-2 md:right-4 top-1/2 -translate-y-1/2 z-20 w-12 h-12 bg-white/90 backdrop-blur rounded-full shadow-xl flex items-center justify-center text-alma-green hover:bg-white hover:scale-110 transition-all disabled:opacity-0 disabled:pointer-events-none">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
+
+              {/* Carousel viewport */}
+              <div className="overflow-hidden px-8 md:px-16"
+                onTouchStart={e => setTouchStartX(e.touches[0].clientX)}
+                onTouchEnd={e => {
+                  if (touchStartX === null) return;
+                  const diff = touchStartX - e.changedTouches[0].clientX;
+                  if (diff > 50) next();
+                  else if (diff < -50) prev();
+                  setTouchStartX(null);
+                }}>
+                <div className="flex transition-transform duration-500 ease-out"
+                  style={{
+                    transform: `translateX(calc(-${current} * (300px + 2rem) + (50% - 150px)))`,
+                  }}>
+                  {posts.map((post, idx) => (
+                    <div key={idx} className="flex-shrink-0 px-4" style={{ width: 300 }}>
+                      <IPhoneFrame post={post} isActive={idx === current} />
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Dots */}
+              <div className="flex justify-center gap-2 mt-10">
                 {posts.map((_, idx) => (
-                  <button key={idx} onClick={() => goTo(idx)}
-                    className={`w-2.5 h-2.5 rounded-full transition-all ${
-                      idx === currentIndex ? 'bg-alma-green scale-125' : 'bg-alma-charcoal/20 hover:bg-alma-charcoal/40'
+                  <button key={idx} onClick={() => setCurrent(idx)}
+                    className={`rounded-full transition-all duration-300 ${
+                      idx === current
+                        ? 'w-8 h-2.5 bg-alma-green'
+                        : 'w-2.5 h-2.5 bg-alma-charcoal/15 hover:bg-alma-charcoal/30'
                     }`} />
                 ))}
               </div>
-            )}
-          </div>
+
+              {/* Counter */}
+              <p className="text-center text-xs text-alma-charcoal/30 mt-3">
+                {current + 1} / {posts.length}
+              </p>
+            </div>
+          )}
         </div>
       </div>
     </section>
