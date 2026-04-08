@@ -8,6 +8,7 @@ const allLinks = [
   { to: '/admin/orders', label: 'Orders', icon: '📦', perm: 'orders' },
   { to: '/admin/customers', label: 'Customers', icon: '👥', perm: 'customers' },
   { to: '/admin/social', label: 'Social Posts', icon: '📱', perm: 'staff' },
+  { to: '/admin/report', label: 'Digital Report', icon: '📈', perm: 'staff' },
   { to: '/admin/staff', label: 'Staff & Tasks', icon: '🏢', perm: 'staff' },
   { to: '/admin/tracking', label: 'Tracking', icon: '📡', perm: 'staff' },
   { to: '/admin/settings', label: 'Settings', icon: '⚙️', perm: 'staff' },

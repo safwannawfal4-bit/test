@@ -26,6 +26,7 @@ import AdminOrdersPage from './pages/admin/AdminOrdersPage';
 import AdminCustomersPage from './pages/admin/AdminCustomersPage';
 import AdminStaffPage from './pages/admin/AdminStaffPage';
 import AdminSocialPage from './pages/admin/AdminSocialPage';
+import AdminDigitalReportPage from './pages/admin/AdminDigitalReportPage';
 import AdminSettingsPage from './pages/admin/AdminSettingsPage';
 import AdminHelpPage from './pages/admin/AdminHelpPage';
 import AdminTrackingPage from './pages/admin/AdminTrackingPage';
@@ -91,6 +92,7 @@ function AppContent() {
           <Route path="orders" element={<AdminOrdersPage />} />
           <Route path="customers" element={<AdminCustomersPage />} />
           <Route path="social" element={<AdminSocialPage />} />
+          <Route path="report" element={<AdminDigitalReportPage />} />
           <Route path="staff" element={<AdminStaffPage />} />
           <Route path="settings" element={<AdminSettingsPage />} />
           <Route path="tracking" element={<AdminTrackingPage />} />
