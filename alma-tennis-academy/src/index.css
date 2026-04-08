@@ -1,0 +1,95 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&family=Noto+Sans+Arabic:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap');
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background-color: var(--color-cream, #FDF6E3);
+    color: var(--color-charcoal, #1A1A1A);
+    @apply font-sans;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    background-color: var(--color-primary, #2D4A2D);
+    @apply text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300 hover:shadow-lg active:scale-95;
+  }
+  .btn-primary:hover {
+    background-color: var(--color-primary-light, #3D6B3D);
+  }
+
+  .btn-secondary {
+    background-color: var(--color-accent, #A8D86E);
+    color: var(--color-primary, #2D4A2D);
+    @apply px-6 py-3 rounded-lg font-semibold transition-all duration-300 hover:shadow-lg active:scale-95;
+  }
+  .btn-secondary:hover {
+    background-color: var(--color-accent-light, #C4E8A0);
+  }
+
+  .btn-outline {
+    border-color: var(--color-primary, #2D4A2D);
+    color: var(--color-primary, #2D4A2D);
+    @apply border-2 px-6 py-3 rounded-lg font-semibold transition-all duration-300 active:scale-95;
+  }
+  .btn-outline:hover {
+    background-color: var(--color-primary, #2D4A2D);
+    @apply text-white;
+  }
+
+  .card {
+    @apply bg-white rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden;
+  }
+
+  .section-title {
+    color: var(--color-primary, #2D4A2D);
+    @apply text-3xl md:text-4xl font-display font-bold;
+  }
+
+  .section-subtitle {
+    @apply text-lg mt-2 max-w-2xl;
+    color: color-mix(in srgb, var(--color-charcoal, #1A1A1A) 70%, transparent);
+  }
+}
+
+@keyframes floatEmoji {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-12px); }
+}
+
+@keyframes fadeUp {
+  0% { opacity: 0.8; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(-30px); }
+}
+
+@keyframes hitBurst {
+  0% { transform: scale(0.5); opacity: 1; }
+  50% { transform: scale(2); opacity: 0.6; }
+  100% { transform: scale(3); opacity: 0; }
+}
+
+@keyframes fadeInOut {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+
+@keyframes slideUp {
+  0% { opacity: 0; transform: translateY(20px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+@layer utilities {
+  .text-gradient {
+    -webkit-background-clip: text;
+    background-clip: text;
+    @apply text-transparent;
+    background-image: linear-gradient(to right, var(--color-primary), var(--color-primary-light));
+  }
+}
