@@ -1,0 +1,27 @@
+#:schema https://developers.openai.com/codex/config-schema.json
+
+approval_policy = "on-request"
+sandbox_mode = "workspace-write"
+personality = "pragmatic"
+web_search = "cached"
+model_reasoning_effort = "medium"
+plan_mode_reasoning_effort = "high"
+model_reasoning_summary = "concise"
+model_verbosity = "low"
+project_root_markers = [".git", ".codex/config.toml", "AGENTS.md", "PLANS.md"]
+project_doc_max_bytes = 32768
+
+[features]
+multi_agent = true
+shell_tool = true
+shell_snapshot = true
+unified_exec = true
+
+# Optional project-local MCP servers can be added here when the rebuild needs them.
+# Keep server definitions narrow and repo-specific.
+#
+# [mcp_servers.example]
+# command = "your-mcp-command"
+# args = ["--flag"]
+# startup_timeout_sec = 20
+# tool_timeout_sec = 60

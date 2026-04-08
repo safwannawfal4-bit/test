@@ -1,16 +1,15 @@
-# Name
-security-review
-
-## Description
-Trigger when work touches auth flows, roles, permissions, secrets, server-only modules, external input, webhooks, integrations, or any boundary where trust changes. Use this as a focused review, not as a generic code review.
+---
+name: security-review
+description: Trigger when work touches Better Auth flows, roles, permissions, secrets, server-only modules, external input, webhooks, integrations, or any boundary where trust changes.
+---
 
 ## Workflow
-1. Identify trust boundaries: caller, server entrypoint, data store, third-party provider, and secret usage.
-2. Confirm authentication and authorization happen on the server at the write or read boundary that matters.
-3. Verify all external input is validated, normalized where needed, and rejected safely on failure.
+1. Identify trust boundaries: caller, server entrypoint, auth session, database, third-party provider, and secret usage.
+2. Confirm authentication and authorization happen on the server at the read or write boundary that matters.
+3. Verify external input is validated, normalized where needed, and rejected safely on failure.
 4. Check that secret values stay in server-only code paths and are never logged or returned to clients.
-5. Review error handling for data leakage, privilege escalation, and unsafe fallbacks.
-6. Record any unresolved security risk before completion.
+5. Review error handling for data leakage, privilege escalation, unsafe defaults, and tenant boundary leaks.
+6. Record unresolved security risks in docs if they are not fixed immediately.
 
 ## Constraints
 - Do not assume UI gating is sufficient authorization.

@@ -1,16 +1,16 @@
-# Name
-ui-accessibility
-
-## Description
-Trigger when creating or revising interactive UI, especially forms, modals, tables, filters, navigation, dashboards, and mobile layouts. Use this to enforce accessible, responsive, and state-complete interfaces.
+---
+name: ui-accessibility
+description: Trigger when creating or revising interactive UI, especially forms, modals, tables, filters, navigation, dashboards, carts, checkout flows, and mobile layouts.
+---
 
 ## Workflow
 1. Identify the main user tasks, viewports, and interaction modes involved.
 2. Ensure semantic structure is correct before styling polish: headings, labels, buttons, landmarks, table semantics, and focus order.
 3. Add complete UI states for loading, empty, success, validation, disabled, and error cases.
 4. Check keyboard access, visible focus, and screen-reader naming for interactive controls.
-5. Verify responsive behavior for common breakpoints and long-content cases.
-6. Trim visual noise and keep interactions legible, consistent, and fast to understand.
+5. Verify responsive behavior for common breakpoints, long-content cases, and real business copy.
+6. Ensure the UI does not promise backend behavior that the system does not actually support.
+7. Trim visual noise and keep interactions legible, consistent, and fast to understand.
 
 ## Constraints
 - Do not rely on color alone to communicate meaning or status.
